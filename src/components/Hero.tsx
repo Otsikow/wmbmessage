@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
-import heroImage from "@/assets/hero-modern.jpg";
+import heroImage from "@/assets/bible-hero-bg.jpg";
+import logoImage from "@/assets/logo-hero.png";
 export default function Hero() {
   return <section className="relative overflow-hidden py-20 md:py-32">
       <div className="absolute inset-0 z-0">
@@ -11,6 +12,9 @@ export default function Hero() {
       </div>
       <div className="container relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up">
+          <div className="mb-6">
+            <img src={logoImage} alt="MessageGuide Logo" className="h-24 md:h-32 w-auto mx-auto drop-shadow-lg" />
+          </div>
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               Your Guide to the
