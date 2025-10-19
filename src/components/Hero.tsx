@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import heroImage from "@/assets/hero-modern.jpg";
-
 export default function Hero() {
-  return (
-    <section className="relative overflow-hidden py-20 md:py-32">
+  return <section className="relative overflow-hidden py-20 md:py-32">
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Bible Study" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
@@ -16,9 +14,7 @@ export default function Hero() {
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               Your Guide to the
-              <span className="block text-primary mt-2">
-                Message of Truth
-              </span>
+              <span className="block text-primary mt-2">Message of The Hour</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Read the Bible, explore William Marrion Branham's sermons, and discover connections between scripture and prophetic messages.
@@ -75,6 +71,5 @@ export default function Hero() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 }
