@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Reader() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [currentBook, setCurrentBook] = useState("Genesis");
   const [currentChapter, setCurrentChapter] = useState(1);
   const [showCrossRef, setShowCrossRef] = useState(false);
@@ -25,6 +27,10 @@ export default function Reader() {
   
   const currentBookData = BIBLE_BOOKS.find(b => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
+
+  const readerFontClass = 
+    settings.readerFontFamily === "serif" ? "font-serif" :
+    settings.readerFontFamily === "monospace" ? "font-mono" : "font-sans";
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -143,7 +149,7 @@ export default function Reader() {
                 {error}
               </div>
             ) : (
-              <div className="space-y-3 sm:space-y-4 max-w-4xl mx-auto">
+              <div className={cn("space-y-3 sm:space-y-4 max-w-4xl mx-auto", readerFontClass)}>
                 {verses.map((verse) => (
                   <div
                     key={verse.number}

@@ -1,19 +1,19 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Moon, Bell, Download, Globe } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Bell, Download, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
+import SettingsFontControls from "@/components/SettingsFontControls";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [autoDownload, setAutoDownload] = useState(false);
+  const { settings, updateSettings, resetSettings } = useSettings();
 
-  const handleToggle = (setting: string, value: boolean) => {
-    toast.success(`${setting} ${value ? "enabled" : "disabled"}`);
+  const handleReset = () => {
+    resetSettings();
+    toast.success("Settings reset to defaults");
   };
 
   return (
@@ -33,6 +33,8 @@ export default function Settings() {
           </div>
 
           <div className="space-y-6 sm:space-y-8">
+            <SettingsFontControls />
+
             <div className="space-y-3">
               <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
                 Appearance
@@ -40,17 +42,23 @@ export default function Settings() {
               <div className="bg-card border border-border rounded-lg divide-y divide-border">
                 <div className="flex items-center justify-between p-4 sm:p-6">
                   <div className="flex items-center gap-3 sm:gap-4">
-                    <Moon className="h-5 w-5 text-muted-foreground shrink-0" />
+                    {settings.theme === "dark" ? (
+                      <Moon className="h-5 w-5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <Sun className="h-5 w-5 text-muted-foreground shrink-0" />
+                    )}
                     <div>
                       <p className="font-medium text-sm sm:text-base">Dark Mode</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Enable dark theme</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {settings.theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+                      </p>
                     </div>
                   </div>
                   <Switch 
-                    checked={darkMode} 
-                    onCheckedChange={(value) => {
-                      setDarkMode(value);
-                      handleToggle("Dark mode", value);
+                    checked={settings.theme === "dark"} 
+                    onCheckedChange={(checked) => {
+                      updateSettings({ theme: checked ? "dark" : "light" });
+                      toast.success(`${checked ? "Dark" : "Light"} mode enabled`);
                     }} 
                   />
                 </div>
@@ -59,48 +67,18 @@ export default function Settings() {
 
             <div className="space-y-3">
               <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                Notifications
+                Reset
               </h2>
-              <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                <div className="flex items-center justify-between p-4 sm:p-6">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <Bell className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">Push Notifications</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Receive daily reminders</p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={notifications} 
-                    onCheckedChange={(value) => {
-                      setNotifications(value);
-                      handleToggle("Notifications", value);
-                    }} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
-                Content
-              </h2>
-              <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                <div className="flex items-center justify-between p-4 sm:p-6">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <Download className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">Auto-download</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Download content for offline use</p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={autoDownload} 
-                    onCheckedChange={(value) => {
-                      setAutoDownload(value);
-                      handleToggle("Auto-download", value);
-                    }} 
-                  />
+              <div className="bg-card border border-border rounded-lg">
+                <div className="p-4 sm:p-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReset}
+                    className="w-full"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reset All Settings
+                  </Button>
                 </div>
               </div>
             </div>
