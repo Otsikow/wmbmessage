@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
 
 export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center space-x-2 md:space-x-3">
-          <img src={logo} alt="MessageGuide Logo" className="h-8 w-8 md:h-10 md:w-10" />
-          <span className="text-lg md:text-xl font-bold bg-hero-gradient bg-clip-text text-transparent">
+          <span className="text-lg md:text-xl font-bold text-primary">
             MessageGuide
           </span>
         </Link>

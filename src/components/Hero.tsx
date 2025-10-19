@@ -2,19 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
-import logo from "@/assets/logo.png";
 
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-subtle-bg py-20 md:py-32">
       <div className="container relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up">
-          <img 
-            src={logo} 
-            alt="MessageGuide Logo" 
-            className="h-20 md:h-24 w-auto mb-4"
-          />
-          
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               Your Guide to the
