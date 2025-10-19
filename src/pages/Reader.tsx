@@ -4,17 +4,22 @@ import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { cn } from "@/lib/utils";
+import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 
 export default function Reader() {
   const navigate = useNavigate();
   const [currentBook, setCurrentBook] = useState("Genesis");
   const [currentChapter, setCurrentChapter] = useState(1);
-  const [crossRefSearch, setCrossRefSearch] = useState("");
   const [showCrossRef, setShowCrossRef] = useState(false);
+
+  const handleNavigateFromCrossRef = (book: string, chapter: number) => {
+    setCurrentBook(book);
+    setCurrentChapter(chapter);
+    setShowCrossRef(false);
+  };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
   
@@ -104,20 +109,14 @@ export default function Reader() {
                   <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Cross References</DialogTitle>
+                  <DialogDescription>
+                    Look up and compare verses from different parts of the Bible
+                  </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <Input
-                    placeholder="Search cross references..."
-                    value={crossRefSearch}
-                    onChange={(e) => setCrossRefSearch(e.target.value)}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Enter a verse reference (e.g., John 3:16) to find related passages
-                  </p>
-                </div>
+                <CrossReferenceViewer onNavigate={handleNavigateFromCrossRef} />
               </DialogContent>
             </Dialog>
             <Button variant="ghost" size="icon" onClick={() => navigate("/search")} title="Search" className="h-8 w-8 sm:h-9 sm:w-9">
