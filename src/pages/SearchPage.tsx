@@ -157,7 +157,30 @@ export default function SearchPage() {
         <div className="px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm mb-6">
             <div className="space-y-4">
-...
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search Bible verses, books, or WMB sermons..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={crossRefMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCrossRefMode(!crossRefMode)}
+                  className="gap-2"
+                >
+                  <Link2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cross-Reference Mode</span>
+                  <span className="sm:hidden">Cross-Ref</span>
+                </Button>
+                {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
             </div>
           </div>
 
