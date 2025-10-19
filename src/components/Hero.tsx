@@ -51,27 +51,33 @@ export default function Hero() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-4xl">
-            <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all">
-              <BookOpen className="h-8 w-8 text-primary mb-3" />
-              <h3 className="font-semibold mb-2">Bible Reading</h3>
-              <p className="text-sm text-muted-foreground">
-                Read scripture with powerful search, notes, and cross-references
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all">
-              <MessageSquare className="h-8 w-8 text-secondary mb-3" />
-              <h3 className="font-semibold mb-2">WMB Sermons</h3>
-              <p className="text-sm text-muted-foreground">
-                Explore sermons with verse connections and deep insights
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all">
-              <Search className="h-8 w-8 text-accent mb-3" />
-              <h3 className="font-semibold mb-2">Smart Search</h3>
-              <p className="text-sm text-muted-foreground">
-                Find verses, topics, and sermon quotes instantly
-              </p>
-            </div>
+            <Link to="/reader" className="block">
+              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
+                <BookOpen className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold mb-2">Bible Reading</h3>
+                <p className="text-sm text-muted-foreground">
+                  Read scripture with powerful search, notes, and cross-references
+                </p>
+              </div>
+            </Link>
+            <Link to="/wmb-sermons" className="block">
+              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
+                <MessageSquare className="h-8 w-8 text-secondary mb-3" />
+                <h3 className="font-semibold mb-2">WMB Sermons</h3>
+                <p className="text-sm text-muted-foreground">
+                  Explore sermons with verse connections and deep insights
+                </p>
+              </div>
+            </Link>
+            <Link to="/search" className="block">
+              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
+                <Search className="h-8 w-8 text-accent mb-3" />
+                <h3 className="font-semibold mb-2">Smart Search</h3>
+                <p className="text-sm text-muted-foreground">
+                  Find verses, topics, and sermon quotes instantly
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
