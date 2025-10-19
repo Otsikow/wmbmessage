@@ -2,10 +2,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
+import heroImage from "@/assets/hero-modern.jpg";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-subtle-bg py-20 md:py-32">
+    <section className="relative overflow-hidden py-20 md:py-32">
+      <div className="absolute inset-0 z-0">
+        <img src={heroImage} alt="Bible Study" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+      </div>
       <div className="container relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up">
           <div className="space-y-4">

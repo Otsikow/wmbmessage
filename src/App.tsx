@@ -13,6 +13,12 @@ import Collections from "./pages/Collections";
 import Notes from "./pages/Notes";
 import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
+import Calendar from "./pages/Calendar";
+import Downloads from "./pages/Downloads";
+import Share from "./pages/Share";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
+import About from "./pages/About";
 import SignIn from "./pages/Auth/SignIn";
 import SignUp from "./pages/Auth/SignUp";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
@@ -37,6 +43,12 @@ const App = () => (
               <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
               <Route path="/more" element={<More />} />
               <Route path="/wmb-sermons" element={<WMBSermons />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/downloads" element={<Downloads />} />
+              <Route path="/share" element={<Share />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/about" element={<About />} />
               <Route path="/auth/sign-in" element={<SignIn />} />
               <Route path="/auth/sign-up" element={<SignUp />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />

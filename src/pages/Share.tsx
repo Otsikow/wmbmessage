@@ -1,0 +1,84 @@
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Share2, Facebook, Twitter, Mail, Link as LinkIcon } from "lucide-react";
+import { toast } from "sonner";
+import Navigation from "@/components/Navigation";
+
+export default function Share() {
+  const navigate = useNavigate();
+  
+  const handleShare = (platform: string) => {
+    toast.success(`Sharing on ${platform}!`);
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.origin);
+    toast.success("Link copied to clipboard!");
+  };
+
+  return (
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
+      <div className="w-full py-6 sm:py-8">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/more")}
+              className="md:hidden shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Share</h1>
+          </div>
+
+          <div className="space-y-6 sm:space-y-8">
+            <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center space-y-4">
+              <Share2 className="h-12 w-12 sm:h-16 sm:w-16 text-primary mx-auto" />
+              <h2 className="text-lg sm:text-xl font-semibold">Share MessageGuide</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Help others discover the power of scripture and prophetic messages
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Button 
+                onClick={() => handleShare("Facebook")} 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-auto py-4 px-4 sm:px-6"
+              >
+                <Facebook className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="text-sm sm:text-base">Share on Facebook</span>
+              </Button>
+              <Button 
+                onClick={() => handleShare("Twitter")} 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-auto py-4 px-4 sm:px-6"
+              >
+                <Twitter className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="text-sm sm:text-base">Share on Twitter</span>
+              </Button>
+              <Button 
+                onClick={() => handleShare("Email")} 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-auto py-4 px-4 sm:px-6"
+              >
+                <Mail className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="text-sm sm:text-base">Share via Email</span>
+              </Button>
+              <Button 
+                onClick={copyLink} 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-auto py-4 px-4 sm:px-6"
+              >
+                <LinkIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="text-sm sm:text-base">Copy Link</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Navigation />
+    </div>
+  );
+}
