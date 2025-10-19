@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Settings, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Reader() {
+  const navigate = useNavigate();
   const [currentBook, setCurrentBook] = useState("Genesis");
   const [currentChapter, setCurrentChapter] = useState(1);
 
@@ -21,6 +23,15 @@ export default function Reader() {
       {/* Top Navigation */}
       <div className="sticky top-16 z-30 bg-card border-b border-border">
         <div className="container flex items-center justify-between py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="md:hidden"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
           <Select value={currentBook} onValueChange={setCurrentBook}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
