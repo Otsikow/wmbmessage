@@ -116,9 +116,9 @@ export default function Reader() {
       </div>
 
       {/* Bible Content */}
-      <div className="container py-8">
-        <Card className="p-6 md:p-8 shadow-elegant">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+      <div className="w-full">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-6 md:py-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8 text-center">
             {currentBook} {currentChapter}
           </h1>
 
@@ -131,17 +131,17 @@ export default function Reader() {
               {error}
             </div>
           ) : (
-            <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="space-y-3 sm:space-y-4 max-w-4xl mx-auto">
               {verses.map((verse) => (
                 <div
                   key={verse.number}
-                  className="group flex gap-3 hover:bg-muted/50 rounded-lg p-2 transition-colors cursor-pointer"
+                  className="group flex gap-2 sm:gap-3 hover:bg-muted/50 rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
                 >
-                  <span className="text-sm font-semibold text-primary min-w-[2rem] text-right">
+                  <span className="text-xs sm:text-sm font-semibold text-primary min-w-[1.5rem] sm:min-w-[2rem] text-right">
                     {verse.number}
                   </span>
                   <p className={cn(
-                    "text-base leading-relaxed",
+                    "text-sm sm:text-base leading-relaxed",
                     verse.isJesusWords && "text-jesus-words font-medium"
                   )}>
                     {verse.text}
@@ -152,24 +152,31 @@ export default function Reader() {
           )}
 
           {/* Chapter Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-8 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mt-8 pt-6 sm:pt-8 border-t border-border max-w-4xl mx-auto">
             <Button
               variant="outline"
               onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
+              disabled={currentChapter <= 1}
+              className="w-full sm:w-auto justify-center sm:justify-start"
+              size="lg"
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
-              Previous Chapter
+              <span className="hidden xs:inline">Previous Chapter</span>
+              <span className="xs:hidden">Previous</span>
             </Button>
             <Button
               variant="outline"
               onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
               disabled={currentChapter >= maxChapter}
+              className="w-full sm:w-auto justify-center sm:justify-start"
+              size="lg"
             >
-              Next Chapter
+              <span className="hidden xs:inline">Next Chapter</span>
+              <span className="xs:hidden">Next</span>
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

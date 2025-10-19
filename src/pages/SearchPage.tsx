@@ -132,19 +132,19 @@ export default function SearchPage() {
         />
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
         <div className="absolute inset-0 flex items-center">
-          <div className="container">
-            <div className="flex items-center gap-4">
+          <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/")}
-                className="md:hidden"
+                className="md:hidden shrink-0"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               <div className="space-y-1">
-                <h1 className="text-3xl md:text-4xl font-bold">Search</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Search</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Search the Bible and WMB sermons with cross-references
                 </p>
               </div>
@@ -153,201 +153,168 @@ export default function SearchPage() {
         </div>
       </div>
 
-      <div className="container py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Card className="p-4 md:p-6">
+      <div className="w-full py-6 sm:py-8">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-12">
+          <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm mb-6">
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    placeholder={crossRefMode ? "Enter verse reference (e.g., John 3:16)" : "Search for verses, topics, or keywords..."}
-                    className="pl-10 pr-10 h-12"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
-                  {isSearching && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
-                  )}
-                </div>
-                <Button
-                  variant={crossRefMode ? "default" : "outline"}
-                  size="lg"
-                  onClick={() => setCrossRefMode(!crossRefMode)}
-                  className="w-full sm:w-auto"
-                >
-                  <Link2 className="h-5 w-5 mr-2" />
-                  <span className="hidden sm:inline">{crossRefMode ? "Cross-Ref Mode" : "Cross-Reference"}</span>
-                  <span className="sm:hidden">Cross-Ref</span>
-                </Button>
-              </div>
-              
-              {crossRefMode && (
-                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                  <p className="flex items-center gap-2">
-                    <Link2 className="h-4 w-4" />
-                    Cross-reference mode: Find related Bible passages and sermon quotes for any verse
-                  </p>
-                </div>
-              )}
+...
             </div>
-          </Card>
+          </div>
 
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all" className="gap-2">
-                <span className="hidden sm:inline">All</span>
-                <span className="sm:hidden">All</span>
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="all" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                <span>All</span>
                 {searchQuery && searchResults.all.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1 text-xs">
                     {searchResults.all.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="bible" className="gap-2">
-                <BookOpen className="h-4 w-4" />
+              <TabsTrigger value="bible" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Bible</span>
                 {searchQuery && searchResults.bible.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1 text-xs">
                     {searchResults.bible.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="wmb" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
+              <TabsTrigger value="wmb" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Sermons</span>
                 {searchQuery && searchResults.wmb.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1 text-xs">
                     {searchResults.wmb.length}
                   </Badge>
                 )}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="space-y-4 mt-6">
+            <TabsContent value="all" className="space-y-3 sm:space-y-4">
               {!searchQuery ? (
-                <Card className="p-8 md:p-12 text-center">
-                  <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Start Your Search</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
+                <div className="bg-card border border-border rounded-lg p-8 sm:p-12 text-center">
+                  <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">Start Your Search</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
                     Search across the entire KJV Bible and William Branham's sermons. 
                     {crossRefMode && " Cross-reference mode helps you find related passages."}
                   </p>
-                </Card>
+                </div>
               ) : searchResults.all.length === 0 ? (
-                <Card className="p-8 text-center">
+                <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center">
                   <p className="text-muted-foreground">
                     No results found for "{searchQuery}"
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                     Try different keywords or check your spelling
                   </p>
-                </Card>
+                </div>
               ) : (
                 searchResults.all.map((result, index) => (
-                  <Card
+                  <div
                     key={index}
-                    className="p-6 hover:shadow-elegant transition-shadow cursor-pointer"
+                    className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
                   >
                     {"book" in result ? (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">Bible</Badge>
-                          <span className="text-sm font-semibold text-primary">
+                          <Badge variant="outline" className="text-xs">Bible</Badge>
+                          <span className="text-xs sm:text-sm font-semibold text-primary">
                             {result.book} {result.chapter}:{result.verse}
                           </span>
                         </div>
-                        <p className="text-base leading-relaxed">{result.text}</p>
+                        <p className="text-sm sm:text-base leading-relaxed">{result.text}</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary">WMB Sermon</Badge>
+                          <Badge variant="secondary" className="text-xs">WMB Sermon</Badge>
                         </div>
-                        <h3 className="font-semibold text-lg">{result.title}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-semibold text-base sm:text-lg">{result.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {result.date} • {result.location}
                         </p>
-                        <p className="text-base leading-relaxed italic">
+                        <p className="text-sm sm:text-base leading-relaxed italic">
                           "{result.excerpt}"
                         </p>
                       </div>
                     )}
-                  </Card>
+                  </div>
                 ))
               )}
             </TabsContent>
 
-            <TabsContent value="bible" className="space-y-4 mt-6">
+            <TabsContent value="bible" className="space-y-3 sm:space-y-4">
               {!searchQuery ? (
-                <Card className="p-8 text-center">
-                  <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
+                <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center">
+                  <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Search for Bible verses by keyword, book, or phrase
                   </p>
-                </Card>
+                </div>
               ) : searchResults.bible.length === 0 ? (
-                <Card className="p-8 text-center">
+                <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center">
                   <p className="text-muted-foreground">
                     No Bible verses found for "{searchQuery}"
                   </p>
-                </Card>
+                </div>
               ) : (
                 searchResults.bible.map((result, index) => (
-                  <Card
+                  <div
                     key={index}
-                    className="p-6 hover:shadow-elegant transition-shadow cursor-pointer"
+                    className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="min-w-[5rem]">
-                        <Badge variant="outline" className="mb-2">
+                    <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                      <div className="min-w-[4rem] sm:min-w-[5rem]">
+                        <Badge variant="outline" className="mb-2 text-xs">
                           {result.testament}
                         </Badge>
-                        <div className="text-sm font-semibold text-primary">
+                        <div className="text-xs sm:text-sm font-semibold text-primary">
                           {result.book} {result.chapter}:{result.verse}
                         </div>
                       </div>
-                      <p className="text-base leading-relaxed">{result.text}</p>
+                      <p className="text-sm sm:text-base leading-relaxed">{result.text}</p>
                     </div>
-                  </Card>
+                  </div>
                 ))
               )}
             </TabsContent>
 
-            <TabsContent value="wmb" className="space-y-4 mt-6">
+            <TabsContent value="wmb" className="space-y-3 sm:space-y-4">
               {!searchQuery ? (
-                <Card className="p-8 text-center">
-                  <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
+                <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center">
+                  <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Search William Branham's sermons for quotes and teachings
                   </p>
-                </Card>
+                </div>
               ) : searchResults.wmb.length === 0 ? (
-                <Card className="p-8 text-center">
+                <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center">
                   <p className="text-muted-foreground">
                     No WMB sermons found for "{searchQuery}"
                   </p>
-                </Card>
+                </div>
               ) : (
                 searchResults.wmb.map((result, index) => (
-                  <Card
+                  <div
                     key={index}
-                    className="p-6 hover:shadow-elegant transition-shadow cursor-pointer"
+                    className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
                   >
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-lg">{result.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <h3 className="font-semibold text-base sm:text-lg">{result.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <span>{result.date}</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>{result.location}</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>¶{result.paragraph}</span>
                       </div>
-                      <p className="text-base leading-relaxed italic">
+                      <p className="text-sm sm:text-base leading-relaxed italic">
                         "{result.excerpt}"
                       </p>
                     </div>
-                  </Card>
+                  </div>
                 ))
               )}
             </TabsContent>
