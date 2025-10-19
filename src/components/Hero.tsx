@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import heroImage from "@/assets/bible-hero-bg.jpg";
@@ -46,37 +47,37 @@ export default function Hero() {
             </Link>
           </div>
 
-          <div className="w-full max-w-4xl mt-12">
+          <div className="w-full max-w-5xl mt-12">
             <DailyQuote />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-4xl">
-            <Link to="/reader" className="block">
-              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
-                <BookOpen className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold mb-2">Bible Reading</h3>
-                <p className="text-sm text-muted-foreground">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-6xl">
+            <Link to="/reader" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
+                <BookOpen className="h-10 w-10 text-primary mb-4" />
+                <h3 className="text-lg font-semibold mb-3">Bible Reading</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Read scripture with powerful search, notes, and cross-references
                 </p>
-              </div>
+              </Card>
             </Link>
-            <Link to="/wmb-sermons" className="block">
-              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
-                <MessageSquare className="h-8 w-8 text-secondary mb-3" />
-                <h3 className="font-semibold mb-2">WMB Sermons</h3>
-                <p className="text-sm text-muted-foreground">
+            <Link to="/wmb-sermons" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-secondary/50 transition-all cursor-pointer h-full">
+                <MessageSquare className="h-10 w-10 text-secondary mb-4" />
+                <h3 className="text-lg font-semibold mb-3">WMB Sermons</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Explore sermons with verse connections and deep insights
                 </p>
-              </div>
+              </Card>
             </Link>
-            <Link to="/search" className="block">
-              <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-elegant transition-all cursor-pointer">
-                <Search className="h-8 w-8 text-accent mb-3" />
-                <h3 className="font-semibold mb-2">Smart Search</h3>
-                <p className="text-sm text-muted-foreground">
+            <Link to="/search" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-accent/50 transition-all cursor-pointer h-full">
+                <Search className="h-10 w-10 text-accent mb-4" />
+                <h3 className="text-lg font-semibold mb-3">Smart Search</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Find verses, topics, and sermon quotes instantly
                 </p>
-              </div>
+              </Card>
             </Link>
           </div>
         </div>
