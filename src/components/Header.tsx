@@ -5,21 +5,18 @@ import logo from "@/assets/logo.png";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-3">
-          <img src={logo} alt="MessageGuide Logo" className="h-10 w-10" />
-          <span className="text-xl font-bold bg-hero-gradient bg-clip-text text-transparent">
+    <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <Link to="/" className="flex items-center space-x-2 md:space-x-3">
+          <img src={logo} alt="MessageGuide Logo" className="h-8 w-8 md:h-10 md:w-10" />
+          <span className="text-lg md:text-xl font-bold bg-hero-gradient bg-clip-text text-transparent">
             MessageGuide
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden lg:flex items-center space-x-6">
           <Link to="/reader" className="text-sm font-medium transition-colors hover:text-primary">
-            Bible Reader
-          </Link>
-          <Link to="/wmb-sermons" className="text-sm font-medium transition-colors hover:text-primary">
-            WMB Sermons
+            Bible
           </Link>
           <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
             Search
@@ -27,16 +24,21 @@ export default function Header() {
           <Link to="/collections" className="text-sm font-medium transition-colors hover:text-primary">
             Collections
           </Link>
+          <Link to="/notes" className="text-sm font-medium transition-colors hover:text-primary">
+            Notes
+          </Link>
           <Link to="/auth/sign-in">
-            <Button variant="default" size="sm">
+            <Button variant="default" size="sm" className="ml-2">
               Sign In
             </Button>
           </Link>
         </nav>
 
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
+        <Link to="/auth/sign-in" className="lg:hidden">
+          <Button variant="ghost" size="sm">
+            Sign In
+          </Button>
+        </Link>
       </div>
     </header>
   );

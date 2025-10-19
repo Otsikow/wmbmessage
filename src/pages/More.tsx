@@ -1,27 +1,31 @@
-import { Link } from "react-router-dom";
-import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, Users } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function More() {
+  const navigate = useNavigate();
+  
   const sections = [
     {
-      title: "Content",
+      title: "Study Tools",
       items: [
+        { icon: FileText, label: "My Notes", path: "/notes" },
         { icon: MessageSquare, label: "WMB Sermons", path: "/wmb-sermons" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
-        { icon: Download, label: "Downloads", path: "/downloads" },
       ],
     },
     {
-      title: "Account",
+      title: "Content",
       items: [
-        { icon: Settings, label: "Settings", path: "/settings" },
+        { icon: Download, label: "Downloads", path: "/downloads" },
         { icon: Share2, label: "Share", path: "/share" },
       ],
     },
     {
-      title: "Support",
+      title: "Account & Support",
       items: [
+        { icon: Settings, label: "Settings", path: "/settings" },
         { icon: HelpCircle, label: "Help", path: "/help" },
         { icon: Info, label: "About", path: "/about" },
       ],
@@ -32,7 +36,17 @@ export default function More() {
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="container py-8">
         <div className="max-w-2xl mx-auto space-y-8">
-          <h1 className="text-3xl md:text-4xl font-bold">More</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="md:hidden"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-3xl md:text-4xl font-bold">More</h1>
+          </div>
 
           {sections.map((section) => (
             <div key={section.title} className="space-y-3">

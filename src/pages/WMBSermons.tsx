@@ -1,8 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, ArrowLeft } from "lucide-react";
 
 export default function WMBSermons() {
+  const navigate = useNavigate();
+  
   const sermons = [
     {
       title: "The Spoken Word is the Original Seed",
@@ -25,11 +29,21 @@ export default function WMBSermons() {
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="container py-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="space-y-4">
-            <h1 className="text-3xl md:text-4xl font-bold">WMB Sermons</h1>
-            <p className="text-muted-foreground">
-              Explore William Marrion Branham's sermons and their connections to scripture
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/more")}
+              className="md:hidden"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="space-y-1">
+              <h1 className="text-3xl md:text-4xl font-bold">WMB Sermons</h1>
+              <p className="text-sm text-muted-foreground">
+                William Branham's sermons
+              </p>
+            </div>
           </div>
 
           <Card className="p-4">
