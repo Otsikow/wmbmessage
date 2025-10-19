@@ -24,22 +24,22 @@ export default function Reader() {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       {/* Top Navigation */}
-      <div className="sticky top-16 z-30 bg-card border-b border-border">
-        <div className="container flex items-center justify-between py-3">
+      <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
+        <div className="container flex items-center justify-between gap-2 sm:gap-3 py-2 sm:py-3 px-3 sm:px-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="md:hidden"
+            className="md:hidden shrink-0"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           
           <Select value={currentBook} onValueChange={(value) => {
             setCurrentBook(value);
             setCurrentChapter(1);
           }}>
-            <SelectTrigger className="w-[140px] md:w-[180px]">
+            <SelectTrigger className="w-[120px] sm:w-[140px] md:w-[180px] shrink-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="max-h-[400px]">
@@ -62,32 +62,34 @@ export default function Reader() {
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
+              className="h-8 w-8 sm:h-9 sm:w-9"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[80px] text-center">
-              Chapter {currentChapter}
+            <span className="text-xs sm:text-sm font-medium min-w-[60px] sm:min-w-[80px] text-center">
+              Ch {currentChapter}
             </span>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
               disabled={currentChapter >= maxChapter}
+              className="h-8 w-8 sm:h-9 sm:w-9"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Cross References">
-                  <Link2 className="h-4 w-4" />
+                <Button variant="ghost" size="icon" title="Cross References" className="h-8 w-8 sm:h-9 sm:w-9">
+                  <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -106,8 +108,8 @@ export default function Reader() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>
-              <Search className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={() => navigate("/search")} className="h-8 w-8 sm:h-9 sm:w-9">
+              <Search className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
