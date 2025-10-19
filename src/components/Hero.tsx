@@ -1,18 +1,24 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, MessageSquare } from "lucide-react";
+import DailyQuote from "@/components/DailyQuote";
+import logo from "@/assets/logo.png";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-subtle-gradient py-20 md:py-32">
-      <div className="absolute inset-0 bg-hero-gradient opacity-5" />
-      
+    <section className="relative overflow-hidden bg-subtle-bg py-20 md:py-32">
       <div className="container relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up">
+          <img 
+            src={logo} 
+            alt="MessageGuide Logo" 
+            className="h-20 md:h-24 w-auto mb-4"
+          />
+          
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               Your Guide to the
-              <span className="block bg-hero-gradient bg-clip-text text-transparent mt-2">
+              <span className="block text-primary mt-2">
                 Message of Truth
               </span>
             </h1>
@@ -40,6 +46,10 @@ export default function Hero() {
                 WMB Sermons
               </Button>
             </Link>
+          </div>
+
+          <div className="w-full max-w-4xl mt-12">
+            <DailyQuote />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-4xl">

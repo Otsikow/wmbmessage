@@ -32,6 +32,9 @@ export default {
         gold: {
           DEFAULT: "hsl(var(--gold-glow))",
         },
+        "jesus-words": "hsl(var(--jesus-words))",
+        "hero-bg": "hsl(var(--hero-bg))",
+        "subtle-bg": "hsl(var(--subtle-bg))",
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -101,10 +104,6 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out",
         "scale-in": "scale-in 0.4s ease-out",
         "glow": "glow 3s ease-in-out infinite",
-      },
-      backgroundImage: {
-        "hero-gradient": "var(--hero-gradient)",
-        "subtle-gradient": "var(--subtle-gradient)",
       },
       boxShadow: {
         elegant: "var(--shadow-elegant)",

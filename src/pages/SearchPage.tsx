@@ -1,16 +1,18 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ArrowLeft, Loader2 } from "lucide-react";
+import { Search, ArrowLeft, Loader2, BookOpen, MessageSquare, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import bibleStudyImage from "@/assets/bible-study.jpg";
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [crossRefMode, setCrossRefMode] = useState(false);
 
   // Mock Bible database
   const bibleVerses = [
@@ -121,62 +123,101 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="container py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="md:hidden"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="space-y-1">
-              <h1 className="text-3xl md:text-4xl font-bold">Search</h1>
-              <p className="text-sm text-muted-foreground">
-                Search the Bible and WMB sermons
-              </p>
+      {/* Hero Section with Background Image */}
+      <div className="relative h-48 md:h-64 overflow-hidden">
+        <img 
+          src={bibleStudyImage} 
+          alt="Bible Study" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 flex items-center">
+          <div className="container">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/")}
+                className="md:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="space-y-1">
+                <h1 className="text-3xl md:text-4xl font-bold">Search</h1>
+                <p className="text-sm text-muted-foreground">
+                  Search the Bible and WMB sermons with cross-references
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <Card className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search for verses, topics, or keywords..."
-                className="pl-10 pr-10 h-12"
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-              {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+      <div className="container py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card className="p-4 md:p-6">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder={crossRefMode ? "Enter verse reference (e.g., John 3:16)" : "Search for verses, topics, or keywords..."}
+                    className="pl-10 pr-10 h-12"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                  {isSearching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+                  )}
+                </div>
+                <Button
+                  variant={crossRefMode ? "default" : "outline"}
+                  size="lg"
+                  onClick={() => setCrossRefMode(!crossRefMode)}
+                  className="w-full sm:w-auto"
+                >
+                  <Link2 className="h-5 w-5 mr-2" />
+                  <span className="hidden sm:inline">{crossRefMode ? "Cross-Ref Mode" : "Cross-Reference"}</span>
+                  <span className="sm:hidden">Cross-Ref</span>
+                </Button>
+              </div>
+              
+              {crossRefMode && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  <p className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    Cross-reference mode: Find related Bible passages and sermon quotes for any verse
+                  </p>
+                </div>
               )}
             </div>
           </Card>
 
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">
-                All
+              <TabsTrigger value="all" className="gap-2">
+                <span className="hidden sm:inline">All</span>
+                <span className="sm:hidden">All</span>
                 {searchQuery && searchResults.all.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-1">
                     {searchResults.all.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="bible">
-                Bible
+              <TabsTrigger value="bible" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Bible</span>
                 {searchQuery && searchResults.bible.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-1">
                     {searchResults.bible.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="wmb">
-                WMB
+              <TabsTrigger value="wmb" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Sermons</span>
                 {searchQuery && searchResults.wmb.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-1">
                     {searchResults.wmb.length}
                   </Badge>
                 )}
@@ -185,16 +226,21 @@ export default function SearchPage() {
 
             <TabsContent value="all" className="space-y-4 mt-6">
               {!searchQuery ? (
-                <Card className="p-8 text-center">
+                <Card className="p-8 md:p-12 text-center">
                   <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Start typing to search across Bible verses and WMB sermons
+                  <h3 className="text-lg font-semibold mb-2">Start Your Search</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Search across the entire KJV Bible and William Branham's sermons. 
+                    {crossRefMode && " Cross-reference mode helps you find related passages."}
                   </p>
                 </Card>
               ) : searchResults.all.length === 0 ? (
                 <Card className="p-8 text-center">
                   <p className="text-muted-foreground">
                     No results found for "{searchQuery}"
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Try different keywords or check your spelling
                   </p>
                 </Card>
               ) : (

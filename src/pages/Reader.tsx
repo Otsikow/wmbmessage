@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
+import { cn } from "@/lib/utils";
 
 export default function Reader() {
   const navigate = useNavigate();
   const [currentBook, setCurrentBook] = useState("Genesis");
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [crossRefSearch, setCrossRefSearch] = useState("");
+  const [showCrossRef, setShowCrossRef] = useState(false);
 
-  const books = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy"];
+  const { verses, loading, error } = useBibleData(currentBook, currentChapter);
   
-  // Mock verses for demonstration
-  const verses = Array.from({ length: 31 }, (_, i) => ({
-    number: i + 1,
-    text: `In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep.`,
-  }));
+  const currentBookData = BIBLE_BOOKS.find(b => b.name === currentBook);
+  const maxChapter = currentBookData?.chapters || 1;
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -32,14 +35,28 @@ export default function Reader() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           
-          <Select value={currentBook} onValueChange={setCurrentBook}>
-            <SelectTrigger className="w-[140px]">
+          <Select value={currentBook} onValueChange={(value) => {
+            setCurrentBook(value);
+            setCurrentChapter(1);
+          }}>
+            <SelectTrigger className="w-[140px] md:w-[180px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              {books.map((book) => (
-                <SelectItem key={book} value={book}>
-                  {book}
+            <SelectContent className="max-h-[400px]">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                Old Testament
+              </div>
+              {BIBLE_BOOKS.filter(b => b.testament === "old").map((book) => (
+                <SelectItem key={book.name} value={book.name}>
+                  {book.name}
+                </SelectItem>
+              ))}
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">
+                New Testament
+              </div>
+              {BIBLE_BOOKS.filter(b => b.testament === "new").map((book) => (
+                <SelectItem key={book.name} value={book.name}>
+                  {book.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -59,18 +76,38 @@ export default function Reader() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCurrentChapter(currentChapter + 1)}
+              onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
+              disabled={currentChapter >= maxChapter}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
+            <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" title="Cross References">
+                  <Link2 className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Cross References</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search cross references..."
+                    value={crossRefSearch}
+                    onChange={(e) => setCrossRefSearch(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter a verse reference (e.g., John 3:16) to find related passages
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>
               <Search className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -83,19 +120,34 @@ export default function Reader() {
             {currentBook} {currentChapter}
           </h1>
 
-          <div className="space-y-4 max-w-3xl mx-auto">
-            {verses.map((verse) => (
-              <div
-                key={verse.number}
-                className="group flex gap-3 hover:bg-muted/50 rounded-lg p-2 transition-colors cursor-pointer"
-              >
-                <span className="text-sm font-semibold text-primary min-w-[2rem] text-right">
-                  {verse.number}
-                </span>
-                <p className="text-base leading-relaxed">{verse.text}</p>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-destructive">
+              {error}
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {verses.map((verse) => (
+                <div
+                  key={verse.number}
+                  className="group flex gap-3 hover:bg-muted/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-semibold text-primary min-w-[2rem] text-right">
+                    {verse.number}
+                  </span>
+                  <p className={cn(
+                    "text-base leading-relaxed",
+                    verse.isJesusWords && "text-jesus-words font-medium"
+                  )}>
+                    {verse.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Chapter Navigation */}
           <div className="flex items-center justify-between mt-8 pt-8 border-t border-border">
@@ -108,7 +160,8 @@ export default function Reader() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => setCurrentChapter(currentChapter + 1)}
+              onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
+              disabled={currentChapter >= maxChapter}
             >
               Next Chapter
               <ChevronRight className="ml-2 h-4 w-4" />
