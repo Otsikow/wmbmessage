@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 import logoImage from "@/assets/logo-final.png";
 
 export default function Header() {
@@ -14,31 +15,35 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden lg:flex items-center space-x-6">
-          <Link to="/reader" className="text-sm font-medium transition-colors hover:text-primary">
-            Bible
-          </Link>
-          <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
-            Search
-          </Link>
-          <Link to="/collections" className="text-sm font-medium transition-colors hover:text-primary">
-            Collections
-          </Link>
-          <Link to="/notes" className="text-sm font-medium transition-colors hover:text-primary">
-            Notes
-          </Link>
-          <Link to="/auth/sign-in">
-            <Button variant="default" size="sm" className="ml-2">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          
+          <nav className="hidden lg:flex items-center space-x-6">
+            <Link to="/reader" className="text-sm font-medium transition-colors hover:text-primary">
+              Bible
+            </Link>
+            <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
+              Search
+            </Link>
+            <Link to="/collections" className="text-sm font-medium transition-colors hover:text-primary">
+              Collections
+            </Link>
+            <Link to="/notes" className="text-sm font-medium transition-colors hover:text-primary">
+              Notes
+            </Link>
+            <Link to="/auth/sign-in">
+              <Button variant="default" size="sm" className="ml-2">
+                Sign In
+              </Button>
+            </Link>
+          </nav>
+
+          <Link to="/auth/sign-in" className="lg:hidden">
+            <Button variant="ghost" size="sm">
               Sign In
             </Button>
           </Link>
-        </nav>
-
-        <Link to="/auth/sign-in" className="lg:hidden">
-          <Button variant="ghost" size="sm">
-            Sign In
-          </Button>
-        </Link>
+        </div>
       </div>
     </header>
   );

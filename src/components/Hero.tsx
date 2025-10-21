@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Search, MessageSquare } from "lucide-react";
+import { BookOpen, Search, MessageSquare, FileText, Download } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
+import RecentBibleVerses from "@/components/RecentBibleVerses";
 import heroImage from "@/assets/bible-hero-bg.jpg";
 import logoImage from "@/assets/logo-hero.png";
 export default function Hero() {
@@ -51,7 +52,11 @@ export default function Hero() {
             <DailyQuote />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-6xl">
+          <div className="w-full max-w-6xl mt-12">
+            <RecentBibleVerses />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-12 w-full max-w-7xl">
             <Link to="/reader" className="block h-full">
               <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
                 <BookOpen className="h-10 w-10 text-primary mb-4" />
@@ -76,6 +81,24 @@ export default function Hero() {
                 <h3 className="text-lg font-semibold mb-3">Smart Search</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Find verses, topics, and sermon quotes instantly
+                </p>
+              </Card>
+            </Link>
+            <Link to="/notes" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
+                <FileText className="h-10 w-10 text-primary mb-4" />
+                <h3 className="text-lg font-semibold mb-3">Notes</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Create and organize your personal Bible study notes
+                </p>
+              </Card>
+            </Link>
+            <Link to="/downloads" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-secondary/50 transition-all cursor-pointer h-full">
+                <Download className="h-10 w-10 text-secondary mb-4" />
+                <h3 className="text-lg font-semibold mb-3">Downloads</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Access offline Bibles and sermon resources
                 </p>
               </Card>
             </Link>
