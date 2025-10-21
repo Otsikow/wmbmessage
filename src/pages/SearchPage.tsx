@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowLeft, Loader2, BookOpen, MessageSquare, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -6,105 +6,43 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
 import bibleStudyImage from "@/assets/bible-study.jpg";
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [crossRefMode, setCrossRefMode] = useState(false);
+  const { searchBible, searchWMBSermons, loading } = useBibleSearch();
+  const [bibleResults, setBibleResults] = useState<BibleSearchResult[]>([]);
+  const [wmbResults, setWMBResults] = useState<WMBSermonResult[]>([]);
 
-  // Mock Bible database
-  const bibleVerses = [
-    {
-      book: "John",
-      chapter: 3,
-      verse: 16,
-      text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
-      testament: "NT",
-    },
-    {
-      book: "Romans",
-      chapter: 8,
-      verse: 28,
-      text: "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
-      testament: "NT",
-    },
-    {
-      book: "Genesis",
-      chapter: 1,
-      verse: 1,
-      text: "In the beginning God created the heaven and the earth.",
-      testament: "OT",
-    },
-    {
-      book: "Psalm",
-      chapter: 23,
-      verse: 1,
-      text: "The LORD is my shepherd; I shall not want.",
-      testament: "OT",
-    },
-    {
-      book: "Matthew",
-      chapter: 5,
-      verse: 16,
-      text: "Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven.",
-      testament: "NT",
-    },
-  ];
+  // Perform search when query changes
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchQuery.trim()) {
+        setBibleResults([]);
+        setWMBResults([]);
+        return;
+      }
 
-  // Mock WMB sermons database
-  const wmbSermons = [
-    {
-      title: "The Spoken Word is the Original Seed",
-      date: "March 18, 1962",
-      location: "Jeffersonville, IN",
-      excerpt: "God's Word is the original seed. Any seed will bring forth after its kind...",
-      paragraph: 45,
-    },
-    {
-      title: "Christ is the Mystery of God Revealed",
-      date: "July 28, 1963",
-      location: "Jeffersonville, IN",
-      excerpt: "Christ is God's mystery revealed to His people in this last day...",
-      paragraph: 12,
-    },
-    {
-      title: "The Seven Church Ages",
-      date: "December 1960",
-      location: "Jeffersonville, IN",
-      excerpt: "The seven church ages represent the complete history of the church...",
-      paragraph: 8,
-    },
-  ];
+      const [bibleData, wmbData] = await Promise.all([
+        searchBible(searchQuery),
+        searchWMBSermons(searchQuery),
+      ]);
 
-  // Search functionality
+      setBibleResults(bibleData);
+      setWMBResults(wmbData);
+    };
+
+    const debounceTimer = setTimeout(performSearch, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, searchBible, searchWMBSermons]);
+
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return { bible: [], wmb: [], all: [] };
-    }
-
-    const query = searchQuery.toLowerCase();
-
-    // Search Bible verses
-    const bibleResults = bibleVerses.filter(
-      (verse) =>
-        verse.text.toLowerCase().includes(query) ||
-        verse.book.toLowerCase().includes(query)
-    );
-
-    // Search WMB sermons
-    const wmbResults = wmbSermons.filter(
-      (sermon) =>
-        sermon.title.toLowerCase().includes(query) ||
-        sermon.excerpt.toLowerCase().includes(query) ||
-        sermon.location.toLowerCase().includes(query)
-    );
-
-    // Combined results
     const allResults = [
-      ...bibleResults.map((r) => ({ ...r, type: "bible" })),
-      ...wmbResults.map((r) => ({ ...r, type: "wmb" })),
+      ...bibleResults.map((r) => ({ ...r, type: "bible" as const })),
+      ...wmbResults.map((r) => ({ ...r, type: "wmb" as const })),
     ];
 
     return {
@@ -112,13 +50,10 @@ export default function SearchPage() {
       wmb: wmbResults,
       all: allResults,
     };
-  }, [searchQuery]);
+  }, [bibleResults, wmbResults]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    setIsSearching(true);
-    // Simulate search delay
-    setTimeout(() => setIsSearching(false), 300);
   };
 
   return (
@@ -128,9 +63,9 @@ export default function SearchPage() {
         <img 
           src={bibleStudyImage} 
           alt="Bible Study" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-50"
         />
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-background/60" />
         <div className="absolute inset-0 flex items-center">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -179,7 +114,7 @@ export default function SearchPage() {
                   <span className="hidden sm:inline">Cross-Reference Mode</span>
                   <span className="sm:hidden">Cross-Ref</span>
                 </Button>
-                {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
             </div>
           </div>
