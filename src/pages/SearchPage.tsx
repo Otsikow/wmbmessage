@@ -49,8 +49,12 @@ export default function SearchPage() {
 
     return {
       bible: bibleResults,
-      wmb: wmbResults,
-      all: allResults,
+  wmb: wmbResults,
+  all: allResults,bible: bibleResults,
+  wmb: wmbResults,
+  all: allResults,bible: bibleResults,
+      wmb: wmb: wmbResults,
+     all: allResults, all: allResults: allResults,
     };
   }, [bibleResults, wmbResults]);
 
