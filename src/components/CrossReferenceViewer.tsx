@@ -24,10 +24,11 @@ export default function CrossReferenceViewer({
   const [searchInput, setSearchInput] = useState("");
   const [manualReferences, setManualReferences] = useState<ParsedReference[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [sermonResults, setSermonResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchMode, setSearchMode] = useState<"reference" | "keyword">("keyword");
   
-  const { searchBible, loading: searchLoading } = useBibleSearch();
+  const { searchBible, searchWMBSermons, loading: searchLoading } = useBibleSearch();
 
   const handleSearch = async () => {
     if (!searchInput.trim()) return;
@@ -49,13 +50,18 @@ export default function CrossReferenceViewer({
       }
       setSearchInput("");
       setSearchResults([]);
+      setSermonResults([]);
     } else {
-      // It's a keyword search
+      // It's a keyword search - search both Bible and sermons
       setSearchMode("keyword");
       setIsSearching(true);
       try {
-        const results = await searchBible(searchInput);
-        setSearchResults(results);
+        const [bibleData, sermonData] = await Promise.all([
+          searchBible(searchInput),
+          searchWMBSermons(searchInput)
+        ]);
+        setSearchResults(bibleData);
+        setSermonResults(sermonData);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -110,7 +116,7 @@ export default function CrossReferenceViewer({
               <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 text-primary" />
-                  <h4 className="font-semibold text-sm">Search Results</h4>
+                  <h4 className="font-semibold text-sm">Bible Verses</h4>
                   <Badge variant="secondary" className="ml-auto">
                     {searchResults.length}
                   </Badge>
@@ -133,6 +139,38 @@ export default function CrossReferenceViewer({
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm leading-relaxed">{result.text}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sermon Results */}
+            {sermonResults.length > 0 && (
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">William Branham Sermons</h4>
+                  <Badge variant="secondary" className="ml-auto">
+                    {sermonResults.length}
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  {sermonResults.map((result, index) => (
+                    <Card key={index} className="hover:shadow-lg transition-shadow border-l-4 border-l-primary/30">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold text-foreground">
+                          {result.title}
+                        </CardTitle>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary" className="text-xs">{result.date}</Badge>
+                          <Badge variant="outline" className="text-xs">{result.location}</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm leading-relaxed text-muted-foreground mb-2">{result.excerpt}</p>
+                        <p className="text-xs text-muted-foreground">Paragraph {result.paragraph}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -164,14 +202,14 @@ export default function CrossReferenceViewer({
             )}
 
             {/* Empty State */}
-            {searchResults.length === 0 && manualReferences.length === 0 && (
+            {searchResults.length === 0 && sermonResults.length === 0 && manualReferences.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12 space-y-2">
                 <Search className="h-12 w-12 text-muted-foreground/50" />
                 <p className="text-muted-foreground text-sm">
                   Search for keywords or verse references
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Try searching for "faith", "love", or "John 3:16"
+                  Try: "love", "faith", "healing", or "John 3:16"
                 </p>
               </div>
             )}

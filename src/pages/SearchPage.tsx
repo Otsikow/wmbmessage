@@ -24,8 +24,10 @@ const SearchPage = () => {
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.trim()) {
-      const bibleData = await searchBible(query);
-      const sermonData = await searchWMBSermons(query);
+      const [bibleData, sermonData] = await Promise.all([
+        searchBible(query),
+        searchWMBSermons(query)
+      ]);
       setBibleResults(bibleData);
       setSermonResults(sermonData);
     } else {
