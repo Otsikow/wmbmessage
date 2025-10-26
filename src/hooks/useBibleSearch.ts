@@ -27,45 +27,77 @@ export function useBibleSearch() {
     setError(null);
 
     try {
-      // Search using Bible API - this searches across all verses
-      const response = await fetch(
-        `https://bible-api.com/${encodeURIComponent(query)}?translation=kjv`
+      // Try to parse as a specific verse reference first (e.g., "John 3:16")
+      const verseReferencePattern = /^(\d?\s?[A-Za-z]+)\s*(\d+)(?::(\d+))?(?:-(\d+))?$/;
+      const match = query.match(verseReferencePattern);
+
+      if (match) {
+        // If it's a specific verse reference, use bible-api.com
+        const response = await fetch(
+          `https://bible-api.com/${encodeURIComponent(query)}?translation=kjv`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const results: BibleSearchResult[] = [];
+          
+          if (data.verses && Array.isArray(data.verses)) {
+            data.verses.forEach((verse: any) => {
+              results.push({
+                book: data.reference.split(/\d/)[0].trim(),
+                chapter: verse.chapter,
+                verse: verse.verse,
+                text: verse.text,
+                testament: getTestament(data.reference.split(/\d/)[0].trim()),
+              });
+            });
+          } else if (data.text) {
+            const bookName = data.reference.split(/\d/)[0].trim();
+            results.push({
+              book: bookName,
+              chapter: data.verses?.[0]?.chapter || 1,
+              verse: data.verses?.[0]?.verse || 1,
+              text: data.text,
+              testament: getTestament(bookName),
+            });
+          }
+
+          if (results.length > 0) {
+            return results;
+          }
+        }
+      }
+
+      // For keyword searches, use getBible.net API which supports text search
+      const searchResponse = await fetch(
+        `https://getbible.net/v2/kjv/search/${encodeURIComponent(query)}.json`
       );
 
-      if (!response.ok) {
-        // If direct verse lookup fails, return empty array
-        // In a production app, you'd use a dedicated search API
+      if (!searchResponse.ok) {
         return [];
       }
 
-      const data = await response.json();
-
-      // Convert API response to our format
+      const searchData = await searchResponse.json();
       const results: BibleSearchResult[] = [];
-      
-      if (data.verses && Array.isArray(data.verses)) {
-        data.verses.forEach((verse: any) => {
-          results.push({
-            book: data.reference.split(" ")[0],
-            chapter: verse.chapter,
-            verse: verse.verse,
-            text: verse.text,
-            testament: getTestament(data.reference.split(" ")[0]),
-          });
-        });
-      } else if (data.text) {
-        // Single verse result
-        const bookName = data.reference.split(" ")[0];
-        results.push({
-          book: bookName,
-          chapter: data.verses?.[0]?.chapter || 1,
-          verse: data.verses?.[0]?.verse || 1,
-          text: data.text,
-          testament: getTestament(bookName),
-        });
+
+      // Process search results from getBible.net
+      if (searchData && searchData.verses) {
+        for (const verseData of Object.values(searchData.verses) as any[]) {
+          if (verseData && verseData.verse) {
+            const verse = verseData.verse;
+            results.push({
+              book: verseData.book_name || "",
+              chapter: verseData.chapter || 0,
+              verse: verseData.verse || 0,
+              text: verseData.text || verse,
+              testament: getTestament(verseData.book_name || ""),
+            });
+          }
+        }
       }
 
-      return results;
+      // Limit results to avoid overwhelming the UI
+      return results.slice(0, 100);
     } catch (err) {
       console.error("Bible search error:", err);
       setError("Failed to search Bible");
