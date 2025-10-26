@@ -80,9 +80,13 @@ const SearchPage = () => {
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Cross References</DialogTitle>
+                    <DialogTitle>Cross References & Search</DialogTitle>
                   </DialogHeader>
-                  <CrossReferenceViewer />
+                  <CrossReferenceViewer 
+                    onNavigate={(book, chapter) => {
+                      navigate(`/reader?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+                    }}
+                  />
                 </DialogContent>
               </Dialog>
             </div>

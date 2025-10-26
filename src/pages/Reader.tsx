@@ -125,20 +125,14 @@ export default function Reader() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Cross References</DialogTitle>
+                  <DialogTitle>Cross References & Search</DialogTitle>
                   <DialogDescription>
-                    {selectedVerse 
-                      ? `Viewing cross-references for ${currentBook} ${currentChapter}:${selectedVerse}`
-                      : 'Look up and compare verses from different parts of the Bible'
-                    }
+                    Search for keywords or look up verse references
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-hidden">
                   <CrossReferenceViewer 
                     onNavigate={handleNavigateFromCrossRef}
-                    currentBook={currentBook}
-                    currentChapter={currentChapter}
-                    currentVerse={selectedVerse}
                   />
                 </div>
               </DialogContent>
