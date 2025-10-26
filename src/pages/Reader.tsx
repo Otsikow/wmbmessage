@@ -17,11 +17,18 @@ export default function Reader() {
   const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
   const [currentChapter, setCurrentChapter] = useState(parseInt(searchParams.get("chapter") || "1"));
   const [showCrossRef, setShowCrossRef] = useState(false);
+  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
     setCurrentBook(book);
     setCurrentChapter(chapter);
     setShowCrossRef(false);
+    setSelectedVerse(undefined);
+  };
+
+  const handleVerseClick = (verseNumber: number) => {
+    setSelectedVerse(verseNumber);
+    setShowCrossRef(true);
   };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
@@ -116,14 +123,24 @@ export default function Reader() {
                   <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Cross References</DialogTitle>
                   <DialogDescription>
-                    Look up and compare verses from different parts of the Bible
+                    {selectedVerse 
+                      ? `Viewing cross-references for ${currentBook} ${currentChapter}:${selectedVerse}`
+                      : 'Look up and compare verses from different parts of the Bible'
+                    }
                   </DialogDescription>
                 </DialogHeader>
-                <CrossReferenceViewer onNavigate={handleNavigateFromCrossRef} />
+                <div className="flex-1 overflow-hidden">
+                  <CrossReferenceViewer 
+                    onNavigate={handleNavigateFromCrossRef}
+                    currentBook={currentBook}
+                    currentChapter={currentChapter}
+                    currentVerse={selectedVerse}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
             <Button variant="ghost" size="icon" onClick={() => navigate("/search")} title="Search" className="h-8 w-8 sm:h-9 sm:w-9">
@@ -154,9 +171,17 @@ export default function Reader() {
                 {verses.map((verse) => (
                   <div
                     key={verse.number}
-                    className="group flex gap-2 sm:gap-3 hover:bg-muted/50 rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
+                    className={cn(
+                      "group flex gap-2 sm:gap-3 rounded-lg p-2 sm:p-3 transition-all cursor-pointer relative",
+                      "hover:bg-muted/50 hover:shadow-sm",
+                      selectedVerse === verse.number && "bg-primary/5 border-l-4 border-l-primary shadow-sm"
+                    )}
+                    onClick={() => handleVerseClick(verse.number)}
                   >
-                    <span className="text-xs sm:text-sm font-semibold text-primary min-w-[1.5rem] sm:min-w-[2rem] text-right">
+                    <span className={cn(
+                      "text-xs sm:text-sm font-semibold min-w-[1.5rem] sm:min-w-[2rem] text-right transition-colors",
+                      selectedVerse === verse.number ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                    )}>
                       {verse.number}
                     </span>
                     <p className={cn(
@@ -165,6 +190,17 @@ export default function Reader() {
                     )}>
                       {verse.text}
                     </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleVerseClick(verse.number);
+                      }}
+                    >
+                      <Link2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 ))}
               </div>
