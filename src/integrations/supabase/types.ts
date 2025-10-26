@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      cross_references: {
+        Row: {
+          id: string
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          to_book: string
+          to_chapter: number
+          to_verse: number
+          to_verse_end: number | null
+          relationship_type: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          to_book: string
+          to_chapter: number
+          to_verse: number
+          to_verse_end?: number | null
+          relationship_type?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          from_book?: string
+          from_chapter?: number
+          from_verse?: number
+          to_book?: string
+          to_chapter?: number
+          to_verse?: number
+          to_verse_end?: number | null
+          relationship_type?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null
@@ -68,6 +110,51 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_cross_references: {
+        Row: {
+          id: string
+          user_id: string
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          to_book: string
+          to_chapter: number
+          to_verse: number
+          to_verse_end: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          to_book: string
+          to_chapter: number
+          to_verse: number
+          to_verse_end?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          from_book?: string
+          from_chapter?: number
+          from_verse?: number
+          to_book?: string
+          to_chapter?: number
+          to_verse?: number
+          to_verse_end?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
