@@ -53,7 +53,21 @@ export default function SearchPage() {
   all: allResults,bible: bibleResults,
   wmb: wmbResults,
   all: allResults,bible: bibleResults,
-      wmb: wmb: wmbResults,
+    return {
+  bible: bibleResults,
+  wmb: wmbResults,
+  all: allResults,
+}const searchResults = useMemo(() => {
+  const allResults = [
+    ...bibleResults.map((r) => ({ ...r, type: 'bible' as const })),
+    ...wmbResults.map((r) => ({ ...r, type: 'wmb' as const })),
+  ];
+  return {
+    bible: bibleResults,
+    wmb: wmbResults,
+    all: allResults,
+  };
+}, [bibleResults, wmbResults]);mb: wmb: wmbResults,
      all: allResults, all: allResults: allResults,
     };
   }, [bibleResults, wmbResults]);
