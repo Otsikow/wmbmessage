@@ -6,7 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
+import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import bibleStudyImage from "@/assets/bible-study.jpg";
 
 export default function SearchPage() {
@@ -54,6 +56,11 @@ export default function SearchPage() {
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+  };
+
+  const handleNavigateFromCrossRef = (book: string, chapter: number) => {
+    setCrossRefMode(false);
+    navigate(`/reader?book=${book}&chapter=${chapter}`);
   };
 
   return (
@@ -104,16 +111,28 @@ export default function SearchPage() {
               </div>
               
               <div className="flex items-center gap-2">
-                <Button
-                  variant={crossRefMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCrossRefMode(!crossRefMode)}
-                  className="gap-2"
-                >
-                  <Link2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cross-Reference Mode</span>
-                  <span className="sm:hidden">Cross-Ref</span>
-                </Button>
+                <Dialog open={crossRefMode} onOpenChange={setCrossRefMode}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant={crossRefMode ? "default" : "outline"}
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Link2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Cross-Reference Mode</span>
+                      <span className="sm:hidden">Cross-Ref</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh]">
+                    <DialogHeader>
+                      <DialogTitle>Cross References</DialogTitle>
+                      <DialogDescription>
+                        Look up and compare verses from different parts of the Bible
+                      </DialogDescription>
+                    </DialogHeader>
+                    <CrossReferenceViewer onNavigate={handleNavigateFromCrossRef} />
+                  </DialogContent>
+                </Dialog>
                 {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
             </div>
@@ -170,9 +189,10 @@ export default function SearchPage() {
                 </div>
               ) : (
                 searchResults.all.map((result, index) => (
-                  <div
+                <div
                     key={index}
                     className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => {"book" in result && navigate(`/reader?book=${result.book}&chapter=${result.chapter}`)}}
                   >
                     {"book" in result ? (
                       <div className="space-y-2">
@@ -222,6 +242,7 @@ export default function SearchPage() {
                   <div
                     key={index}
                     className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/reader?book=${result.book}&chapter=${result.chapter}`)}
                   >
                     <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                       <div className="min-w-[4rem] sm:min-w-[5rem]">

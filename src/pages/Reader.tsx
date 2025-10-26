@@ -13,8 +13,9 @@ import { useSettings } from "@/contexts/SettingsContext";
 export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
-  const [currentBook, setCurrentBook] = useState("Genesis");
-  const [currentChapter, setCurrentChapter] = useState(1);
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
+  const [currentChapter, setCurrentChapter] = useState(parseInt(searchParams.get("chapter") || "1"));
   const [showCrossRef, setShowCrossRef] = useState(false);
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
