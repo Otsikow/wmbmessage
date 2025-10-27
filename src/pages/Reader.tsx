@@ -133,6 +133,9 @@ export default function Reader() {
                 <div className="flex-1 overflow-hidden">
                   <CrossReferenceViewer 
                     onNavigate={handleNavigateFromCrossRef}
+                    currentBook={currentBook}
+                    currentChapter={currentChapter}
+                    currentVerse={selectedVerse}
                   />
                 </div>
               </DialogContent>
