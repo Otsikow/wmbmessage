@@ -1,0 +1,264 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+
+export interface Highlight {
+  id: string;
+  user_id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  color: string;
+  note?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Bookmark {
+  id: string;
+  user_id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  note?: string;
+  created_at: string;
+}
+
+export const HIGHLIGHT_COLORS = [
+  { name: "Yellow", value: "yellow", class: "bg-yellow-200/60 dark:bg-yellow-900/30" },
+  { name: "Green", value: "green", class: "bg-green-200/60 dark:bg-green-900/30" },
+  { name: "Blue", value: "blue", class: "bg-blue-200/60 dark:bg-blue-900/30" },
+  { name: "Pink", value: "pink", class: "bg-pink-200/60 dark:bg-pink-900/30" },
+  { name: "Purple", value: "purple", class: "bg-purple-200/60 dark:bg-purple-900/30" },
+  { name: "Orange", value: "orange", class: "bg-orange-200/60 dark:bg-orange-900/30" },
+];
+
+export function getHighlightColorClass(color: string): string {
+  return HIGHLIGHT_COLORS.find(c => c.value === color)?.class || HIGHLIGHT_COLORS[0].class;
+}
+
+export function useHighlights(book: string, chapter: number) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch highlights and bookmarks for the current chapter
+  useEffect(() => {
+    if (!user) {
+      setHighlights([]);
+      setBookmarks([]);
+      return;
+    }
+
+    fetchHighlightsAndBookmarks();
+  }, [user, book, chapter]);
+
+  const fetchHighlightsAndBookmarks = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const [highlightsResult, bookmarksResult] = await Promise.all([
+        supabase
+          .from("user_highlights")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("book", book)
+          .eq("chapter", chapter),
+        supabase
+          .from("user_bookmarks")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("book", book)
+          .eq("chapter", chapter),
+      ]);
+
+      if (highlightsResult.error) throw highlightsResult.error;
+      if (bookmarksResult.error) throw bookmarksResult.error;
+
+      setHighlights(highlightsResult.data || []);
+      setBookmarks(bookmarksResult.data || []);
+    } catch (error) {
+      console.error("Error fetching highlights/bookmarks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addHighlight = async (
+    verse: number,
+    color: string,
+    note?: string
+  ): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to highlight verses.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("user_highlights")
+        .upsert(
+          {
+            user_id: user.id,
+            book,
+            chapter,
+            verse,
+            color,
+            note,
+          },
+          {
+            onConflict: "user_id,book,chapter,verse",
+          }
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setHighlights((prev) => {
+        const filtered = prev.filter((h) => h.verse !== verse);
+        return [...filtered, data];
+      });
+
+      toast({
+        title: "Highlight added",
+        description: `${book} ${chapter}:${verse} has been highlighted.`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error adding highlight:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add highlight. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const removeHighlight = async (verse: number): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from("user_highlights")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("book", book)
+        .eq("chapter", chapter)
+        .eq("verse", verse);
+
+      if (error) throw error;
+
+      setHighlights((prev) => prev.filter((h) => h.verse !== verse));
+
+      toast({
+        title: "Highlight removed",
+        description: `Highlight removed from ${book} ${chapter}:${verse}.`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error removing highlight:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove highlight. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const toggleBookmark = async (verse: number, note?: string): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to bookmark verses.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const existingBookmark = bookmarks.find((b) => b.verse === verse);
+
+    try {
+      if (existingBookmark) {
+        // Remove bookmark
+        const { error } = await supabase
+          .from("user_bookmarks")
+          .delete()
+          .eq("id", existingBookmark.id);
+
+        if (error) throw error;
+
+        setBookmarks((prev) => prev.filter((b) => b.id !== existingBookmark.id));
+
+        toast({
+          title: "Bookmark removed",
+          description: `Bookmark removed from ${book} ${chapter}:${verse}.`,
+        });
+      } else {
+        // Add bookmark
+        const { data, error } = await supabase
+          .from("user_bookmarks")
+          .insert({
+            user_id: user.id,
+            book,
+            chapter,
+            verse,
+            note,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setBookmarks((prev) => [...prev, data]);
+
+        toast({
+          title: "Bookmark added",
+          description: `${book} ${chapter}:${verse} has been bookmarked.`,
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const getVerseHighlight = (verse: number): Highlight | undefined => {
+    return highlights.find((h) => h.verse === verse);
+  };
+
+  const isVerseBookmarked = (verse: number): boolean => {
+    return bookmarks.some((b) => b.verse === verse);
+  };
+
+  return {
+    highlights,
+    bookmarks,
+    loading,
+    addHighlight,
+    removeHighlight,
+    toggleBookmark,
+    getVerseHighlight,
+    isVerseBookmarked,
+    refetch: fetchHighlightsAndBookmarks,
+  };
+}
