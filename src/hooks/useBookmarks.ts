@@ -6,21 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface Bookmark {
   id: string;
   user_id: string;
-  book: string;
-  chapter: number;
-  verse: number;
-  verse_text: string | null;
+  sermon_id: string;
+  paragraph_number: number;
   created_at: string;
 }
 
-export interface CreateBookmarkInput {
-  book: string;
-  chapter: number;
-  verse: number;
-  verse_text?: string;
-}
-
-export function useBookmarks() {
+export function useBookmarks(sermonId?: string) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -35,10 +26,18 @@ export function useBookmarks() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("bookmarks")
+      let query = supabase
+        .from("user_bookmarks")
         .select("*")
-        .order("created_at", { ascending: false });
+        .eq("user_id", user.id);
+
+      if (sermonId) {
+        query = query.eq("sermon_id", sermonId);
+      }
+
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
       setBookmarks(data || []);
@@ -56,28 +55,29 @@ export function useBookmarks() {
 
   useEffect(() => {
     fetchBookmarks();
-  }, [user]);
+  }, [user, sermonId]);
 
-  const createBookmark = async (input: CreateBookmarkInput) => {
+  const addBookmark = async (
+    sermon_id: string,
+    paragraph_number: number
+  ): Promise<boolean> => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be signed in to create bookmarks",
+        title: "Sign in required",
+        description: "Please sign in to bookmark paragraphs",
         variant: "destructive",
       });
-      return null;
+      return false;
     }
 
     try {
       const { data, error } = await supabase
-        .from("bookmarks")
+        .from("user_bookmarks")
         .insert([
           {
             user_id: user.id,
-            book: input.book,
-            chapter: input.chapter,
-            verse: input.verse,
-            verse_text: input.verse_text || null,
+            sermon_id,
+            paragraph_number,
           },
         ])
         .select()
@@ -87,56 +87,90 @@ export function useBookmarks() {
 
       setBookmarks([data, ...bookmarks]);
       toast({
-        title: "Success",
-        description: "Bookmark added successfully",
+        title: "Bookmark added",
+        description: "Paragraph bookmarked successfully",
       });
-      return data;
-    } catch (error) {
-      console.error("Error creating bookmark:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create bookmark",
-        variant: "destructive",
-      });
-      return null;
+      return true;
+    } catch (error: any) {
+      console.error("Error adding bookmark:", error);
+      if (error?.code === "23505") {
+        toast({
+          title: "Already bookmarked",
+          description: "This paragraph is already bookmarked",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add bookmark",
+          variant: "destructive",
+        });
+      }
+      return false;
     }
   };
 
-  const deleteBookmark = async (id: string) => {
+  const removeBookmark = async (
+    sermon_id: string,
+    paragraph_number: number
+  ): Promise<boolean> => {
+    if (!user) return false;
+
     try {
-      const { error } = await supabase.from("bookmarks").delete().eq("id", id);
+      const { error } = await supabase
+        .from("user_bookmarks")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("sermon_id", sermon_id)
+        .eq("paragraph_number", paragraph_number);
 
       if (error) throw error;
 
-      setBookmarks(bookmarks.filter((bookmark) => bookmark.id !== id));
+      setBookmarks(
+        bookmarks.filter(
+          (b) => !(b.sermon_id === sermon_id && b.paragraph_number === paragraph_number)
+        )
+      );
       toast({
-        title: "Success",
+        title: "Bookmark removed",
         description: "Bookmark removed successfully",
       });
       return true;
     } catch (error) {
-      console.error("Error deleting bookmark:", error);
+      console.error("Error removing bookmark:", error);
       toast({
         title: "Error",
-        description: "Failed to delete bookmark",
+        description: "Failed to remove bookmark",
         variant: "destructive",
       });
       return false;
     }
   };
 
-  const isBookmarked = (book: string, chapter: number, verse: number) => {
+  const isBookmarked = (sermon_id: string, paragraph_number: number): boolean => {
     return bookmarks.some(
-      (b) => b.book === book && b.chapter === chapter && b.verse === verse
+      (b) => b.sermon_id === sermon_id && b.paragraph_number === paragraph_number
     );
+  };
+
+  const toggleBookmark = async (
+    sermon_id: string,
+    paragraph_number: number
+  ): Promise<boolean> => {
+    if (isBookmarked(sermon_id, paragraph_number)) {
+      return await removeBookmark(sermon_id, paragraph_number);
+    } else {
+      return await addBookmark(sermon_id, paragraph_number);
+    }
   };
 
   return {
     bookmarks,
     loading,
-    createBookmark,
-    deleteBookmark,
+    addBookmark,
+    removeBookmark,
     isBookmarked,
+    toggleBookmark,
     refetch: fetchBookmarks,
   };
 }
