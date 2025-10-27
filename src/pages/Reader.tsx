@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,15 +9,20 @@ import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import { useSettings } from "@/contexts/SettingsContext";
+import { NoteEditor } from "@/components/NoteEditor";
+import { useUserNotes } from "@/hooks/useNotes";
 
 export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { createUserNote } = useUserNotes();
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
   const [currentChapter, setCurrentChapter] = useState(parseInt(searchParams.get("chapter") || "1"));
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
+  const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
+  const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
     setCurrentBook(book);
@@ -29,6 +34,24 @@ export default function Reader() {
   const handleVerseClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
     setShowCrossRef(true);
+  };
+
+  const handleAddNote = (verseNumber: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const verseRef = `${currentBook} ${currentChapter}:${verseNumber}`;
+    setNoteVerseContext(verseRef);
+    setIsNoteEditorOpen(true);
+  };
+
+  const handleSaveNote = async (noteData: {
+    source_type: "bible" | "sermon";
+    source_id: string;
+    content: string;
+    tags: string[];
+  }) => {
+    await createUserNote(noteData);
+    setIsNoteEditorOpen(false);
+    setNoteVerseContext("");
   };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
@@ -187,17 +210,29 @@ export default function Reader() {
                     )}>
                       {verse.text}
                     </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleVerseClick(verse.number);
-                      }}
-                    >
-                      <Link2 className="h-3 w-3" />
-                    </Button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => handleAddNote(verse.number, e)}
+                        title="Add note"
+                      >
+                        <StickyNote className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVerseClick(verse.number);
+                        }}
+                        title="Cross references"
+                      >
+                        <Link2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -231,6 +266,15 @@ export default function Reader() {
           </div>
         </Card>
       </div>
+
+      {/* Note Editor Dialog */}
+      <NoteEditor
+        open={isNoteEditorOpen}
+        onOpenChange={setIsNoteEditorOpen}
+        onSave={handleSaveNote}
+        sourceType="bible"
+        sourceId={noteVerseContext}
+      />
     </div>
   );
 }

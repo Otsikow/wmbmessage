@@ -13,10 +13,28 @@ export interface Note {
   updated_at: string;
 }
 
+export interface UserNote {
+  id: string;
+  user_id: string;
+  source_type: "bible" | "sermon";
+  source_id: string;
+  content: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CreateNoteInput {
   title: string;
   content?: string;
   verse_reference?: string;
+}
+
+export interface CreateUserNoteInput {
+  source_type: "bible" | "sermon";
+  source_id: string;
+  content: string;
+  tags: string[];
 }
 
 export interface UpdateNoteInput {
@@ -25,6 +43,14 @@ export interface UpdateNoteInput {
   verse_reference?: string;
 }
 
+export interface UpdateUserNoteInput {
+  source_type?: "bible" | "sermon";
+  source_id?: string;
+  content?: string;
+  tags?: string[];
+}
+
+// Legacy hook for old notes table
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,5 +190,149 @@ export function useNotes() {
     updateNote,
     deleteNote,
     refetch: fetchNotes,
+  };
+}
+
+// New hook for user_notes table with enhanced features
+export function useUserNotes() {
+  const [userNotes, setUserNotes] = useState<UserNote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const fetchUserNotes = async () => {
+    if (!user) {
+      setUserNotes([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("user_notes")
+        .select("*")
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      setUserNotes(data || []);
+    } catch (error) {
+      console.error("Error fetching user notes:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load notes",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserNotes();
+  }, [user]);
+
+  const createUserNote = async (input: CreateUserNoteInput) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to create notes",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("user_notes")
+        .insert([
+          {
+            user_id: user.id,
+            source_type: input.source_type,
+            source_id: input.source_id,
+            content: input.content,
+            tags: input.tags,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUserNotes([data, ...userNotes]);
+      toast({
+        title: "Success",
+        description: "Note created successfully",
+      });
+      return data;
+    } catch (error) {
+      console.error("Error creating user note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create note",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const updateUserNote = async (id: string, input: UpdateUserNoteInput) => {
+    try {
+      const { data, error } = await supabase
+        .from("user_notes")
+        .update(input)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUserNotes(userNotes.map((note) => (note.id === id ? data : note)));
+      toast({
+        title: "Success",
+        description: "Note updated successfully",
+      });
+      return data;
+    } catch (error) {
+      console.error("Error updating user note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update note",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const deleteUserNote = async (id: string) => {
+    try {
+      const { error } = await supabase.from("user_notes").delete().eq("id", id);
+
+      if (error) throw error;
+
+      setUserNotes(userNotes.filter((note) => note.id !== id));
+      toast({
+        title: "Success",
+        description: "Note deleted successfully",
+      });
+      return true;
+    } catch (error) {
+      console.error("Error deleting user note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete note",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  return {
+    userNotes,
+    loading,
+    createUserNote,
+    updateUserNote,
+    deleteUserNote,
+    refetch: fetchUserNotes,
   };
 }
