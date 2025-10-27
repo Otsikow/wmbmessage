@@ -14,6 +14,7 @@ import Collections from "./pages/Collections";
 import Notes from "./pages/Notes";
 import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
+import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
 import Downloads from "./pages/Downloads";
 import Share from "./pages/Share";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
               <Route path="/more" element={<More />} />
               <Route path="/wmb-sermons" element={<WMBSermons />} />
+              <Route path="/message-reader" element={<MessageReader />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/downloads" element={<Downloads />} />
               <Route path="/share" element={<Share />} />
