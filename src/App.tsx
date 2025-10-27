@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 // Pages
 import Index from "./pages/Index";
@@ -52,6 +53,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <OfflineIndicator />
             <BrowserRouter>
               <Routes>
                 {/* Home Page */}
