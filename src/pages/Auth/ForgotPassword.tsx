@@ -31,10 +31,10 @@ export default function ForgotPassword() {
         title: "Recovery email sent",
         description: "Check your inbox for password reset instructions",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {

@@ -6,17 +6,17 @@ import { Card } from "@/components/ui/card";
 import { useUserNotes } from "@/hooks/useNotes";
 import { NoteEditor } from "@/components/NoteEditor";
 import { NoteCard, UserNote } from "@/components/NoteCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 export default function Notes() {
   const navigate = useNavigate();
   const { userNotes, loading, createUserNote, updateUserNote, deleteUserNote } = useUserNotes();
+
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<UserNote | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<"all" | string>("all");
 
-  // Group notes by tags
+  // Group notes by tags and source type
   const groupedNotes = useMemo(() => {
     const groups: { [key: string]: UserNote[] } = {
       all: userNotes,
@@ -25,12 +25,9 @@ export default function Notes() {
       prayer: userNotes.filter((note) => note.tags.includes("Prayer")),
       personal: userNotes.filter((note) => note.tags.includes("Personal")),
       untagged: userNotes.filter((note) => note.tags.length === 0),
+      bibleVerses: userNotes.filter((note) => note.source_type === "bible"),
+      sermonNotes: userNotes.filter((note) => note.source_type === "sermon"),
     };
-
-    // Count notes by source type
-    groups.bibleVerses = userNotes.filter((note) => note.source_type === "bible");
-    groups.sermonNotes = userNotes.filter((note) => note.source_type === "sermon");
-
     return groups;
   }, [userNotes]);
 
@@ -182,7 +179,9 @@ export default function Notes() {
             <Card className="p-8 sm:p-12 text-center">
               <Plus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">
-                {selectedFilter === "all" ? "No Notes Yet" : "No Notes in This Category"}
+                {selectedFilter === "all"
+                  ? "No Notes Yet"
+                  : "No Notes in This Category"}
               </h3>
               <p className="text-muted-foreground mb-4">
                 {selectedFilter === "all"

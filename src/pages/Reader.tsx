@@ -3,13 +3,11 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
-  Settings,
-  Search,
   ArrowLeft,
   Loader2,
   Link2,
   BookMarked,
-  StickyNote,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,16 +40,28 @@ export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { createUserNote } = useUserNotes();
+
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
   const [currentChapter, setCurrentChapter] = useState(
     parseInt(searchParams.get("chapter") || "1")
   );
+
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
+
+  const { verses, loading, error } = useBibleData(currentBook, currentChapter);
+
+  const {
+    addHighlight,
+    removeHighlight,
+    toggleBookmark,
+    getVerseHighlight,
+    isVerseBookmarked,
+  } = useHighlights(currentBook, currentChapter);
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
     setCurrentBook(book);
@@ -88,16 +98,6 @@ export default function Reader() {
     setNoteVerseContext("");
   };
 
-  const { verses, loading, error } = useBibleData(currentBook, currentChapter);
-
-  const {
-    addHighlight,
-    removeHighlight,
-    toggleBookmark,
-    getVerseHighlight,
-    isVerseBookmarked,
-  } = useHighlights(currentBook, currentChapter);
-
   const handleHighlight = async (verseNumber: number, color: string, note?: string) => {
     await addHighlight(verseNumber, color, note);
   };
@@ -130,6 +130,7 @@ export default function Reader() {
             size="icon"
             onClick={() => navigate("/")}
             className="md:hidden shrink-0"
+            aria-label="Go back to home"
           >
             <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -183,33 +184,14 @@ export default function Reader() {
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
-              disabled={currentChapter <= 1}
-              className="h-8 w-8 sm:h-9 sm:w-9"
-              title="Previous Chapter"
-            >
-              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
-              disabled={currentChapter >= maxChapter}
-              className="h-8 w-8 sm:h-9 sm:w-9"
-              title="Next Chapter"
-            >
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
-
+            {/* Cross Reference Button */}
             <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   title="Cross References"
+                  aria-label="View Cross References"
                   className="h-8 w-8 sm:h-9 sm:w-9"
                 >
                   <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -233,21 +215,25 @@ export default function Reader() {
               </DialogContent>
             </Dialog>
 
+            {/* Sermon Cross Reference Button */}
             <Button
               variant="ghost"
               size="icon"
               title="Sermon Cross References"
+              aria-label="View Sermon References"
               className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => setShowSermonCrossRef(true)}
             >
               <BookMarked className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
 
+            {/* Search Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate("/search")}
               title="Search"
+              aria-label="Search Bible"
               className="h-8 w-8 sm:h-9 sm:w-9"
             >
               <Search className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -315,4 +301,39 @@ export default function Reader() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCurrentChapter(Math.min(maxChapter, currentCha
+                onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
+                disabled={currentChapter >= maxChapter}
+                className="w-full sm:w-auto justify-center sm:justify-end"
+                size="lg"
+              >
+                <span className="hidden xs:inline">Next Chapter</span>
+                <span className="xs:hidden">Next</span>
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Sermon Cross References Modal */}
+      <SermonCrossReferenceModal
+        open={showSermonCrossRef}
+        onOpenChange={setShowSermonCrossRef}
+        verseRef={`${currentBook} ${currentChapter}:${selectedVerse}`}
+      />
+
+      {/* Note Editor */}
+      <NoteEditor
+        open={isNoteEditorOpen}
+        onOpenChange={setIsNoteEditorOpen}
+        onSave={handleSaveNote}
+        initialData={{
+          source_type: "bible",
+          source_id: noteVerseContext,
+          content: "",
+          tags: ["Bible"],
+        }}
+      />
+    </div>
+  );
+}

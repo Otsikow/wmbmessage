@@ -30,7 +30,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center space-x-2 md:space-x-3">
+        <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3">
           <img src={logoImage} alt="MessageGuide Logo" className="h-10 md:h-12 w-auto" />
           <span className="text-lg md:text-xl font-bold text-primary">
             MessageGuide
@@ -63,9 +63,9 @@ export default function Header() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt="User" />
+                      <AvatarImage src="" alt={`${user.email} avatar`} />
                       <AvatarFallback>
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>

@@ -87,6 +87,7 @@ export function useNotes() {
 
   useEffect(() => {
     fetchNotes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const createNote = async (input: CreateNoteInput) => {

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { parseVerseReference, formatReference, ParsedReference } from "@/lib/verseParser";
 import { useBibleData } from "@/hooks/useBibleData";
-import { useBibleSearch } from "@/hooks/useBibleSearch";
+import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
 import { useCrossReferences } from "@/hooks/useCrossReferences";
 import { Loader2, X, BookOpen, Search, ExternalLink, BookMarked, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,8 +28,8 @@ export default function CrossReferenceViewer({
 }: CrossReferenceViewerProps) {
   const [searchInput, setSearchInput] = useState("");
   const [manualReferences, setManualReferences] = useState<ParsedReference[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [sermonResults, setSermonResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
+  const [sermonResults, setSermonResults] = useState<WMBSermonResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("search");
   
@@ -485,7 +485,14 @@ function ManualReferenceDisplay({ reference, onRemove, onNavigate }: ManualRefer
 }
 
 interface CrossReferenceDisplayProps {
-  crossRef: any;
+  crossRef: {
+    to_book: string;
+    to_chapter: number;
+    to_verse: number;
+    to_verse_end?: number | null;
+    relationship_type?: string | null;
+    notes?: string | null;
+  };
   onNavigate?: (book: string, chapter: number) => void;
   isUserRef?: boolean;
 }
@@ -567,7 +574,7 @@ function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode 
   if (!searchTerm.trim()) return text;
 
   const terms = searchTerm.toLowerCase().split(/\s+/);
-  let result = text;
+  const result = text;
   
   // Create a regex pattern that matches any of the search terms
   const pattern = terms
