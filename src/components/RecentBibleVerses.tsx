@@ -45,6 +45,7 @@ export default function RecentBibleVerses() {
       
       sampleVerses.forEach(verse => addRecentVerse(verse));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (recentVerses.length === 0) {

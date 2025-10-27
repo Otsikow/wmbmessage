@@ -28,6 +28,8 @@ export default function Navigation() {
             <Link
               key={item.path}
               to={item.path}
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full transition-all rounded-lg",
                 isActive

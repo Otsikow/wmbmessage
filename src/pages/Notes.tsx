@@ -17,7 +17,7 @@ export default function Notes() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [selectedNote, setSelectedNote] = useState<{ id: string; title: string; content: string | null; verse_reference: string | null } | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -59,7 +59,7 @@ export default function Notes() {
     setSelectedNote(null);
   };
 
-  const openEditDialog = (note: any) => {
+  const openEditDialog = (note: { id: string; title: string; content: string | null; verse_reference: string | null }) => {
     setSelectedNote(note);
     setFormData({
       title: note.title,
@@ -69,7 +69,7 @@ export default function Notes() {
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (note: any) => {
+  const openDeleteDialog = (note: { id: string; title: string; content: string | null; verse_reference: string | null }) => {
     setSelectedNote(note);
     setIsDeleteDialogOpen(true);
   };

@@ -50,6 +50,7 @@ export default function Reader() {
             size="icon"
             onClick={() => navigate("/")}
             className="md:hidden shrink-0"
+            aria-label="Go back to home"
           >
             <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -104,6 +105,7 @@ export default function Reader() {
               disabled={currentChapter <= 1}
               className="h-8 w-8 sm:h-9 sm:w-9"
               title="Previous Chapter"
+              aria-label="Previous Chapter"
             >
               <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
@@ -114,12 +116,13 @@ export default function Reader() {
               disabled={currentChapter >= maxChapter}
               className="h-8 w-8 sm:h-9 sm:w-9"
               title="Next Chapter"
+              aria-label="Next Chapter"
             >
               <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
             <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Cross References" className="h-8 w-8 sm:h-9 sm:w-9">
+                <Button variant="ghost" size="icon" title="Cross References" aria-label="View Cross References" className="h-8 w-8 sm:h-9 sm:w-9">
                   <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </DialogTrigger>
@@ -140,7 +143,7 @@ export default function Reader() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/search")} title="Search" className="h-8 w-8 sm:h-9 sm:w-9">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/search")} title="Search" aria-label="Search Bible" className="h-8 w-8 sm:h-9 sm:w-9">
               <Search className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
