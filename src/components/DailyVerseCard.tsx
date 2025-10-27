@@ -90,23 +90,9 @@ const DailyVerseCard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Card className="w-full border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Error</CardTitle>
-          <CardDescription>{error}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleRefresh} variant="outline">
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!dailyContent) {
+  // Gracefully hide the component if there's an error or no content
+  // The DailyQuote component will still be visible as a fallback
+  if (error || !dailyContent) {
     return null;
   }
 
