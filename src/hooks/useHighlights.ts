@@ -12,7 +12,7 @@ export interface Highlight {
   color: string;
   note?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Bookmark {
@@ -45,20 +45,18 @@ export function useHighlights(book: string, chapter: number) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch highlights and bookmarks for the current chapter
+  // Fetch highlights and bookmarks for current chapter
   useEffect(() => {
     if (!user) {
       setHighlights([]);
       setBookmarks([]);
       return;
     }
-
     fetchHighlightsAndBookmarks();
   }, [user, book, chapter]);
 
   const fetchHighlightsAndBookmarks = async () => {
     if (!user) return;
-
     setLoading(true);
     try {
       const [highlightsResult, bookmarksResult] = await Promise.all([
@@ -83,16 +81,17 @@ export function useHighlights(book: string, chapter: number) {
       setBookmarks(bookmarksResult.data || []);
     } catch (error) {
       console.error("Error fetching highlights/bookmarks:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load highlights and bookmarks.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const addHighlight = async (
-    verse: number,
-    color: string,
-    note?: string
-  ): Promise<boolean> => {
+  const addHighlight = async (verse: number, color: string, note?: string): Promise<boolean> => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -114,9 +113,7 @@ export function useHighlights(book: string, chapter: number) {
             color,
             note,
           },
-          {
-            onConflict: "user_id,book,chapter,verse",
-          }
+          { onConflict: "user_id,book,chapter,verse" }
         )
         .select()
         .single();
@@ -138,7 +135,7 @@ export function useHighlights(book: string, chapter: number) {
       console.error("Error adding highlight:", error);
       toast({
         title: "Error",
-        description: "Failed to add highlight. Please try again.",
+        description: "Failed to add highlight.",
         variant: "destructive",
       });
       return false;
@@ -163,15 +160,14 @@ export function useHighlights(book: string, chapter: number) {
 
       toast({
         title: "Highlight removed",
-        description: `Highlight removed from ${book} ${chapter}:${verse}.`,
+        description: `Removed highlight from ${book} ${chapter}:${verse}.`,
       });
-
       return true;
     } catch (error) {
       console.error("Error removing highlight:", error);
       toast({
         title: "Error",
-        description: "Failed to remove highlight. Please try again.",
+        description: "Failed to remove highlight.",
         variant: "destructive",
       });
       return false;
@@ -192,22 +188,19 @@ export function useHighlights(book: string, chapter: number) {
 
     try {
       if (existingBookmark) {
-        // Remove bookmark
         const { error } = await supabase
           .from("user_bookmarks")
           .delete()
           .eq("id", existingBookmark.id);
-
         if (error) throw error;
 
         setBookmarks((prev) => prev.filter((b) => b.id !== existingBookmark.id));
 
         toast({
           title: "Bookmark removed",
-          description: `Bookmark removed from ${book} ${chapter}:${verse}.`,
+          description: `Removed bookmark from ${book} ${chapter}:${verse}.`,
         });
       } else {
-        // Add bookmark
         const { data, error } = await supabase
           .from("user_bookmarks")
           .insert({
@@ -235,20 +228,18 @@ export function useHighlights(book: string, chapter: number) {
       console.error("Error toggling bookmark:", error);
       toast({
         title: "Error",
-        description: "Failed to update bookmark. Please try again.",
+        description: "Failed to update bookmark.",
         variant: "destructive",
       });
       return false;
     }
   };
 
-  const getVerseHighlight = (verse: number): Highlight | undefined => {
-    return highlights.find((h) => h.verse === verse);
-  };
+  const getVerseHighlight = (verse: number): Highlight | undefined =>
+    highlights.find((h) => h.verse === verse);
 
-  const isVerseBookmarked = (verse: number): boolean => {
-    return bookmarks.some((b) => b.verse === verse);
-  };
+  const isVerseBookmarked = (verse: number): boolean =>
+    bookmarks.some((b) => b.verse === verse);
 
   return {
     highlights,

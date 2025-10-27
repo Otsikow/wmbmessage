@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, ArrowLeft } from "lucide-react";
+import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, ArrowLeft, Library as LibraryIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
@@ -12,6 +12,7 @@ export default function More() {
     {
       title: "Study Tools",
       items: [
+        { icon: LibraryIcon, label: "My Library", path: "/library" },
         { icon: FileText, label: "My Notes", path: "/notes" },
         { icon: MessageSquare, label: "WMB Sermons", path: "/wmb-sermons" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },

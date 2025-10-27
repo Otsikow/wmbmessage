@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 import Reader from "./pages/Reader";
 import SearchPage from "./pages/SearchPage";
 import Collections from "./pages/Collections";
+import Library from "./pages/Library";
 import Notes from "./pages/Notes";
 import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
@@ -25,7 +26,6 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import About from "./pages/About";
 import DailyVerse from "./pages/DailyVerse";
-import Library from "./pages/Library";
 import CrossReferences from "./pages/CrossReferences";
 
 // Auth Pages
@@ -76,7 +76,14 @@ const App = () => (
                   }
                 />
                 <Route path="/daily" element={<DailyVerse />} />
-                <Route path="/library" element={<Library />} />
+                <Route
+                  path="/library"
+                  element={
+                    <ProtectedRoute>
+                      <Library />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/settings" element={<Settings />} />
 
                 {/* Additional Pages */}

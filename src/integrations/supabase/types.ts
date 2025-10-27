@@ -330,52 +330,6 @@ export type Database = {
         ];
       };
 
-      user_cross_references: {
-        Row: {
-          id: string;
-          user_id: string;
-          from_book: string;
-          from_chapter: number;
-          from_verse: number;
-          to_book: string;
-          to_chapter: number;
-          to_verse: number;
-          to_verse_end: number | null;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          from_book: string;
-          from_chapter: number;
-          from_verse: number;
-          to_book: string;
-          to_chapter: number;
-          to_verse: number;
-          to_verse_end?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          from_book?: string;
-          from_chapter?: number;
-          from_verse?: number;
-          to_book?: string;
-          to_chapter?: number;
-          to_verse?: number;
-          to_verse_end?: number | null;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-
       user_highlights: {
         Row: {
           id: string;
@@ -441,6 +395,77 @@ export type Database = {
           id?: string;
           role?: Database["public"]["Enums"]["app_role"];
           user_id?: string;
+        };
+        Relationships: [];
+      };
+
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          font_size: number;
+          theme: string;
+          bible_version: string;
+          font_family: string;
+          reader_font_family: string;
+          color_scheme: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          font_size?: number;
+          theme?: string;
+          bible_version?: string;
+          font_family?: string;
+          reader_font_family?: string;
+          color_scheme?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          font_size?: number;
+          theme?: string;
+          bible_version?: string;
+          font_family?: string;
+          reader_font_family?: string;
+          color_scheme?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      user_activity_log: {
+        Row: {
+          id: string;
+          user_id: string;
+          action: string;
+          source_type: string;
+          source_id: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          action: string;
+          source_type: string;
+          source_id: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          action?: string;
+          source_type?: string;
+          source_id?: string;
+          metadata?: Json;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -595,3 +620,4 @@ export const Constants = {
     },
   },
 } as const;
+

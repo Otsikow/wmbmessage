@@ -96,7 +96,7 @@ export function useBookmarks(sermonId?: string) {
       if (error?.code === "23505") {
         toast({
           title: "Already bookmarked",
-          description: "This paragraph is already in your bookmarks",
+          description: "This paragraph is already bookmarked",
           variant: "destructive",
         });
       } else {
