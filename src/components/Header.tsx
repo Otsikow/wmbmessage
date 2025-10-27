@@ -41,17 +41,23 @@ export default function Header() {
           <ThemeToggle />
           
           <nav className="hidden lg:flex items-center space-x-6">
-            <Link to="/reader" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/bible" className="text-sm font-medium transition-colors hover:text-primary">
               Bible
+            </Link>
+            <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
+              Messages
             </Link>
             <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
               Search
             </Link>
-            <Link to="/collections" className="text-sm font-medium transition-colors hover:text-primary">
-              Collections
+            <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
+              References
             </Link>
-            <Link to="/notes" className="text-sm font-medium transition-colors hover:text-primary">
-              Notes
+            <Link to="/library" className="text-sm font-medium transition-colors hover:text-primary">
+              Library
+            </Link>
+            <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary">
+              Settings
             </Link>
             
             {user ? (

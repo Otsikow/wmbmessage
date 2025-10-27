@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Search, BookmarkIcon, User } from "lucide-react";
+import { Home, Book, Search, BookOpen, Library as LibraryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
-  { path: "/reader", icon: Book, label: "Reader" },
+  { path: "/bible", icon: Book, label: "Bible" },
   { path: "/search", icon: Search, label: "Search" },
-  { path: "/collections", icon: BookmarkIcon, label: "Collections" },
-  { path: "/more", icon: User, label: "More" },
+  { path: "/messages", icon: BookOpen, label: "Messages" },
+  { path: "/library", icon: LibraryIcon, label: "Library" },
 ];
 
 export default function Navigation() {

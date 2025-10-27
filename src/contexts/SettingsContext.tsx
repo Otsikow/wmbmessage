@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthContext";
 
 export interface AppSettings {
   fontSize: number; // 14-24px
@@ -6,6 +8,7 @@ export interface AppSettings {
   readerFontFamily: "serif" | "sans-serif" | "monospace";
   colorScheme: "default" | "warm" | "cool" | "high-contrast";
   theme: "light" | "dark";
+  bibleVersion: string;
 }
 
 const defaultSettings: AppSettings = {
@@ -14,22 +17,70 @@ const defaultSettings: AppSettings = {
   readerFontFamily: "serif",
   colorScheme: "default",
   theme: "light",
+  bibleVersion: "KJV",
 };
 
 interface SettingsContextType {
   settings: AppSettings;
   updateSettings: (updates: Partial<AppSettings>) => void;
   resetSettings: () => void;
+  loading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem("app-settings");
     return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
   });
 
+  // Load settings from Supabase when user logs in
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+          console.error("Error loading settings:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          const loadedSettings: AppSettings = {
+            fontSize: data.font_size,
+            fontFamily: data.font_family as any,
+            readerFontFamily: data.reader_font_family as any,
+            colorScheme: data.color_scheme as any,
+            theme: data.theme as any,
+            bibleVersion: data.bible_version,
+          };
+          setSettings(loadedSettings);
+          localStorage.setItem("app-settings", JSON.stringify(loadedSettings));
+        }
+      } catch (error) {
+        console.error("Error loading user settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserSettings();
+  }, [user]);
+
+  // Apply settings to DOM
   useEffect(() => {
     localStorage.setItem("app-settings", JSON.stringify(settings));
     
@@ -55,16 +106,56 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.body.classList.add(fontClass);
   }, [settings]);
 
-  const updateSettings = (updates: Partial<AppSettings>) => {
-    setSettings((prev) => ({ ...prev, ...updates }));
+  const updateSettings = async (updates: Partial<AppSettings>) => {
+    const newSettings = { ...settings, ...updates };
+    setSettings(newSettings);
+
+    // Save to Supabase if user is logged in
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from("user_settings")
+          .upsert({
+            user_id: user.id,
+            font_size: newSettings.fontSize,
+            font_family: newSettings.fontFamily,
+            reader_font_family: newSettings.readerFontFamily,
+            color_scheme: newSettings.colorScheme,
+            theme: newSettings.theme,
+            bible_version: newSettings.bibleVersion,
+          });
+
+        if (error) {
+          console.error("Error saving settings:", error);
+        }
+      } catch (error) {
+        console.error("Error updating settings in Supabase:", error);
+      }
+    }
   };
 
-  const resetSettings = () => {
+  const resetSettings = async () => {
     setSettings(defaultSettings);
+
+    // Reset in Supabase if user is logged in
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from("user_settings")
+          .delete()
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error resetting settings:", error);
+        }
+      } catch (error) {
+        console.error("Error resetting settings in Supabase:", error);
+      }
+    }
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings, loading }}>
       {children}
     </SettingsContext.Provider>
   );
