@@ -4,14 +4,19 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowLeft, Calendar, MapPin, BookOpen } from "lucide-react";
+import { Search, ArrowLeft, Calendar, MapPin, BookOpen, StickyNote } from "lucide-react";
 import churchInteriorImage from "@/assets/church-interior.jpg";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { NoteEditor } from "@/components/NoteEditor";
+import { useUserNotes } from "@/hooks/useNotes";
 
 export default function WMBSermons() {
   const navigate = useNavigate();
+  const { createUserNote } = useUserNotes();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
+  const [noteSermonContext, setNoteSermonContext] = useState<string>("");
   
   const sermons = [
     { title: "The Spoken Word is the Original Seed", date: "March 18, 1962", location: "Jeffersonville, IN", excerpt: "God's Word is the original seed. Any seed will bring forth after its kind.", verseCount: 156 },
@@ -23,6 +28,23 @@ export default function WMBSermons() {
     s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleAddSermonNote = (sermonTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNoteSermonContext(sermonTitle);
+    setIsNoteEditorOpen(true);
+  };
+
+  const handleSaveNote = async (noteData: {
+    source_type: "bible" | "sermon";
+    source_id: string;
+    content: string;
+    tags: string[];
+  }) => {
+    await createUserNote(noteData);
+    setIsNoteEditorOpen(false);
+    setNoteSermonContext("");
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -81,15 +103,35 @@ export default function WMBSermons() {
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm leading-relaxed">{sermon.excerpt}</p>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto mt-2">
-                    View Cross-References
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
+                      View Cross-References
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={(e) => handleAddSermonNote(sermon.title, e)}
+                      className="shrink-0"
+                    >
+                      <StickyNote className="h-4 w-4 mr-1" />
+                      Add Note
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+      
+      {/* Note Editor Dialog */}
+      <NoteEditor
+        open={isNoteEditorOpen}
+        onOpenChange={setIsNoteEditorOpen}
+        onSave={handleSaveNote}
+        sourceType="sermon"
+        sourceId={noteSermonContext}
+      />
       
       <Footer />
       <div className="md:hidden">

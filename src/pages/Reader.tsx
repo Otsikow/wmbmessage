@@ -9,6 +9,7 @@ import {
   Loader2,
   Link2,
   BookMarked,
+  StickyNote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,10 +35,13 @@ import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
 import VerseCard from "@/components/VerseCard";
 import { useSettings } from "@/contexts/SettingsContext";
+import { NoteEditor } from "@/components/NoteEditor";
+import { useUserNotes } from "@/hooks/useNotes";
 
 export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { createUserNote } = useUserNotes();
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
   const [currentChapter, setCurrentChapter] = useState(
@@ -46,6 +50,8 @@ export default function Reader() {
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
+  const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
+  const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
     setCurrentBook(book);
@@ -62,6 +68,24 @@ export default function Reader() {
   const handleSermonCrossRefClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
     setShowSermonCrossRef(true);
+  };
+
+  const handleAddNote = (verseNumber: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const verseRef = `${currentBook} ${currentChapter}:${verseNumber}`;
+    setNoteVerseContext(verseRef);
+    setIsNoteEditorOpen(true);
+  };
+
+  const handleSaveNote = async (noteData: {
+    source_type: "bible" | "sermon";
+    source_id: string;
+    content: string;
+    tags: string[];
+  }) => {
+    await createUserNote(noteData);
+    setIsNoteEditorOpen(false);
+    setNoteVerseContext("");
   };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
@@ -268,6 +292,8 @@ export default function Reader() {
                     onRemoveHighlight={handleRemoveHighlight}
                     onToggleBookmark={handleToggleBookmark}
                     onViewCrossReferences={handleVerseClick}
+                    onAddNote={handleAddNote}
+                    onSermonCrossRef={handleSermonCrossRefClick}
                     fontClass={readerFontClass}
                   />
                 ))}
@@ -289,28 +315,4 @@ export default function Reader() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
-                disabled={currentChapter >= maxChapter}
-                className="w-full sm:w-auto justify-center sm:justify-start"
-                size="lg"
-              >
-                <span className="hidden xs:inline">Next Chapter</span>
-                <span className="xs:hidden">Next</span>
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Sermon Cross Reference Modal */}
-      <SermonCrossReferenceModal
-        open={showSermonCrossRef}
-        onOpenChange={setShowSermonCrossRef}
-        book={currentBook}
-        chapter={currentChapter}
-        verse={selectedVerse}
-      />
-    </div>
-  );
-}
+                onClick={() => setCurrentChapter(Math.min(maxChapter, currentCha

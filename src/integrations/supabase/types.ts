@@ -114,6 +114,40 @@ export type Database = {
         Relationships: [];
       };
 
+      user_notes: {
+        Row: {
+          id: string;
+          user_id: string;
+          source_type: Database["public"]["Enums"]["note_source_type"];
+          source_id: string;
+          content: string;
+          tags: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          source_type: Database["public"]["Enums"]["note_source_type"];
+          source_id: string;
+          content: string;
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          source_type?: Database["public"]["Enums"]["note_source_type"];
+          source_id?: string;
+          content?: string;
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
       sermons: {
         Row: {
           id: string;
@@ -443,6 +477,7 @@ export type Database = {
 
     Enums: {
       app_role: "admin" | "moderator" | "user";
+      note_source_type: "bible" | "sermon";
     };
 
     CompositeTypes: {
@@ -556,6 +591,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      note_source_type: ["bible", "sermon"],
     },
   },
 } as const;
