@@ -144,6 +144,55 @@ export type Database = {
           }
         ]
       }
+      sermon_cross_references: {
+        Row: {
+          id: string
+          bible_book: string
+          bible_chapter: number
+          bible_verse: number
+          sermon_id: string
+          paragraph_id: string
+          reference_note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          bible_book: string
+          bible_chapter: number
+          bible_verse: number
+          sermon_id: string
+          paragraph_id: string
+          reference_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          bible_book?: string
+          bible_chapter?: number
+          bible_verse?: number
+          sermon_id?: string
+          paragraph_id?: string
+          reference_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sermon_cross_references_sermon_id_fkey"
+            columns: ["sermon_id"]
+            referencedRelation: "sermons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sermon_cross_references_paragraph_id_fkey"
+            columns: ["paragraph_id"]
+            referencedRelation: "sermon_paragraphs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

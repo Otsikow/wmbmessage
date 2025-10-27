@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, Search, ArrowLeft, Loader2, Link2, BookMarked } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
+import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
 import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Reader() {
@@ -17,6 +18,7 @@ export default function Reader() {
   const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
   const [currentChapter, setCurrentChapter] = useState(parseInt(searchParams.get("chapter") || "1"));
   const [showCrossRef, setShowCrossRef] = useState(false);
+  const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
 
   const handleNavigateFromCrossRef = (book: string, chapter: number) => {
@@ -29,6 +31,11 @@ export default function Reader() {
   const handleVerseClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
     setShowCrossRef(true);
+  };
+
+  const handleSermonCrossRefClick = (verseNumber: number) => {
+    setSelectedVerse(verseNumber);
+    setShowSermonCrossRef(true);
   };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
@@ -140,6 +147,15 @@ export default function Reader() {
                 </div>
               </DialogContent>
             </Dialog>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              title="Sermon Cross References" 
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              onClick={() => setShowSermonCrossRef(true)}
+            >
+              <BookMarked className="h-3 w-3 sm:h-4 sm:w-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate("/search")} title="Search" className="h-8 w-8 sm:h-9 sm:w-9">
               <Search className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
@@ -187,17 +203,32 @@ export default function Reader() {
                     )}>
                       {verse.text}
                     </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleVerseClick(verse.number);
-                      }}
-                    >
-                      <Link2 className="h-3 w-3" />
-                    </Button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Cross References"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVerseClick(verse.number);
+                        }}
+                      >
+                        <Link2 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Sermon References"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSermonCrossRefClick(verse.number);
+                        }}
+                      >
+                        <BookMarked className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -231,6 +262,15 @@ export default function Reader() {
           </div>
         </Card>
       </div>
+
+      {/* Sermon Cross Reference Modal */}
+      <SermonCrossReferenceModal
+        open={showSermonCrossRef}
+        onOpenChange={setShowSermonCrossRef}
+        book={currentBook}
+        chapter={currentChapter}
+        verse={selectedVerse}
+      />
     </div>
   );
 }
