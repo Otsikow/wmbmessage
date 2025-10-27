@@ -171,6 +171,37 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bookmarks: {
+        Row: {
+          id: string
+          user_id: string
+          sermon_id: string
+          paragraph_number: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sermon_id: string
+          paragraph_number: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sermon_id?: string
+          paragraph_number?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_sermon_id_fkey"
+            columns: ["sermon_id"]
+            referencedRelation: "sermons"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       user_cross_references: {
         Row: {
           id: string
