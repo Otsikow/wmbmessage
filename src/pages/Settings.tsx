@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Moon, Sun, Bell, Download, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import SettingsFontControls from "@/components/SettingsFontControls";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -17,8 +18,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="w-full py-6 sm:py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Button
@@ -85,7 +86,11 @@ export default function Settings() {
           </div>
         </div>
       </div>
-      <Navigation />
+      
+      <Footer />
+      <div className="md:hidden">
+        <Navigation />
+      </div>
     </div>
   );
 }

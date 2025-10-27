@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ArrowLeft, Calendar, MapPin, BookOpen } from "lucide-react";
 import churchInteriorImage from "@/assets/church-interior.jpg";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 export default function WMBSermons() {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ export default function WMBSermons() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="relative h-48 md:h-64 overflow-hidden">
         <img src={churchInteriorImage} alt="Church Interior" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
@@ -42,7 +44,7 @@ export default function WMBSermons() {
         </div>
       </div>
 
-      <div className="w-full py-6 sm:py-8">
+      <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm mb-6">
             <div className="relative">
@@ -87,6 +89,11 @@ export default function WMBSermons() {
             ))}
           </div>
         </div>
+      </div>
+      
+      <Footer />
+      <div className="md:hidden">
+        <Navigation />
       </div>
     </div>
   );
