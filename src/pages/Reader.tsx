@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
+import { useHighlights } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
+import VerseCard from "@/components/VerseCard";
 import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Reader() {
@@ -32,6 +34,26 @@ export default function Reader() {
   };
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
+  
+  const {
+    addHighlight,
+    removeHighlight,
+    toggleBookmark,
+    getVerseHighlight,
+    isVerseBookmarked,
+  } = useHighlights(currentBook, currentChapter);
+
+  const handleHighlight = async (verseNumber: number, color: string, note?: string) => {
+    await addHighlight(verseNumber, color, note);
+  };
+
+  const handleRemoveHighlight = async (verseNumber: number) => {
+    await removeHighlight(verseNumber);
+  };
+
+  const handleToggleBookmark = async (verseNumber: number) => {
+    await toggleBookmark(verseNumber);
+  };
   
   const currentBookData = BIBLE_BOOKS.find(b => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
@@ -166,39 +188,23 @@ export default function Reader() {
             ) : (
               <div className={cn("space-y-3 sm:space-y-4 max-w-4xl mx-auto", readerFontClass)}>
                 {verses.map((verse) => (
-                  <div
+                  <VerseCard
                     key={verse.number}
-                    className={cn(
-                      "group flex gap-2 sm:gap-3 rounded-lg p-2 sm:p-3 transition-all cursor-pointer relative",
-                      "hover:bg-muted/50 hover:shadow-sm",
-                      selectedVerse === verse.number && "bg-primary/5 border-l-4 border-l-primary shadow-sm"
-                    )}
-                    onClick={() => handleVerseClick(verse.number)}
-                  >
-                    <span className={cn(
-                      "text-xs sm:text-sm font-semibold min-w-[1.5rem] sm:min-w-[2rem] text-right transition-colors",
-                      selectedVerse === verse.number ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                    )}>
-                      {verse.number}
-                    </span>
-                    <p className={cn(
-                      "text-sm sm:text-base leading-relaxed",
-                      verse.isJesusWords && "text-jesus-words font-medium"
-                    )}>
-                      {verse.text}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleVerseClick(verse.number);
-                      }}
-                    >
-                      <Link2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+                    book={currentBook}
+                    chapter={currentChapter}
+                    verse={verse}
+                    highlight={getVerseHighlight(verse.number) ? {
+                      color: getVerseHighlight(verse.number)!.color,
+                      note: getVerseHighlight(verse.number)!.note,
+                    } : undefined}
+                    isBookmarked={isVerseBookmarked(verse.number)}
+                    isSelected={selectedVerse === verse.number}
+                    onHighlight={handleHighlight}
+                    onRemoveHighlight={handleRemoveHighlight}
+                    onToggleBookmark={handleToggleBookmark}
+                    onViewCrossReferences={handleVerseClick}
+                    fontClass={readerFontClass}
+                  />
                 ))}
               </div>
             )}

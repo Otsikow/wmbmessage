@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      bible_verses: {
+        Row: {
+          id: string
+          book: string
+          chapter: number
+          verse: number
+          text: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          book: string
+          chapter: number
+          verse: number
+          text: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          book?: string
+          chapter?: number
+          verse?: number
+          text?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       cross_references: {
         Row: {
           id: string
@@ -171,6 +198,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bookmarks: {
+        Row: {
+          id: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          book?: string
+          chapter?: number
+          verse?: number
+          note?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       user_cross_references: {
         Row: {
           id: string
@@ -215,6 +272,52 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_highlights: {
+        Row: {
+          id: string
+          user_id: string
+          verse_id: string | null
+          book: string
+          chapter: number
+          verse: number
+          color: string
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          verse_id?: string | null
+          book: string
+          chapter: number
+          verse: number
+          color?: string
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          verse_id?: string | null
+          book?: string
+          chapter?: number
+          verse?: number
+          color?: string
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_highlights_verse_id_fkey"
+            columns: ["verse_id"]
+            referencedRelation: "bible_verses"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_roles: {
         Row: {
