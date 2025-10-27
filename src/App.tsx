@@ -20,6 +20,9 @@ import Share from "./pages/Share";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import About from "./pages/About";
+import DailyVerse from "./pages/DailyVerse";
+import Library from "./pages/Library";
+import CrossReferences from "./pages/CrossReferences";
 import SignIn from "./pages/Auth/SignIn";
 import SignUp from "./pages/Auth/SignUp";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
@@ -43,26 +46,40 @@ const App = () => (
             <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/reader" element={<Reader />} />
+              
+              {/* Main Navigation Routes */}
               <Route path="/search" element={<SearchPage />} />
-              <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+              <Route path="/bible" element={<Reader />} />
+              <Route path="/reader" element={<Reader />} /> {/* Legacy route */}
+              <Route path="/messages" element={<WMBSermons />} />
+              <Route path="/wmb-sermons" element={<WMBSermons />} /> {/* Legacy route */}
+              <Route path="/cross-references" element={<CrossReferences />} />
               <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+              <Route path="/daily" element={<DailyVerse />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/settings" element={<Settings />} />
+              
+              {/* Additional Pages */}
+              <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
               <Route path="/more" element={<More />} />
-              <Route path="/wmb-sermons" element={<WMBSermons />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/downloads" element={<Downloads />} />
               <Route path="/share" element={<Share />} />
-              <Route path="/settings" element={<Settings />} />
               <Route path="/help" element={<Help />} />
               <Route path="/about" element={<About />} />
+              
+              {/* Auth Routes */}
               <Route path="/auth/sign-in" element={<SignIn />} />
               <Route path="/auth/sign-up" element={<SignUp />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              
+              {/* Legal Pages */}
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
