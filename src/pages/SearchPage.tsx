@@ -149,18 +149,27 @@ const SearchPage = () => {
               <TabsContent value="sermons" className="space-y-4">
                 {sermonResults.length > 0 ? (
                   sermonResults.map((result, index) => (
-                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                    <Card key={`${result.sermon_id}-${result.paragraph}`} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
-                        <h3 className="text-xl font-semibold mb-2 text-foreground">
-                          {result.title}
-                        </h3>
-                        <div className="flex gap-2 mb-3">
-                          <Badge variant="secondary">{result.date}</Badge>
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-xl font-semibold text-foreground">
+                            {result.title}
+                          </h3>
+                          <Badge variant="secondary" className="shrink-0 ml-2">
+                            ¶ {result.paragraph}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                          <Badge variant="outline">{result.date}</Badge>
                           <Badge variant="outline">{result.location}</Badge>
                         </div>
-                        <p className="text-muted-foreground mb-2">{result.excerpt}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Paragraph {result.paragraph}
+                        <blockquote className="border-l-4 border-primary pl-4 py-2 mb-2 bg-muted/30 rounded-r">
+                          <p className="text-foreground leading-relaxed italic">
+                            "{result.excerpt}"
+                          </p>
+                        </blockquote>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Paragraph {result.paragraph} from "{result.title}"
                         </p>
                       </CardContent>
                     </Card>
