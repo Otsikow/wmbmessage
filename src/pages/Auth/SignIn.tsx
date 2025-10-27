@@ -36,10 +36,10 @@ export default function SignIn() {
       });
 
       navigate("/");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -57,10 +57,10 @@ export default function SignIn() {
       });
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     }

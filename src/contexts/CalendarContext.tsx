@@ -24,7 +24,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((e: any) => ({ ...e, date: new Date(e.date) }));
+      return parsed.map((e: { id: string; title: string; date: string; description?: string }) => ({ ...e, date: new Date(e.date) }));
     }
     // Add default sample events
     const today = new Date();

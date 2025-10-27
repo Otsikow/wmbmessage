@@ -18,6 +18,13 @@ export interface WMBSermonResult {
   paragraph: number;
 }
 
+interface BibleVerseData {
+  book_name?: string;
+  chapter?: number;
+  verse?: number;
+  text?: string;
+}
+
 export function useBibleSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +50,7 @@ export function useBibleSearch() {
           const searchData = await searchResponse.json();
 
           if (searchData && searchData.verses) {
-            for (const verseData of Object.values(searchData.verses) as any[]) {
+            for (const verseData of Object.values(searchData.verses) as BibleVerseData[]) {
               if (verseData && verseData.text) {
                 allResults.push({
                   book: verseData.book_name || "",
@@ -81,7 +88,7 @@ export function useBibleSearch() {
             const data = await response.json();
             
             if (data && data.verses) {
-              for (const verseData of Object.values(data.verses) as any[]) {
+              for (const verseData of Object.values(data.verses) as BibleVerseData[]) {
                 if (verseData && verseData.text && allResults.length < 100) {
                   const newResult = {
                     book: verseData.book_name || "",
@@ -126,7 +133,7 @@ export function useBibleSearch() {
               const data = await response.json();
               
               if (data.verses && Array.isArray(data.verses)) {
-                data.verses.forEach((verse: any) => {
+                data.verses.forEach((verse: { chapter: number; verse: number; text: string }) => {
                   allResults.push({
                     book: data.reference.split(/\d/)[0].trim(),
                     chapter: verse.chapter,
@@ -194,7 +201,7 @@ export function useBibleSearch() {
       }
 
       // Transform the results to match the expected format
-      const results: WMBSermonResult[] = data.map((row: any) => ({
+      const results: WMBSermonResult[] = data.map((row: { id: string; title: string; date: string; location: string; excerpt: string; paragraph: number }) => ({
         sermon_id: row.sermon_id,
         title: row.sermon_title,
         date: new Date(row.sermon_date).toLocaleDateString('en-US', { 

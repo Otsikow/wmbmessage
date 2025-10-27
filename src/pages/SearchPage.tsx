@@ -10,14 +10,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
-import { useBibleSearch } from "@/hooks/useBibleSearch";
+import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-modern.jpg";
 
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [bibleResults, setBibleResults] = useState<any[]>([]);
-  const [sermonResults, setSermonResults] = useState<any[]>([]);
+  const [bibleResults, setBibleResults] = useState<BibleSearchResult[]>([]);
+  const [sermonResults, setSermonResults] = useState<WMBSermonResult[]>([]);
   const { searchBible, searchWMBSermons, loading } = useBibleSearch();
   const navigate = useNavigate();
 

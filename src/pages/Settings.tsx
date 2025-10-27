@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Moon, Sun, Bell, Download, RotateCcw } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Bell, Download, RotateCcw, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import SettingsFontControls from "@/components/SettingsFontControls";
 import { useSettings } from "@/contexts/SettingsContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -35,6 +36,46 @@ export default function Settings() {
 
           <div className="space-y-6 sm:space-y-8">
             <SettingsFontControls />
+
+            <div className="space-y-3">
+              <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                Bible Version
+              </h2>
+              <div className="bg-card border border-border rounded-lg">
+                <div className="flex items-center justify-between p-4 sm:p-6">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                    <BookOpen className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm sm:text-base">Preferred Translation</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Choose your default Bible version
+                      </p>
+                    </div>
+                  </div>
+                  <Select
+                    value={settings.bibleVersion}
+                    onValueChange={(value) => {
+                      updateSettings({ bibleVersion: value });
+                      toast.success(`Bible version changed to ${value}`);
+                    }}
+                  >
+                    <SelectTrigger className="w-[140px] sm:w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="KJV">King James (KJV)</SelectItem>
+                      <SelectItem value="NIV">New International (NIV)</SelectItem>
+                      <SelectItem value="ESV">English Standard (ESV)</SelectItem>
+                      <SelectItem value="NKJV">New King James (NKJV)</SelectItem>
+                      <SelectItem value="NLT">New Living (NLT)</SelectItem>
+                      <SelectItem value="NASB">New American Standard (NASB)</SelectItem>
+                      <SelectItem value="AMP">Amplified (AMP)</SelectItem>
+                      <SelectItem value="CSB">Christian Standard (CSB)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
             <div className="space-y-3">
               <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">

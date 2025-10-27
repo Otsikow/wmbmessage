@@ -108,7 +108,7 @@ export function useBibleData(book: string, chapter: number) {
         const data = await response.json();
         
         // Parse verses from API response
-        const parsedVerses: BibleVerse[] = data.verses.map((verse: any) => ({
+        const parsedVerses: BibleVerse[] = data.verses.map((verse: { verse: number; text: string }) => ({
           number: verse.verse,
           text: verse.text,
           isJesusWords: checkIfJesusWords(book, chapter, verse.verse),

@@ -30,7 +30,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center space-x-2 md:space-x-3">
+        <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3">
           <img src={logoImage} alt="MessageGuide Logo" className="h-10 md:h-12 w-auto" />
           <span className="text-lg md:text-xl font-bold text-primary">
             MessageGuide
@@ -41,25 +41,31 @@ export default function Header() {
           <ThemeToggle />
           
           <nav className="hidden lg:flex items-center space-x-6">
-            <Link to="/reader" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/bible" className="text-sm font-medium transition-colors hover:text-primary">
               Bible
+            </Link>
+            <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
+              Messages
             </Link>
             <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
               Search
             </Link>
-            <Link to="/collections" className="text-sm font-medium transition-colors hover:text-primary">
-              Collections
+            <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
+              References
             </Link>
-            <Link to="/notes" className="text-sm font-medium transition-colors hover:text-primary">
-              Notes
+            <Link to="/library" className="text-sm font-medium transition-colors hover:text-primary">
+              Library
+            </Link>
+            <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary">
+              Settings
             </Link>
             
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt="User" />
+                      <AvatarImage src="" alt={`${user.email} avatar`} />
                       <AvatarFallback>
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
