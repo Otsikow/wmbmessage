@@ -2,6 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 export default function More() {
   const navigate = useNavigate();
@@ -33,8 +35,8 @@ export default function More() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="w-full py-6 sm:py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Button
@@ -73,6 +75,11 @@ export default function More() {
             ))}
           </div>
         </div>
+      </div>
+      
+      <Footer />
+      <div className="md:hidden">
+        <Navigation />
       </div>
     </div>
   );

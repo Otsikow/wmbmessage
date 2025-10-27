@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Info, Heart, Users, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo-final.png";
 import crossImage from "@/assets/cross-sunrise.jpg";
 
@@ -9,7 +10,7 @@ export default function About() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="relative h-48 md:h-64 overflow-hidden">
         <img src={crossImage} alt="Cross at Sunrise" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
@@ -28,7 +29,7 @@ export default function About() {
         </div>
       </div>
 
-      <div className="w-full py-6 sm:py-8">
+      <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto space-y-6 sm:space-y-8">
           <div className="bg-card border border-border rounded-lg p-6 sm:p-8 text-center space-y-4">
             <img src={logoImage} alt="MessageGuide Logo" className="h-16 sm:h-20 w-auto mx-auto" />
@@ -92,7 +93,11 @@ export default function About() {
           </div>
         </div>
       </div>
-      <Navigation />
+      
+      <Footer />
+      <div className="md:hidden">
+        <Navigation />
+      </div>
     </div>
   );
 }
