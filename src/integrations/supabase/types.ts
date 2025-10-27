@@ -86,6 +86,64 @@ export type Database = {
         }
         Relationships: []
       }
+      sermons: {
+        Row: {
+          id: string
+          title: string
+          date: string
+          location: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          date: string
+          location: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          date?: string
+          location?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sermon_paragraphs: {
+        Row: {
+          id: string
+          sermon_id: string
+          paragraph_number: number
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sermon_id: string
+          paragraph_number: number
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sermon_id?: string
+          paragraph_number?: number
+          content?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sermon_paragraphs_sermon_id_fkey"
+            columns: ["sermon_id"]
+            referencedRelation: "sermons"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -190,6 +248,21 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_sermon_content: {
+        Args: {
+          search_query: string
+          result_limit?: number
+        }
+        Returns: {
+          sermon_id: string
+          sermon_title: string
+          sermon_date: string
+          sermon_location: string
+          paragraph_number: number
+          content: string
+          relevance: number
+        }[]
       }
     }
     Enums: {
