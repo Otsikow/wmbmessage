@@ -115,9 +115,9 @@ export default function CrossReferenceViewer({
   const hasSearchResults = searchResults.length > 0 || sermonResults.length > 0 || manualReferences.length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full space-y-4">
       {/* Search Input */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
@@ -149,15 +149,15 @@ export default function CrossReferenceViewer({
         </div>
         
         {searchError && (
-          <Alert variant="destructive" className="py-2">
+          <Alert variant="destructive" className="py-3">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-xs">{searchError}</AlertDescription>
+            <AlertDescription className="text-sm">{searchError}</AlertDescription>
           </Alert>
         )}
       </div>
 
       {/* Tabs for organizing content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
@@ -180,8 +180,8 @@ export default function CrossReferenceViewer({
         </TabsList>
 
         {/* Search Results Tab */}
-        <TabsContent value="search" className="mt-4">
-          <ScrollArea className="h-[500px] rounded-md border p-4">
+        <TabsContent value="search" className="mt-4 flex-1 overflow-hidden">
+          <ScrollArea className="h-full rounded-md border p-4">
             {searchLoading || isSearching ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -217,7 +217,7 @@ export default function CrossReferenceViewer({
                             </div>
                           </CardHeader>
                           <CardContent className="pb-3">
-                            <p className="text-sm leading-relaxed">
+                            <p className="text-sm leading-relaxed break-words">
                               {highlightSearchTerm(result.text, searchInput)}
                             </p>
                           </CardContent>
@@ -273,7 +273,7 @@ export default function CrossReferenceViewer({
                             </div>
                           </CardHeader>
                           <CardContent className="pb-3">
-                            <p className="text-sm leading-relaxed text-muted-foreground mb-1">
+                            <p className="text-sm leading-relaxed text-muted-foreground mb-1 break-words">
                               {highlightSearchTerm(result.excerpt, searchInput)}
                             </p>
                             <p className="text-xs text-muted-foreground/70">Paragraph {result.paragraph}</p>
@@ -284,17 +284,30 @@ export default function CrossReferenceViewer({
                   </div>
                 )}
 
-                {/* Empty State */}
+                {/* Empty State or No Results */}
                 {!hasSearchResults && (
                   <div className="flex flex-col items-center justify-center h-full text-center py-16 space-y-3">
                     <Search className="h-16 w-16 text-muted-foreground/30" />
                     <div className="space-y-1">
-                      <p className="text-muted-foreground font-medium">
-                        Search for keywords or verse references
-                      </p>
-                      <p className="text-xs text-muted-foreground/70">
-                        Try: "love", "faith", "healing", "John 3:16", or "Romans 8:28"
-                      </p>
+                      {searchInput ? (
+                        <>
+                          <p className="text-muted-foreground font-medium">
+                            No results found for "{searchInput}"
+                          </p>
+                          <p className="text-sm text-muted-foreground/70">
+                            Try different keywords or a specific verse reference
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-muted-foreground font-medium">
+                            Search for keywords or verse references
+                          </p>
+                          <p className="text-sm text-muted-foreground/70">
+                            Try: "love", "faith", "healing", "John 3:16", or "Romans 8:28"
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -304,8 +317,8 @@ export default function CrossReferenceViewer({
         </TabsContent>
 
         {/* Cross References Tab */}
-        <TabsContent value="cross-refs" className="mt-4">
-          <ScrollArea className="h-[500px] rounded-md border p-4">
+        <TabsContent value="cross-refs" className="mt-4 flex-1 overflow-hidden">
+          <ScrollArea className="h-full rounded-md border p-4">
             {crossRefsLoading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -453,11 +466,11 @@ function ManualReferenceDisplay({ reference, onRemove, onNavigate }: ManualRefer
           <div className="space-y-2">
             {displayVerses.map((verse) => (
               <div key={verse.number} className="flex gap-2 text-sm">
-                <span className="font-semibold text-primary min-w-[1.5rem]">
+                <span className="font-semibold text-primary min-w-[1.5rem] flex-shrink-0">
                   {verse.number}
                 </span>
                 <p className={cn(
-                  "leading-relaxed",
+                  "leading-relaxed break-words flex-1",
                   verse.isJesusWords && "text-jesus-words font-medium"
                 )}>
                   {verse.text}
@@ -531,11 +544,11 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
           <div className="space-y-2">
             {displayVerses.map((verse) => (
               <div key={verse.number} className="flex gap-2 text-sm">
-                <span className="font-semibold text-primary min-w-[1.5rem]">
+                <span className="font-semibold text-primary min-w-[1.5rem] flex-shrink-0">
                   {verse.number}
                 </span>
                 <p className={cn(
-                  "leading-relaxed",
+                  "leading-relaxed break-words flex-1",
                   verse.isJesusWords && "text-jesus-words font-medium"
                 )}>
                   {verse.text}

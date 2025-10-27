@@ -80,15 +80,20 @@ const SearchPage = () => {
                     Cross References
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Cross References & Search</DialogTitle>
+                <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0">
+                  <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                    <DialogTitle className="text-xl">Cross References & Search</DialogTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Search for keywords or look up verse references
+                    </p>
                   </DialogHeader>
-                  <CrossReferenceViewer 
-                    onNavigate={(book, chapter) => {
-                      navigate(`/reader?book=${encodeURIComponent(book)}&chapter=${chapter}`);
-                    }}
-                  />
+                  <div className="flex-1 overflow-hidden px-6 py-4">
+                    <CrossReferenceViewer 
+                      onNavigate={(book, chapter) => {
+                        navigate(`/reader?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+                      }}
+                    />
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
