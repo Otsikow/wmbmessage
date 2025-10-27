@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Reader from "./pages/Reader";
 import SearchPage from "./pages/SearchPage";
 import Collections from "./pages/Collections";
+import Library from "./pages/Library";
 import Notes from "./pages/Notes";
 import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/reader" element={<Reader />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+              <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
               <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
               <Route path="/more" element={<More />} />
               <Route path="/wmb-sermons" element={<WMBSermons />} />

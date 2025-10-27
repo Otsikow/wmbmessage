@@ -237,6 +237,144 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          font_size: number
+          theme: string
+          bible_version: string
+          font_family: string
+          reader_font_family: string
+          color_scheme: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          font_size?: number
+          theme?: string
+          bible_version?: string
+          font_family?: string
+          reader_font_family?: string
+          color_scheme?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          font_size?: number
+          theme?: string
+          bible_version?: string
+          font_family?: string
+          reader_font_family?: string
+          color_scheme?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_activity_log: {
+        Row: {
+          id: string
+          user_id: string
+          action: string
+          source_type: string
+          source_id: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action: string
+          source_type: string
+          source_id: string
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action?: string
+          source_type?: string
+          source_id?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      bookmarks: {
+        Row: {
+          id: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          verse_text: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          verse_text?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          book?: string
+          chapter?: number
+          verse?: number
+          verse_text?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      highlights: {
+        Row: {
+          id: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          verse_text: string | null
+          color: string
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          book: string
+          chapter: number
+          verse: number
+          verse_text?: string | null
+          color?: string
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          book?: string
+          chapter?: number
+          verse?: number
+          verse_text?: string | null
+          color?: string
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
