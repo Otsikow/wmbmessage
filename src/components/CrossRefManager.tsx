@@ -1,0 +1,554 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Trash2, Upload, Loader2, Search, ArrowRight } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { BIBLE_BOOKS } from '@/hooks/useBibleData';
+import { Badge } from '@/components/ui/badge';
+
+interface CrossReference {
+  id: string;
+  from_book: string;
+  from_chapter: number;
+  from_verse: number;
+  to_book: string;
+  to_chapter: number;
+  to_verse: number;
+  to_verse_end: number | null;
+  relationship_type: string | null;
+  notes: string | null;
+}
+
+interface BulkImportCrossRef {
+  from_book: string;
+  from_chapter: number;
+  from_verse: number;
+  to_book: string;
+  to_chapter: number;
+  to_verse: number;
+  to_verse_end?: number | null;
+  relationship_type?: string;
+  notes?: string;
+}
+
+const RELATIONSHIP_TYPES = [
+  { value: 'related', label: 'Related' },
+  { value: 'parallel', label: 'Parallel' },
+  { value: 'quotation', label: 'Quotation' },
+  { value: 'fulfillment', label: 'Fulfillment' },
+  { value: 'contrast', label: 'Contrast' },
+];
+
+export default function CrossRefManager() {
+  const [crossRefs, setCrossRefs] = useState<CrossReference[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCrossRef, setEditingCrossRef] = useState<CrossReference | null>(null);
+  const [bulkImportData, setBulkImportData] = useState('');
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    from_book: '',
+    from_chapter: 1,
+    from_verse: 1,
+    to_book: '',
+    to_chapter: 1,
+    to_verse: 1,
+    to_verse_end: null as number | null,
+    relationship_type: 'related',
+    notes: '',
+  });
+
+  useEffect(() => {
+    fetchCrossRefs();
+  }, [searchTerm]);
+
+  const fetchCrossRefs = async () => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('cross_references')
+        .select('*')
+        .order('from_book')
+        .order('from_chapter')
+        .order('from_verse')
+        .limit(100);
+
+      if (searchTerm) {
+        query = query.or(`from_book.ilike.%${searchTerm}%,to_book.ilike.%${searchTerm}%,notes.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setCrossRefs(data || []);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingCrossRef) {
+        const { error } = await supabase
+          .from('cross_references')
+          .update(formData)
+          .eq('id', editingCrossRef.id);
+
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Cross reference updated successfully' });
+      } else {
+        const { error } = await supabase
+          .from('cross_references')
+          .insert([formData]);
+
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Cross reference created successfully' });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchCrossRefs();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this cross reference?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('cross_references')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Success', description: 'Cross reference deleted successfully' });
+      fetchCrossRefs();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleBulkImport = async () => {
+    try {
+      const parsed = JSON.parse(bulkImportData) as BulkImportCrossRef[];
+      
+      if (!Array.isArray(parsed)) {
+        throw new Error('Invalid format: Expected an array');
+      }
+
+      const crossRefsToInsert = parsed.map(item => ({
+        from_book: item.from_book,
+        from_chapter: item.from_chapter,
+        from_verse: item.from_verse,
+        to_book: item.to_book,
+        to_chapter: item.to_chapter,
+        to_verse: item.to_verse,
+        to_verse_end: item.to_verse_end || null,
+        relationship_type: item.relationship_type || 'related',
+        notes: item.notes || null,
+      }));
+
+      const { error } = await supabase
+        .from('cross_references')
+        .insert(crossRefsToInsert);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Imported ${crossRefsToInsert.length} cross references successfully`,
+      });
+      setIsBulkDialogOpen(false);
+      setBulkImportData('');
+      fetchCrossRefs();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      from_book: '',
+      from_chapter: 1,
+      from_verse: 1,
+      to_book: '',
+      to_chapter: 1,
+      to_verse: 1,
+      to_verse_end: null,
+      relationship_type: 'related',
+      notes: '',
+    });
+    setEditingCrossRef(null);
+  };
+
+  const openEditDialog = (crossRef: CrossReference) => {
+    setEditingCrossRef(crossRef);
+    setFormData({
+      from_book: crossRef.from_book,
+      from_chapter: crossRef.from_chapter,
+      from_verse: crossRef.from_verse,
+      to_book: crossRef.to_book,
+      to_chapter: crossRef.to_chapter,
+      to_verse: crossRef.to_verse,
+      to_verse_end: crossRef.to_verse_end,
+      relationship_type: crossRef.relationship_type || 'related',
+      notes: crossRef.notes || '',
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openNewDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const formatVerseRef = (book: string, chapter: number, verse: number, verseEnd?: number | null) => {
+    const ref = `${book} ${chapter}:${verse}`;
+    return verseEnd ? `${ref}-${verseEnd}` : ref;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Cross References Management</CardTitle>
+            <CardDescription>Manage Bible verse cross-references and relationships</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Import
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Bulk Import Cross References</DialogTitle>
+                  <DialogDescription>
+                    Paste JSON array of cross references. Format: {`[{"from_book": "John", "from_chapter": 3, "from_verse": 16, "to_book": "Romans", "to_chapter": 5, "to_verse": 8, "relationship_type": "related", "notes": "..."}]`}
+                  </DialogDescription>
+                </DialogHeader>
+                <Textarea
+                  placeholder="Paste JSON data here..."
+                  value={bulkImportData}
+                  onChange={(e) => setBulkImportData(e.target.value)}
+                  className="min-h-[400px] font-mono text-sm"
+                />
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleBulkImport}>
+                    Import Cross References
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openNewDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Cross Reference
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingCrossRef ? 'Edit Cross Reference' : 'Add New Cross Reference'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* FROM verse section */}
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-sm">From Verse</h3>
+                      
+                      <div className="space-y-2">
+                        <Label>Book</Label>
+                        <Select
+                          value={formData.from_book}
+                          onValueChange={(value) => setFormData({ ...formData, from_book: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select book" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {BIBLE_BOOKS.map((book) => (
+                              <SelectItem key={book.name} value={book.name}>
+                                {book.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label>Chapter</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.from_chapter}
+                            onChange={(e) =>
+                              setFormData({ ...formData, from_chapter: parseInt(e.target.value) })
+                            }
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Verse</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.from_verse}
+                            onChange={(e) =>
+                              setFormData({ ...formData, from_verse: parseInt(e.target.value) })
+                            }
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TO verse section */}
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-sm">To Verse</h3>
+                      
+                      <div className="space-y-2">
+                        <Label>Book</Label>
+                        <Select
+                          value={formData.to_book}
+                          onValueChange={(value) => setFormData({ ...formData, to_book: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select book" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {BIBLE_BOOKS.map((book) => (
+                              <SelectItem key={book.name} value={book.name}>
+                                {book.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-2">
+                          <Label>Chapter</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.to_chapter}
+                            onChange={(e) =>
+                              setFormData({ ...formData, to_chapter: parseInt(e.target.value) })
+                            }
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Verse</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.to_verse}
+                            onChange={(e) =>
+                              setFormData({ ...formData, to_verse: parseInt(e.target.value) })
+                            }
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>End (opt)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.to_verse_end || ''}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                to_verse_end: e.target.value ? parseInt(e.target.value) : null,
+                              })
+                            }
+                            placeholder="-"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Relationship Type</Label>
+                    <Select
+                      value={formData.relationship_type}
+                      onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RELATIONSHIP_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Notes (Optional)</Label>
+                    <Textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Add any additional notes about this cross reference..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      {editingCrossRef ? 'Update' : 'Create'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by book or notes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>From Verse</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>To Verse</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {crossRefs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      No cross references found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  crossRefs.map((crossRef) => (
+                    <TableRow key={crossRef.id}>
+                      <TableCell className="font-medium">
+                        {formatVerseRef(
+                          crossRef.from_book,
+                          crossRef.from_chapter,
+                          crossRef.from_verse
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatVerseRef(
+                          crossRef.to_book,
+                          crossRef.to_chapter,
+                          crossRef.to_verse,
+                          crossRef.to_verse_end
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {crossRef.relationship_type || 'related'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {crossRef.notes || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openEditDialog(crossRef)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(crossRef.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

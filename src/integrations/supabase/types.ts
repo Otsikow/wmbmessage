@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      bible_verses: {
+        Row: {
+          id: string
+          book: string
+          chapter: number
+          verse: number
+          text: string
+          translation: string
+          is_jesus_words: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          book: string
+          chapter: number
+          verse: number
+          text: string
+          translation?: string
+          is_jesus_words?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          book?: string
+          chapter?: number
+          verse?: number
+          text?: string
+          translation?: string
+          is_jesus_words?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cross_references: {
         Row: {
           id: string
@@ -248,6 +284,22 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_bible_verses: {
+        Args: {
+          search_query: string
+          result_limit?: number
+        }
+        Returns: {
+          id: string
+          book: string
+          chapter: number
+          verse: number
+          text: string
+          translation: string
+          is_jesus_words: boolean
+          relevance: number
+        }[]
       }
       search_sermon_content: {
         Args: {

@@ -1,0 +1,42 @@
+[
+  {
+    "book": "John",
+    "chapter": 3,
+    "verse": 16,
+    "text": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Psalms",
+    "chapter": 23,
+    "verse": 1,
+    "text": "The LORD is my shepherd; I shall not want.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Proverbs",
+    "chapter": 3,
+    "verse": 5,
+    "text": "Trust in the LORD with all thine heart; and lean not unto thine own understanding.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 8,
+    "verse": 28,
+    "text": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Philippians",
+    "chapter": 4,
+    "verse": 13,
+    "text": "I can do all things through Christ which strengtheneth me.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  }
+]
