@@ -19,7 +19,10 @@ export type Database = {
           chapter: number;
           verse: number;
           text: string;
+          translation: string;
+          is_jesus_words: boolean;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -27,7 +30,10 @@ export type Database = {
           chapter: number;
           verse: number;
           text: string;
+          translation?: string;
+          is_jesus_words?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -35,7 +41,10 @@ export type Database = {
           chapter?: number;
           verse?: number;
           text?: string;
+          translation?: string;
+          is_jesus_words?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -483,6 +492,22 @@ export type Database = {
         };
         Returns: boolean;
       };
+      search_bible_verses: {
+        Args: {
+          search_query: string;
+          result_limit?: number;
+        };
+        Returns: {
+          id: string;
+          book: string;
+          chapter: number;
+          verse: number;
+          text: string;
+          translation: string;
+          is_jesus_words: boolean;
+          relevance: number;
+        }[];
+      };
       search_sermon_content: {
         Args: {
           search_query: string;
@@ -526,9 +551,7 @@ export type Tables<
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"]
       )
     : never = never
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"]
@@ -554,9 +577,7 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I;
     }
@@ -579,9 +600,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U;
     }
@@ -604,9 +623,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
@@ -620,4 +637,3 @@ export const Constants = {
     },
   },
 } as const;
-

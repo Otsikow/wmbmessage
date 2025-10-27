@@ -1,0 +1,52 @@
+[
+  {
+    "from_book": "John",
+    "from_chapter": 3,
+    "from_verse": 16,
+    "to_book": "Romans",
+    "to_chapter": 5,
+    "to_verse": 8,
+    "relationship_type": "related",
+    "notes": "God's love demonstrated through Christ"
+  },
+  {
+    "from_book": "John",
+    "from_chapter": 3,
+    "from_verse": 16,
+    "to_book": "1 John",
+    "to_chapter": 4,
+    "to_verse": 9,
+    "relationship_type": "related",
+    "notes": "God's love manifested in sending His Son"
+  },
+  {
+    "from_book": "Psalms",
+    "from_chapter": 23,
+    "from_verse": 1,
+    "to_book": "John",
+    "to_chapter": 10,
+    "to_verse": 11,
+    "relationship_type": "fulfillment",
+    "notes": "Jesus is the Good Shepherd prophesied in Psalms"
+  },
+  {
+    "from_book": "Isaiah",
+    "from_chapter": 53,
+    "from_verse": 5,
+    "to_book": "1 Peter",
+    "to_chapter": 2,
+    "to_verse": 24,
+    "relationship_type": "fulfillment",
+    "notes": "By His wounds we are healed - prophecy fulfilled"
+  },
+  {
+    "from_book": "Genesis",
+    "from_chapter": 1,
+    "from_verse": 1,
+    "to_book": "John",
+    "to_chapter": 1,
+    "to_verse": 1,
+    "relationship_type": "parallel",
+    "notes": "In the beginning - creation and the Word"
+  }
+]
