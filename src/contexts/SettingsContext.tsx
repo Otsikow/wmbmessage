@@ -43,7 +43,8 @@ interface SupabaseSettingsUpsert extends SupabaseSettingsRow {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const authContext = useAuth();
+  const user = authContext?.user ?? null;
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem("app-settings");
