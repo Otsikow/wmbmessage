@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
-import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -51,12 +51,6 @@ export default function Admin() {
       return;
     }
 
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      setErrorMessage('Supabase is not configured. Connect your Supabase project to enable admin features.');
-      return;
-    }
-
     if (isAdmin) {
       fetchData();
       fetchStats();
@@ -64,7 +58,6 @@ export default function Admin() {
   }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchData = async () => {
-    if (!isSupabaseConfigured) return;
     try {
       const [profilesRes, rolesRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -86,7 +79,6 @@ export default function Admin() {
   };
 
   const fetchStats = async () => {
-    if (!isSupabaseConfigured) return;
     try {
       const [versesCount, sermonsCount, crossRefsCount] = await Promise.all([
         supabase.from('bible_verses').select('*', { count: 'exact', head: true }),

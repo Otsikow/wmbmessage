@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent } from 'react';
-import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,17 +56,10 @@ export default function BibleManager() {
   });
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      setConfigError('Supabase is not configured. Bible management tools are currently disabled.');
-      return;
-    }
-
     fetchVerses();
   }, [searchTerm]);
 
   const fetchVerses = async () => {
-    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
       let query = supabase
@@ -104,14 +97,6 @@ export default function BibleManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to create or update verses.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       if (editingVerse) {
         const { error } = await supabase
@@ -147,14 +132,6 @@ export default function BibleManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to delete verses.',
-        variant: 'destructive',
-      });
-      return;
-    }
     if (!confirm('Are you sure you want to delete this verse?')) return;
 
     try {
@@ -216,14 +193,6 @@ export default function BibleManager() {
   };
 
   const handleBulkImport = async () => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to import verses.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const parsed = JSON.parse(bulkImportData) as BulkImportItem[];
       
@@ -315,7 +284,7 @@ export default function BibleManager() {
         <div className="flex flex-wrap gap-2">
           <Dialog open={isBulkDialogOpen} onOpenChange={handleBulkDialogChange}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!isSupabaseConfigured}>
+              <Button variant="outline">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Import
               </Button>
@@ -360,7 +329,7 @@ export default function BibleManager() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNewDialog} disabled={!isSupabaseConfigured}>
+              <Button onClick={openNewDialog}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Verse
               </Button>

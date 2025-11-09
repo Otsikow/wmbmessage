@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DailyContent {
   id: string;
@@ -52,10 +52,6 @@ export function useDailyContent() {
     setError(null);
 
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Supabase is not configured. Daily content is unavailable.");
-      }
-
       // First, try to get today's content
       const today = new Date().toISOString().split('T')[0];
 
@@ -110,10 +106,6 @@ export function useDailyContent() {
     setError(null);
     
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Supabase is not configured. Daily content is unavailable.");
-      }
-
       // Delete old content for today
       const today = new Date().toISOString().split('T')[0];
       await (supabase as any)

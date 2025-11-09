@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent } from 'react';
-import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,17 +58,10 @@ export default function SermonManager() {
   const [paragraphsText, setParagraphsText] = useState('');
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      setConfigError('Supabase is not configured. Sermon management tools are currently disabled.');
-      return;
-    }
-
     fetchSermons();
   }, [searchTerm]);
 
   const fetchSermons = async () => {
-    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
       let query = supabase
@@ -103,7 +96,6 @@ export default function SermonManager() {
   };
 
   const fetchParagraphs = async (sermonId: string) => {
-    if (!isSupabaseConfigured) return;
     try {
       const { data, error } = await supabase
         .from('sermon_paragraphs')
@@ -128,14 +120,6 @@ export default function SermonManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to create or update sermons.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       if (editingSermon) {
         const { error } = await supabase
@@ -185,7 +169,6 @@ export default function SermonManager() {
   };
 
   const updateSermonParagraphs = async (sermonId: string) => {
-    if (!isSupabaseConfigured) return;
     // Delete existing paragraphs
     await supabase
       .from('sermon_paragraphs')
@@ -211,14 +194,6 @@ export default function SermonManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to delete sermons.',
-        variant: 'destructive',
-      });
-      return;
-    }
     if (!confirm('Are you sure you want to delete this sermon and all its paragraphs?')) return;
 
     try {
@@ -284,14 +259,6 @@ export default function SermonManager() {
   };
 
   const handleBulkImport = async () => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to import sermons.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const parsed = JSON.parse(bulkImportData) as BulkImportSermon[];
       
@@ -359,15 +326,6 @@ export default function SermonManager() {
   };
 
   const openEditDialog = async (sermon: Sermon) => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: 'Supabase not configured',
-        description: 'Connect Supabase to edit sermons.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setEditingSermon(sermon);
     setFormData({
       title: sermon.title,
@@ -431,7 +389,7 @@ export default function SermonManager() {
         <div className="flex flex-wrap gap-2">
           <Dialog open={isBulkDialogOpen} onOpenChange={handleBulkDialogChange}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!isSupabaseConfigured}>
+              <Button variant="outline">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Import
               </Button>
@@ -476,7 +434,7 @@ export default function SermonManager() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openNewDialog} disabled={!isSupabaseConfigured}>
+              <Button onClick={openNewDialog}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Sermon
               </Button>
