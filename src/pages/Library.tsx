@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   BookmarkIcon,
@@ -38,6 +39,33 @@ const HIGHLIGHT_COLORS = {
   pink: "bg-pink-200 dark:bg-pink-900",
   purple: "bg-purple-200 dark:bg-purple-900",
 };
+
+interface LibraryDisplayItem {
+  id: string;
+  book?: string;
+  chapter?: number;
+  verse?: number;
+  verse_text?: string;
+  color?: string;
+  note?: string;
+  [key: string]: unknown;
+}
+
+interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem> {
+  title: string;
+  icon: LucideIcon;
+  items: T[];
+  loading: boolean;
+  onDelete?: (id: string) => void;
+  onNavigate: (item: T) => void;
+  colorMap?: Record<string, string>;
+}
+
+interface LibraryTabProps<T extends LibraryDisplayItem = LibraryDisplayItem>
+  extends Omit<LibrarySectionProps<T>, "title"> {
+  label: string;
+  emptyMessage: string;
+}
 
 export default function Library() {
   const navigate = useNavigate();
@@ -267,7 +295,7 @@ export default function Library() {
 }
 
 /* Subcomponent for compact library previews */
-function LibrarySection({
+function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
   title,
   icon: Icon,
   items,
@@ -275,7 +303,7 @@ function LibrarySection({
   onDelete,
   onNavigate,
   colorMap,
-}: any) {
+}: LibrarySectionProps<T>) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -295,47 +323,47 @@ function LibrarySection({
         </Card>
       ) : (
         <div className="space-y-2">
-          {items.slice(0, 5).map((item: any) => (
-            <Card
-              key={item.id}
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onNavigate(item)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    {colorMap && (
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          colorMap[item.color as keyof typeof colorMap]
-                        }`}
-                      />
+          {items.slice(0, 5).map((item) => {
+            const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+
+            return (
+              <Card
+                key={item.id}
+                className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => onNavigate(item)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      {colorClass && (
+                        <div className={`w-3 h-3 rounded-full ${colorClass}`} />
+                      )}
+                      <span className="font-semibold text-sm">
+                        {item.book} {item.chapter}:{item.verse}
+                      </span>
+                    </div>
+                    {item.verse_text && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {item.verse_text}
+                      </p>
                     )}
-                    <span className="font-semibold text-sm">
-                      {item.book} {item.chapter}:{item.verse}
-                    </span>
                   </div>
-                  {item.verse_text && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {item.verse_text}
-                    </p>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(item.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(item.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
@@ -343,7 +371,7 @@ function LibrarySection({
 }
 
 /* Subcomponent for tab details */
-function LibraryTab({
+function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   label,
   icon: Icon,
   items,
@@ -352,7 +380,7 @@ function LibraryTab({
   onDelete,
   onNavigate,
   colorMap,
-}: any) {
+}: LibraryTabProps<T>) {
   return (
     <TabsContent value={label.toLowerCase()}>
       {loading ? (
@@ -367,52 +395,52 @@ function LibraryTab({
         </Card>
       ) : (
         <div className="space-y-3">
-          {items.map((item: any) => (
-            <Card
-              key={item.id}
-              className="p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => onNavigate(item)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {colorMap && (
-                      <div
-                        className={`w-4 h-4 rounded-full ${
-                          colorMap[item.color as keyof typeof colorMap]
-                        }`}
-                      />
+          {items.map((item) => {
+            const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+
+            return (
+              <Card
+                key={item.id}
+                className="p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => onNavigate(item)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {colorClass && (
+                        <div className={`w-4 h-4 rounded-full ${colorClass}`} />
+                      )}
+                      <span className="font-semibold">
+                        {item.book} {item.chapter}:{item.verse}
+                      </span>
+                    </div>
+                    {item.verse_text && (
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {item.verse_text}
+                      </p>
                     )}
-                    <span className="font-semibold">
-                      {item.book} {item.chapter}:{item.verse}
-                    </span>
+                    {item.note && (
+                      <p className="text-xs text-muted-foreground italic border-l-2 border-muted pl-3">
+                        {item.note}
+                      </p>
+                    )}
                   </div>
-                  {item.verse_text && (
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {item.verse_text}
-                    </p>
-                  )}
-                  {item.note && (
-                    <p className="text-xs text-muted-foreground italic border-l-2 border-muted pl-3">
-                      {item.note}
-                    </p>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(item.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(item.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </TabsContent>

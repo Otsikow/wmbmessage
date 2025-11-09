@@ -58,8 +58,8 @@ export function useDailyContent() {
 
       // First, try to get today's content
       const today = new Date().toISOString().split('T')[0];
-      
-      let { data, error: fetchError } = await supabase
+
+      const { data: initialData, error: fetchError } = await supabase
         .from('daily_content')
         .select(`
           *,
@@ -75,8 +75,10 @@ export function useDailyContent() {
         .eq('date_generated', today)
         .single();
 
+      let dailyData = initialData;
+
       // If no content exists for today, generate it
-      if (!data || fetchError) {
+      if (!dailyData || fetchError) {
         const { data: generated, error: generateError } = await supabase
           .rpc('generate_daily_content');
 
@@ -105,19 +107,19 @@ export function useDailyContent() {
           throw newFetchError;
         }
 
-        data = newData;
+        dailyData = newData;
       }
 
-      if (data) {
+      if (dailyData) {
         // Fetch the Bible verse text from the API
         const verseText = await fetchBibleVerseText(
-          data.bible_book,
-          data.bible_chapter,
-          data.bible_verse
+          dailyData.bible_book,
+          dailyData.bible_chapter,
+          dailyData.bible_verse
         );
 
         setDailyContent({
-          ...data,
+          ...dailyData,
           bible_verse_text: verseText,
         });
       }

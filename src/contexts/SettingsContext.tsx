@@ -27,6 +27,19 @@ interface SettingsContextType {
   loading: boolean;
 }
 
+interface SupabaseSettingsRow {
+  font_size: string | null;
+  font_family: string | null;
+  reader_font_family: string | null;
+  color_scheme: string | null;
+  theme: string | null;
+  bible_version: string | null;
+}
+
+interface SupabaseSettingsUpsert extends SupabaseSettingsRow {
+  user_id: string;
+}
+
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
@@ -59,7 +72,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
 
         if (data) {
-          const rawData = data as any;
+          const rawData = data as SupabaseSettingsRow;
           const loadedSettings: AppSettings = {
             fontSize: parseInt(rawData.font_size || "16") || 16,
             fontFamily: rawData.font_family || "sans-serif",
@@ -114,17 +127,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     // Save to Supabase if user is logged in
     if (user && isSupabaseConfigured) {
       try {
+        const supabasePayload: SupabaseSettingsUpsert = {
+          user_id: user.id,
+          font_size: newSettings.fontSize.toString(),
+          font_family: newSettings.fontFamily,
+          reader_font_family: newSettings.readerFontFamily,
+          color_scheme: newSettings.colorScheme,
+          theme: newSettings.theme,
+          bible_version: newSettings.bibleVersion,
+        };
+
         const { error } = await supabase
           .from("user_settings")
-          .upsert({
-            user_id: user.id,
-            font_size: newSettings.fontSize.toString(),
-            font_family: newSettings.fontFamily,
-            reader_font_family: newSettings.readerFontFamily,
-            color_scheme: newSettings.colorScheme,
-            theme: newSettings.theme,
-            bible_version: newSettings.bibleVersion,
-          } as any);
+          .upsert(supabasePayload);
 
         if (error) {
           console.error("Error saving settings:", error);
