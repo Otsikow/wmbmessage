@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 
 export interface DailyContent {
   id: string;
@@ -50,8 +50,12 @@ export function useDailyContent() {
   const fetchDailyContent = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      if (!isSupabaseConfigured) {
+        throw new Error("Supabase is not configured. Daily content is unavailable.");
+      }
+
       // First, try to get today's content
       const today = new Date().toISOString().split('T')[0];
       
@@ -130,6 +134,10 @@ export function useDailyContent() {
     setError(null);
     
     try {
+      if (!isSupabaseConfigured) {
+        throw new Error("Supabase is not configured. Daily content is unavailable.");
+      }
+
       // Generate new random content
       const { data: generated, error: generateError } = await supabase
         .rpc('generate_daily_content');

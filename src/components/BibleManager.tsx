@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Trash2, Upload, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { BIBLE_BOOKS } from '@/hooks/useBibleData';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface BibleVerse {
   id: string;
@@ -41,6 +42,7 @@ export default function BibleManager() {
   const [bulkImportData, setBulkImportData] = useState('');
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     book: '',
@@ -52,10 +54,17 @@ export default function BibleManager() {
   });
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setConfigError('Supabase is not configured. Bible management tools are currently disabled.');
+      return;
+    }
+
     fetchVerses();
   }, [searchTerm]);
 
   const fetchVerses = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
       let query = supabase
@@ -74,12 +83,14 @@ export default function BibleManager() {
 
       if (error) throw error;
       setVerses(data || []);
+      setConfigError(null);
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       });
+      setConfigError('Unable to load Bible verses. Please verify your Supabase setup or try again later.');
     } finally {
       setLoading(false);
     }
@@ -87,6 +98,14 @@ export default function BibleManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to create or update verses.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       if (editingVerse) {
         const { error } = await supabase
@@ -118,6 +137,14 @@ export default function BibleManager() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to delete verses.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!confirm('Are you sure you want to delete this verse?')) return;
 
     try {
@@ -139,6 +166,14 @@ export default function BibleManager() {
   };
 
   const handleBulkImport = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to import verses.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const parsed = JSON.parse(bulkImportData) as BulkImportItem[];
       
@@ -209,153 +244,158 @@ export default function BibleManager() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Bible Verses Management</CardTitle>
-            <CardDescription>Add, edit, and manage Bible verses</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Import
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle>Bible Verses Management</CardTitle>
+          <CardDescription>Add, edit, and manage Bible verses</CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={!isSupabaseConfigured}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[80vh] w-full max-w-3xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Bulk Import Bible Verses</DialogTitle>
+                <DialogDescription>
+                  Paste JSON array of verses to import. Format: {`[{"book": "Genesis", "chapter": 1, "verse": 1, "text": "...", "translation": "KJV", "is_jesus_words": false}]`}
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Paste JSON data here..."
+                value={bulkImportData}
+                onChange={(e) => setBulkImportData(e.target.value)}
+                className="min-h-[300px] font-mono text-sm"
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                  Cancel
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Bulk Import Bible Verses</DialogTitle>
-                  <DialogDescription>
-                    Paste JSON array of verses to import. Format: {`[{"book": "Genesis", "chapter": 1, "verse": 1, "text": "...", "translation": "KJV", "is_jesus_words": false}]`}
-                  </DialogDescription>
-                </DialogHeader>
-                <Textarea
-                  placeholder="Paste JSON data here..."
-                  value={bulkImportData}
-                  onChange={(e) => setBulkImportData(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
-                />
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleBulkImport}>
-                    Import Verses
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={openNewDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Verse
+                <Button onClick={handleBulkImport} disabled={!bulkImportData.trim()}>
+                  Import Verses
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>{editingVerse ? 'Edit Verse' : 'Add New Verse'}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Book</Label>
-                      <Select
-                        value={formData.book}
-                        onValueChange={(value) => setFormData({ ...formData, book: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select book" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {BIBLE_BOOKS.map((book) => (
-                            <SelectItem key={book.name} value={book.name}>
-                              {book.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-                    <div className="space-y-2">
-                      <Label>Translation</Label>
-                      <Select
-                        value={formData.translation}
-                        onValueChange={(value) => setFormData({ ...formData, translation: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="KJV">KJV</SelectItem>
-                          <SelectItem value="NIV">NIV</SelectItem>
-                          <SelectItem value="ESV">ESV</SelectItem>
-                          <SelectItem value="NKJV">NKJV</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Chapter</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={formData.chapter}
-                        onChange={(e) => setFormData({ ...formData, chapter: parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Verse</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={formData.verse}
-                        onChange={(e) => setFormData({ ...formData, verse: parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNewDialog} disabled={!isSupabaseConfigured}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Verse
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-full max-w-2xl sm:max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{editingVerse ? 'Edit Verse' : 'Add New Verse'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Book</Label>
+                    <Select
+                      value={formData.book}
+                      onValueChange={(value) => setFormData({ ...formData, book: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select book" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BIBLE_BOOKS.map((book) => (
+                          <SelectItem key={book.name} value={book.name}>
+                            {book.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Text</Label>
-                    <Textarea
-                      value={formData.text}
-                      onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                      rows={5}
+                    <Label>Translation</Label>
+                    <Select
+                      value={formData.translation}
+                      onValueChange={(value) => setFormData({ ...formData, translation: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="KJV">KJV</SelectItem>
+                        <SelectItem value="NIV">NIV</SelectItem>
+                        <SelectItem value="ESV">ESV</SelectItem>
+                        <SelectItem value="NKJV">NKJV</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Chapter</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.chapter}
+                      onChange={(e) => setFormData({ ...formData, chapter: parseInt(e.target.value) })}
                       required
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="jesus-words"
-                      checked={formData.is_jesus_words}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, is_jesus_words: checked as boolean })
-                      }
+                  <div className="space-y-2">
+                    <Label>Verse</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.verse}
+                      onChange={(e) => setFormData({ ...formData, verse: parseInt(e.target.value) })}
+                      required
                     />
-                    <Label htmlFor="jesus-words">Jesus's words (red letter)</Label>
                   </div>
+                </div>
 
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingVerse ? 'Update' : 'Create'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                <div className="space-y-2">
+                  <Label>Text</Label>
+                  <Textarea
+                    value={formData.text}
+                    onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                    rows={5}
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="jesus-words"
+                    checked={formData.is_jesus_words}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, is_jesus_words: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="jesus-words">Jesus's words (red letter)</Label>
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editingVerse ? 'Update' : 'Create'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
+        {configError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Supabase connection required</AlertTitle>
+            <AlertDescription>{configError}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -373,7 +413,7 @@ export default function BibleManager() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -393,15 +433,15 @@ export default function BibleManager() {
                 ) : (
                   verses.map((verse) => (
                     <TableRow key={verse.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium whitespace-nowrap">
                         {verse.book} {verse.chapter}:{verse.verse}
                       </TableCell>
-                      <TableCell className="max-w-md truncate">
+                      <TableCell className="min-w-[200px] whitespace-normal break-words text-sm text-muted-foreground">
                         {verse.text}
                       </TableCell>
-                      <TableCell>{verse.translation}</TableCell>
+                      <TableCell className="whitespace-nowrap">{verse.translation}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
                             variant="ghost"

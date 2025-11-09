@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useUserRole = () => {
@@ -9,7 +9,7 @@ export const useUserRole = () => {
 
   useEffect(() => {
     const checkRole = async () => {
-      if (!user) {
+      if (!user || !isSupabaseConfigured) {
         setIsAdmin(false);
         setLoading(false);
         return;

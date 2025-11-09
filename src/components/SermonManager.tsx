@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Edit, Trash2, Upload, Loader2, Search, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Sermon {
   id: string;
@@ -44,6 +45,7 @@ export default function SermonManager() {
   const [bulkImportData, setBulkImportData] = useState('');
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -54,10 +56,17 @@ export default function SermonManager() {
   const [paragraphsText, setParagraphsText] = useState('');
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setConfigError('Supabase is not configured. Sermon management tools are currently disabled.');
+      return;
+    }
+
     fetchSermons();
   }, [searchTerm]);
 
   const fetchSermons = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
       let query = supabase
@@ -74,18 +83,21 @@ export default function SermonManager() {
 
       if (error) throw error;
       setSermons(data || []);
+      setConfigError(null);
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       });
+      setConfigError('Unable to load sermons. Please check your Supabase configuration.');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchParagraphs = async (sermonId: string) => {
+    if (!isSupabaseConfigured) return;
     try {
       const { data, error } = await supabase
         .from('sermon_paragraphs')
@@ -106,6 +118,14 @@ export default function SermonManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to create or update sermons.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       if (editingSermon) {
         const { error } = await supabase
@@ -151,6 +171,7 @@ export default function SermonManager() {
   };
 
   const updateSermonParagraphs = async (sermonId: string) => {
+    if (!isSupabaseConfigured) return;
     // Delete existing paragraphs
     await supabase
       .from('sermon_paragraphs')
@@ -176,6 +197,14 @@ export default function SermonManager() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to delete sermons.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!confirm('Are you sure you want to delete this sermon and all its paragraphs?')) return;
 
     try {
@@ -201,6 +230,14 @@ export default function SermonManager() {
   };
 
   const handleBulkImport = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to import sermons.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const parsed = JSON.parse(bulkImportData) as BulkImportSermon[];
       
@@ -263,6 +300,15 @@ export default function SermonManager() {
   };
 
   const openEditDialog = async (sermon: Sermon) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to edit sermons.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setEditingSermon(sermon);
     setFormData({
       title: sermon.title,
@@ -306,124 +352,137 @@ export default function SermonManager() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>WMB Sermons Management</CardTitle>
-            <CardDescription>Manage William Branham sermons and content</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Import
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle>WMB Sermons Management</CardTitle>
+          <CardDescription>Manage William Branham sermons and content</CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={!isSupabaseConfigured}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[80vh] w-full max-w-3xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Bulk Import Sermons</DialogTitle>
+                <DialogDescription>
+                  Paste JSON array of sermons. Format: {`[{"title": "...", "date": "YYYY-MM-DD", "location": "...", "paragraphs": ["...", "..."]}]`}
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Paste JSON data here..."
+                value={bulkImportData}
+                onChange={(e) => setBulkImportData(e.target.value)}
+                className="min-h-[320px] font-mono text-sm"
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                  Cancel
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Bulk Import Sermons</DialogTitle>
-                  <DialogDescription>
-                    Paste JSON array of sermons. Format: {`[{"title": "...", "date": "YYYY-MM-DD", "location": "...", "paragraphs": ["...", "..."]}]`}
-                  </DialogDescription>
-                </DialogHeader>
-                <Textarea
-                  placeholder="Paste JSON data here..."
-                  value={bulkImportData}
-                  onChange={(e) => setBulkImportData(e.target.value)}
-                  className="min-h-[400px] font-mono text-sm"
-                />
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleBulkImport}>
-                    Import Sermons
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                <Button onClick={handleBulkImport} disabled={!bulkImportData.trim()}>
+                  Import Sermons
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={openNewDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Sermon
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingSermon ? 'Edit Sermon' : 'Add New Sermon'}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNewDialog} disabled={!isSupabaseConfigured}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Sermon
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingSermon ? 'Edit Sermon' : 'Add New Sermon'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="The Spoken Word"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Title</Label>
+                    <Label>Date</Label>
                     <Input
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="The Spoken Word"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <Input
-                        value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        placeholder="Jeffersonville, IN"
-                        required
-                      />
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label>Content (Paragraphs)</Label>
-                    <Textarea
-                      value={paragraphsText}
-                      onChange={(e) => setParagraphsText(e.target.value)}
-                      placeholder="Enter sermon content. Separate paragraphs with double line breaks..."
-                      rows={15}
-                      className="font-mono text-sm"
+                    <Label>Location</Label>
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="Jeffersonville, IN"
+                      required
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Tip: Separate paragraphs with blank lines or number them (1. 2. 3...)
-                    </p>
                   </div>
+                </div>
 
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingSermon ? 'Update' : 'Create'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                <div className="space-y-2">
+                  <Label>Content (Paragraphs)</Label>
+                  <Textarea
+                    value={paragraphsText}
+                    onChange={(e) => setParagraphsText(e.target.value)}
+                    placeholder="Enter sermon content. Separate paragraphs with double line breaks..."
+                    rows={12}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tip: Separate paragraphs with blank lines or number them (1. 2. 3...)
+                  </p>
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editingSermon ? 'Update' : 'Create'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="list" className="w-full">
-          <TabsList>
-            <TabsTrigger value="list">Sermons List</TabsTrigger>
-            {selectedSermon && <TabsTrigger value="content">Sermon Content</TabsTrigger>}
-          </TabsList>
+        {configError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Supabase connection required</AlertTitle>
+            <AlertDescription>{configError}</AlertDescription>
+          </Alert>
+        )}
 
-          <TabsContent value="list" className="mt-4">
+        <Tabs defaultValue="list" className="w-full space-y-4">
+          <div className="overflow-x-auto">
+            <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1">
+              <TabsTrigger value="list" className="w-full whitespace-nowrap">
+                Sermons List
+              </TabsTrigger>
+              {selectedSermon && (
+                <TabsTrigger value="content" className="w-full whitespace-nowrap">
+                  Sermon Content
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+
+          <TabsContent value="list">
             <div className="mb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -441,7 +500,7 @@ export default function SermonManager() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="rounded-md border">
+              <div className="overflow-x-auto rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -452,31 +511,35 @@ export default function SermonManager() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sermons.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
-                          No sermons found.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      sermons.map((sermon) => (
-                        <TableRow 
-                          key={sermon.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSermonClick(sermon)}
-                        >
-                          <TableCell className="font-medium">{sermon.title}</TableCell>
-                          <TableCell>
-                            {new Date(sermon.date).toLocaleDateString()}
+                      {sermons.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            No sermons found.
                           </TableCell>
-                          <TableCell>{sermon.location}</TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => openEditDialog(sermon)}
-                              >
+                        </TableRow>
+                      ) : (
+                        sermons.map((sermon) => (
+                          <TableRow
+                            key={sermon.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSermonClick(sermon)}
+                          >
+                            <TableCell className="font-medium min-w-[200px] whitespace-normal break-words">
+                              {sermon.title}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {new Date(sermon.date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="min-w-[180px] whitespace-normal break-words">
+                              {sermon.location}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openEditDialog(sermon)}
+                                >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
@@ -500,13 +563,13 @@ export default function SermonManager() {
           {selectedSermon && (
             <TabsContent value="content" className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>{selectedSermon.title}</CardTitle>
-                  <CardDescription>
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl font-semibold">{selectedSermon.title}</CardTitle>
+                  <CardDescription className="text-sm">
                     {new Date(selectedSermon.date).toLocaleDateString()} • {selectedSermon.location}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="space-y-4">
                     {paragraphs.map((para) => (
                       <div key={para.id} className="border-l-2 border-primary pl-4">

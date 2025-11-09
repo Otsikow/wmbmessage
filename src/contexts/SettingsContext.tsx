@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 
 export interface AppSettings {
@@ -40,7 +40,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Load settings from Supabase when user logs in
   useEffect(() => {
     const loadUserSettings = async () => {
-      if (!user) {
+      if (!user || !isSupabaseConfigured) {
         setLoading(false);
         return;
       }
@@ -111,7 +111,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(newSettings);
 
     // Save to Supabase if user is logged in
-    if (user) {
+    if (user && isSupabaseConfigured) {
       try {
         const { error } = await supabase
           .from("user_settings")
@@ -138,7 +138,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(defaultSettings);
 
     // Reset in Supabase if user is logged in
-    if (user) {
+    if (user && isSupabaseConfigured) {
       try {
         const { error } = await supabase
           .from("user_settings")

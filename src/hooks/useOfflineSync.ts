@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { offlineStorage, STORES } from '@/lib/offlineStorage';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,6 +17,7 @@ export const useOfflineSync = () => {
 
   // Cache sermons for offline reading
   const cacheSermons = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
     try {
       const { data: sermons, error } = await supabase
         .from('sermons')
@@ -37,6 +38,7 @@ export const useOfflineSync = () => {
 
   // Cache sermon paragraphs for offline reading
   const cacheSermonParagraphs = useCallback(async (sermonId: string) => {
+    if (!isSupabaseConfigured) return;
     try {
       const { data: paragraphs, error } = await supabase
         .from('sermon_paragraphs')
@@ -57,7 +59,7 @@ export const useOfflineSync = () => {
 
   // Cache user notes for offline access
   const cacheUserNotes = useCallback(async () => {
-    if (!user) return;
+    if (!user || !isSupabaseConfigured) return;
 
     try {
       const { data: notes, error } = await supabase
@@ -79,6 +81,7 @@ export const useOfflineSync = () => {
 
   // Cache cross references for offline access
   const cacheCrossReferences = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
     try {
       const { data: crossRefs, error } = await supabase
         .from('cross_references')
@@ -138,6 +141,8 @@ export const useOfflineSync = () => {
 
   // Sync offline changes to Supabase
   const syncOfflineChanges = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+
     if (!navigator.onLine) {
       console.log('Cannot sync - offline');
       return;
@@ -187,6 +192,8 @@ export const useOfflineSync = () => {
 
   // Auto-sync when coming back online
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
     const handleOnline = () => {
       syncOfflineChanges();
       // Re-cache data to get latest updates
@@ -212,6 +219,8 @@ export const useOfflineSync = () => {
 
   // Cache initial data when online
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
     if (navigator.onLine) {
       cacheSermons();
       cacheUserNotes();
