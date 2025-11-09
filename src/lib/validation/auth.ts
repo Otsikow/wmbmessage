@@ -134,7 +134,7 @@ export function validateSignUpInput(input: SignUpInput): ValidationResult<SignUp
   const result = signUpSchema.safeParse(sanitized);
 
   if (result.success) {
-    return { sanitized: result.data, errors: [] };
+    return { sanitized: result.data as SignUpInput, errors: [] };
   }
 
   return {
@@ -148,7 +148,7 @@ export function validateSignInInput(input: SignInInput): ValidationResult<SignIn
   const result = signInSchema.safeParse(sanitized);
 
   if (result.success) {
-    return { sanitized: result.data, errors: [] };
+    return { sanitized: result.data as SignInInput, errors: [] };
   }
 
   return {
@@ -164,7 +164,7 @@ export function validateResetPasswordInput(
   const result = resetPasswordSchema.safeParse(sanitized);
 
   if (result.success) {
-    return { sanitized: result.data, errors: [] };
+    return { sanitized: result.data as ResetPasswordInput, errors: [] };
   }
 
   return {

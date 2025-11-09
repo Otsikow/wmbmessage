@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./AuthContext";
+import { AuthContext } from "./AuthContext";
 
 export interface AppSettings {
   fontSize: number; // 14-24px
@@ -43,7 +43,7 @@ interface SupabaseSettingsUpsert extends SupabaseSettingsRow {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const authContext = useAuth();
+  const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>(() => {
