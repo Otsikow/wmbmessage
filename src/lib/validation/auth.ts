@@ -1,10 +1,31 @@
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { z } from "zod";
+
 const NAME_REGEX = /^(?=.{2,100}$)[A-Za-z]+(?:[\s'-][A-Za-z]+)*$/;
 
-const hasUppercase = (value: string) => /[A-Z]/.test(value);
-const hasLowercase = (value: string) => /[a-z]/.test(value);
-const hasNumber = (value: string) => /\d/.test(value);
-const hasSymbol = (value: string) => /[^A-Za-z0-9]/.test(value);
+const sanitizeEmail = (value: string) => value.trim().toLowerCase();
+const sanitizeText = (value: string) => value.trim();
+
+const createStrongPasswordIssues = (value: string) => {
+  const issues: string[] = [];
+
+  if (value.length < 8) {
+    issues.push("Password must be at least 8 characters long.");
+  }
+  if (!/[A-Z]/.test(value)) {
+    issues.push("Password must include an uppercase letter.");
+  }
+  if (!/[a-z]/.test(value)) {
+    issues.push("Password must include a lowercase letter.");
+  }
+  if (!/\d/.test(value)) {
+    issues.push("Password must include a number.");
+  }
+  if (!/[^A-Za-z0-9]/.test(value)) {
+    issues.push("Password must include a special character.");
+  }
+
+  return issues;
+};
 
 export interface ValidationResult<T> {
   sanitized: T;
@@ -22,76 +43,132 @@ export interface SignInInput {
   password: string;
 }
 
-export function validateSignUpInput({
-  name,
-  email,
-  password,
-}: SignUpInput): ValidationResult<SignUpInput> {
-  const sanitized = {
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    password: password.trim(),
-  };
-
-  const errors: string[] = [];
-
-  if (!sanitized.name) {
-    errors.push("Name is required.");
-  } else if (!NAME_REGEX.test(sanitized.name)) {
-    errors.push(
-      "Name must be 2-100 characters and may include letters, spaces, apostrophes, or hyphens."
-    );
-  }
-
-  if (!sanitized.email) {
-    errors.push("Email is required.");
-  } else if (!EMAIL_REGEX.test(sanitized.email)) {
-    errors.push("Enter a valid email address.");
-  }
-
-  if (!sanitized.password) {
-    errors.push("Password is required.");
-  } else {
-    if (sanitized.password.length < 8) {
-      errors.push("Password must be at least 8 characters long.");
-    }
-    if (!hasUppercase(sanitized.password)) {
-      errors.push("Password must include an uppercase letter.");
-    }
-    if (!hasLowercase(sanitized.password)) {
-      errors.push("Password must include a lowercase letter.");
-    }
-    if (!hasNumber(sanitized.password)) {
-      errors.push("Password must include a number.");
-    }
-    if (!hasSymbol(sanitized.password)) {
-      errors.push("Password must include a special character.");
-    }
-  }
-
-  return { sanitized, errors };
+export interface ResetPasswordInput {
+  password: string;
+  confirmPassword: string;
 }
 
-export function validateSignInInput({
-  email,
+const nameSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Name is required." })
+  .refine((value) => NAME_REGEX.test(value), {
+    message:
+      "Name must be 2-100 characters and may include letters, spaces, apostrophes, or hyphens.",
+  });
+
+const emailSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Email is required." })
+  .email({ message: "Enter a valid email address." })
+  .transform((value) => value.toLowerCase());
+
+const passwordSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Password is required." });
+
+const strongPasswordSchema = passwordSchema.superRefine((value, ctx) => {
+  for (const issue of createStrongPasswordIssues(value)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: issue,
+    });
+  }
+});
+
+const signUpSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  password: strongPasswordSchema,
+});
+
+const signInSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+const resetPasswordSchema = z
+  .object({
+    password: strongPasswordSchema,
+    confirmPassword: z
+      .string()
+      .trim()
+      .min(1, { message: "Confirm password is required." }),
+  })
+  .superRefine(({ password, confirmPassword }, ctx) => {
+    if (password !== confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwords do not match.",
+        path: ["confirmPassword"],
+      });
+    }
+  });
+
+const sanitizeSignUpInput = ({ name, email, password }: SignUpInput): SignUpInput => ({
+  name: sanitizeText(name),
+  email: sanitizeEmail(email),
+  password: sanitizeText(password),
+});
+
+const sanitizeSignInInput = ({ email, password }: SignInInput): SignInInput => ({
+  email: sanitizeEmail(email),
+  password: sanitizeText(password),
+});
+
+const sanitizeResetPasswordInput = ({
   password,
-}: SignInInput): ValidationResult<SignInInput> {
-  const sanitized = {
-    email: email.trim().toLowerCase(),
-    password: password.trim(),
+  confirmPassword,
+}: ResetPasswordInput): ResetPasswordInput => ({
+  password: sanitizeText(password),
+  confirmPassword: sanitizeText(confirmPassword),
+});
+
+const extractErrors = (error: z.ZodError): string[] =>
+  error.errors.map((issue) => issue.message);
+
+export function validateSignUpInput(input: SignUpInput): ValidationResult<SignUpInput> {
+  const sanitized = sanitizeSignUpInput(input);
+  const result = signUpSchema.safeParse(sanitized);
+
+  if (result.success) {
+    return { sanitized: result.data, errors: [] };
+  }
+
+  return {
+    sanitized,
+    errors: extractErrors(result.error),
   };
+}
 
-  const errors: string[] = [];
+export function validateSignInInput(input: SignInInput): ValidationResult<SignInInput> {
+  const sanitized = sanitizeSignInInput(input);
+  const result = signInSchema.safeParse(sanitized);
 
-  if (!sanitized.email) {
-    errors.push("Email is required.");
-  } else if (!EMAIL_REGEX.test(sanitized.email)) {
-    errors.push("Enter a valid email address.");
+  if (result.success) {
+    return { sanitized: result.data, errors: [] };
   }
 
-  if (!sanitized.password) {
-    errors.push("Password is required.");
+  return {
+    sanitized,
+    errors: extractErrors(result.error),
+  };
+}
+
+export function validateResetPasswordInput(
+  input: ResetPasswordInput
+): ValidationResult<ResetPasswordInput> {
+  const sanitized = sanitizeResetPasswordInput(input);
+  const result = resetPasswordSchema.safeParse(sanitized);
+
+  if (result.success) {
+    return { sanitized: result.data, errors: [] };
   }
 
-  return { sanitized, errors };
+  return {
+    sanitized,
+    errors: extractErrors(result.error),
+  };
 }
