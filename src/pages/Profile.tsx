@@ -1,18 +1,46 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Mail, Lock, LogOut, CheckCircle2, Clock, RefreshCcw } from 'lucide-react';
-import Header from '@/components/Header';
-import { getFriendlyErrorMessage } from '@/lib/errorHandling';
-import { validateEmailOnly } from '@/lib/validation/auth';
+import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Loader2,
+  User,
+  Mail,
+  Lock,
+  LogOut,
+  Upload,
+  Trash2,
+  Settings as SettingsIcon,
+  Bell,
+  Calendar,
+  Megaphone,
+  CheckCircle2,
+  Clock,
+  RefreshCcw,
+} from "lucide-react";
+import Header from "@/components/Header";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
+import { validateEmailOnly } from "@/lib/validation/auth";
+import { Switch } from "@/components/ui/switch";
+
+interface AccountSettingsState {
+  emailNotifications: boolean;
+  weeklySummary: boolean;
+  productUpdates: boolean;
+}
 
 const RESEND_TIMEOUT_SECONDS = 60;
 
@@ -20,35 +48,62 @@ export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [loading, setLoading] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [accountSettings, setAccountSettings] = useState<AccountSettingsState>({
+    emailNotifications: false,
+    weeklySummary: false,
+    productUpdates: false,
+  });
+  const [updatingSetting, setUpdatingSetting] =
+    useState<keyof AccountSettingsState | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     if (!user) {
-      navigate('/auth/sign-in');
+      navigate("/auth/sign-in");
       return;
     }
 
     const fetchProfile = async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
           .single();
 
         if (error) throw error;
         if (data) {
-          setFullName(data.full_name || '');
-          setEmail(data.email || user.email || '');
+          setFullName(data.full_name || "");
+          setEmail(data.email || user.email || "");
+          setAvatarPath(data.avatar_url);
+
+          if (data.avatar_url) {
+            if (data.avatar_url.startsWith("http")) {
+              setAvatarUrl(data.avatar_url);
+            } else {
+              const { data: publicUrlData } = supabase.storage
+                .from("avatars")
+                .getPublicUrl(data.avatar_url);
+              setAvatarUrl(publicUrlData?.publicUrl ?? null);
+            }
+          } else {
+            setAvatarUrl(null);
+          }
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error("Error fetching profile:", error);
       }
     };
 
@@ -56,91 +111,246 @@ export default function Profile() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (resendCountdown <= 0) return;
+    if (!user) return;
 
+    const metadata =
+      user.user_metadata?.account_settings as
+        | Partial<AccountSettingsState>
+        | undefined;
+
+    if (metadata) {
+      setAccountSettings((prev) => ({
+        emailNotifications:
+          typeof metadata.emailNotifications === "boolean"
+            ? metadata.emailNotifications
+            : prev.emailNotifications,
+        weeklySummary:
+          typeof metadata.weeklySummary === "boolean"
+            ? metadata.weeklySummary
+            : prev.weeklySummary,
+        productUpdates:
+          typeof metadata.productUpdates === "boolean"
+            ? metadata.productUpdates
+            : prev.productUpdates,
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
     const timer = setInterval(() => {
       setResendCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [resendCountdown]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
-
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ full_name: fullName })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Profile updated successfully',
+        title: "Success",
+        description: "Profile updated successfully",
       });
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          'We could not update your profile. Please try again shortly.',
-          'update-profile'
+          "We could not update your profile. Please try again shortly.",
+          "update-profile"
         ),
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
+  const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive',
+        title: "Image too large",
+        description: "Please choose an image smaller than 5MB.",
+        variant: "destructive",
       });
+      event.target.value = "";
       return;
     }
 
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const safeExt = fileExt ? `.${fileExt}` : "";
+      const fileName = `${user.id}-${Date.now()}${safeExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+      const publicUrl = publicUrlData?.publicUrl ?? null;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: filePath })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+
+      setAvatarPath(filePath);
+      setAvatarUrl(publicUrl);
+      toast({
+        title: "Avatar updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error uploading avatar",
+        description: getFriendlyErrorMessage(
+          error,
+          "We could not upload your new avatar right now. Please try again.",
+          "upload-avatar"
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      if (avatarPath && !avatarPath.startsWith("http")) {
+        const { error: removeError } = await supabase.storage
+          .from("avatars")
+          .remove([avatarPath]);
+        if (removeError) throw removeError;
+      }
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", user.id);
+      if (updateError) throw updateError;
+
+      setAvatarPath(null);
+      setAvatarUrl(null);
+      toast({
+        title: "Avatar removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error removing avatar",
+        description: getFriendlyErrorMessage(
+          error,
+          "We could not remove your avatar right now. Please try again later.",
+          "remove-avatar"
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
     if (newPassword.length < 6) {
       toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters',
-        variant: 'destructive',
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Password updated successfully',
+        title: "Success",
+        description: "Password updated successfully",
       });
-      setNewPassword('');
-      setConfirmPassword('');
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          'We could not update your password right now. Please try again later.',
-          'change-password'
+          "We could not update your password right now. Please try again later.",
+          "change-password"
         ),
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAccountSettingChange = async (
+    key: keyof AccountSettingsState,
+    value: boolean
+  ) => {
+    if (!user) return;
+
+    const previousValue = accountSettings[key];
+    const updatedSettings = { ...accountSettings, [key]: value };
+    setAccountSettings(updatedSettings);
+    setUpdatingSetting(key);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { account_settings: updatedSettings },
+      });
+      if (error) throw error;
+
+      toast({
+        title: "Settings updated",
+        description: "Your account preferences have been saved.",
+      });
+    } catch (error) {
+      setAccountSettings((prev) => ({ ...prev, [key]: previousValue }));
+      toast({
+        title: "Error updating settings",
+        description: getFriendlyErrorMessage(
+          error,
+          "We could not update that preference right now. Please try again.",
+          "update-account-setting"
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingSetting(null);
     }
   };
 
@@ -150,37 +360,35 @@ export default function Profile() {
 
     if (errors.length > 0) {
       toast({
-        title: 'Invalid email address',
-        description: errors.join('\n'),
-        variant: 'destructive',
+        title: "Invalid email address",
+        description: errors.join("\n"),
+        variant: "destructive",
       });
       return;
     }
 
     setResendLoading(true);
-
     try {
       const { error } = await supabase.auth.resend({
-        type: 'signup',
+        type: "signup",
         email: sanitized.email,
       });
-
       if (error) throw error;
 
       setResendCountdown(RESEND_TIMEOUT_SECONDS);
       toast({
-        title: 'Verification email sent',
-        description: 'We have sent a new verification link to your inbox.',
+        title: "Verification email sent",
+        description: "A new verification link has been sent to your inbox.",
       });
     } catch (error) {
       toast({
-        title: 'Unable to resend email',
+        title: "Unable to resend email",
         description: getFriendlyErrorMessage(
           error,
-          'We could not resend the verification email. Please try again later.',
-          'resend-verification'
+          "We could not resend the verification email. Please try again later.",
+          "resend-verification"
         ),
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setResendLoading(false);
@@ -190,16 +398,16 @@ export default function Profile() {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/');
+      navigate("/");
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          'We could not sign you out safely. Please refresh and try again.',
-          'sign-out'
+          "We could not sign you out safely. Please refresh and try again.",
+          "sign-out"
         ),
-        variant: 'destructive',
+        variant: "destructive",
       });
     }
   };
@@ -217,6 +425,7 @@ export default function Profile() {
             </Button>
           </div>
 
+          {/* Profile Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -228,11 +437,49 @@ export default function Profile() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 mb-6">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src="" />
+                  <AvatarImage src={avatarUrl ?? ""} />
                   <AvatarFallback className="text-2xl">
-                    {fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    {fullName?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      Upload Avatar
+                    </Button>
+                    {avatarUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleRemoveAvatar}
+                        disabled={uploadingAvatar}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a square JPG or PNG (max 5MB).
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -261,12 +508,7 @@ export default function Profile() {
                     </Badge>
                   )}
                 </Label>
-                <Input
-                  id="email"
-                  value={email}
-                  disabled
-                  className="bg-muted"
-                />
+                <Input id="email" value={email} disabled className="bg-muted" />
                 {!user?.email_confirmed_at && (
                   <div className="space-y-3 rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-4 text-sm">
                     <div className="flex items-start gap-3 text-muted-foreground">
@@ -299,7 +541,7 @@ export default function Profile() {
                         )}
                       </Button>
                       <span className="text-xs text-muted-foreground">
-                        We'll send the link to {email || 'your registered email'}.
+                        We'll send the link to {email || "your registered email"}.
                       </span>
                     </div>
                   </div>
@@ -313,6 +555,67 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* Account Settings Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5" />
+                Account Settings
+              </CardTitle>
+              <CardDescription>Manage communication preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                {
+                  key: "emailNotifications",
+                  icon: <Bell className="h-5 w-5 text-muted-foreground" />,
+                  title: "Email notifications",
+                  desc: "Receive alerts about important account activity.",
+                },
+                {
+                  key: "weeklySummary",
+                  icon: <Calendar className="h-5 w-5 text-muted-foreground" />,
+                  title: "Weekly summary",
+                  desc: "Get a weekly recap of new sermons and study guides.",
+                },
+                {
+                  key: "productUpdates",
+                  icon: <Megaphone className="h-5 w-5 text-muted-foreground" />,
+                  title: "Product updates",
+                  desc: "Hear about new features and improvements first.",
+                },
+              ].map((setting) => (
+                <div
+                  key={setting.key}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3">
+                    {setting.icon}
+                    <div>
+                      <p className="font-medium">{setting.title}</p>
+                      <p className="text-sm text-muted-foreground">{setting.desc}</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={
+                      accountSettings[
+                        setting.key as keyof AccountSettingsState
+                      ]
+                    }
+                    onCheckedChange={(checked) =>
+                      handleAccountSettingChange(
+                        setting.key as keyof AccountSettingsState,
+                        checked
+                      )
+                    }
+                    disabled={updatingSetting === setting.key}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Password Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -332,7 +635,6 @@ export default function Profile() {
                   placeholder="Enter new password"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -343,7 +645,6 @@ export default function Profile() {
                   placeholder="Confirm new password"
                 />
               </div>
-
               <Button onClick={handleChangePassword} disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Change Password
