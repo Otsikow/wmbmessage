@@ -59,13 +59,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
 
         if (data) {
+          const rawData = data as any;
           const loadedSettings: AppSettings = {
-            fontSize: data.font_size,
-            fontFamily: data.font_family as any,
-            readerFontFamily: data.reader_font_family as any,
-            colorScheme: data.color_scheme as any,
-            theme: data.theme as any,
-            bibleVersion: data.bible_version,
+            fontSize: parseInt(rawData.font_size || "16") || 16,
+            fontFamily: rawData.font_family || "sans-serif",
+            readerFontFamily: rawData.reader_font_family || "serif",
+            colorScheme: rawData.color_scheme || "default",
+            theme: rawData.theme || "light",
+            bibleVersion: rawData.bible_version || "KJV",
           };
           setSettings(loadedSettings);
           localStorage.setItem("app-settings", JSON.stringify(loadedSettings));
@@ -117,13 +118,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           .from("user_settings")
           .upsert({
             user_id: user.id,
-            font_size: newSettings.fontSize,
+            font_size: newSettings.fontSize.toString(),
             font_family: newSettings.fontFamily,
             reader_font_family: newSettings.readerFontFamily,
             color_scheme: newSettings.colorScheme,
             theme: newSettings.theme,
             bible_version: newSettings.bibleVersion,
-          });
+          } as any);
 
         if (error) {
           console.error("Error saving settings:", error);
@@ -164,7 +165,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 export function useSettings() {
   const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error("useSettings must be used within SettingsProvider");
+    // Return a default context if provider is not available
+    // This prevents the app from crashing if there's a provider initialization issue
+    console.warn("useSettings called outside SettingsProvider, using defaults");
+    return {
+      settings: defaultSettings,
+      updateSettings: () => {},
+      resetSettings: () => {},
+      loading: false,
+    };
   }
   return context;
 }
