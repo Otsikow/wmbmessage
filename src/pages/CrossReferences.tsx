@@ -9,8 +9,14 @@ import Footer from "@/components/Footer";
 export default function CrossReferences() {
   const navigate = useNavigate();
 
-  const handleNavigateToVerse = (book: string, chapter: number) => {
-    navigate(`/bible?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+  const handleNavigateToVerse = (book: string, chapter: number, verse?: number) => {
+    const params = new URLSearchParams();
+    params.set("book", book);
+    params.set("chapter", chapter.toString());
+    if (verse !== undefined) {
+      params.set("verse", verse.toString());
+    }
+    navigate(`/bible?${params.toString()}`);
   };
 
   return (

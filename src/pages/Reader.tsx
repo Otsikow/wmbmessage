@@ -50,7 +50,13 @@ export default function Reader() {
 
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
-  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(undefined);
+  const initialVerseParam = searchParams.get("verse");
+  const initialVerseNumber = initialVerseParam ? parseInt(initialVerseParam, 10) : undefined;
+  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(
+    initialVerseNumber !== undefined && !Number.isNaN(initialVerseNumber)
+      ? initialVerseNumber
+      : undefined
+  );
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
@@ -64,11 +70,11 @@ export default function Reader() {
     isVerseBookmarked,
   } = useHighlights(currentBook, currentChapter);
 
-  const handleNavigateFromCrossRef = (book: string, chapter: number) => {
+  const handleNavigateFromCrossRef = (book: string, chapter: number, verse?: number) => {
     setCurrentBook(book);
     setCurrentChapter(chapter);
     setShowCrossRef(false);
-    setSelectedVerse(undefined);
+    setSelectedVerse(verse);
   };
 
   const handleVerseSelect = (verseNumber: number) => {

@@ -37,7 +37,11 @@ const SearchPage = () => {
   };
 
   const handleResultClick = (book: string, chapter: number, verse: number) => {
-    navigate(`/reader?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+    const params = new URLSearchParams();
+    params.set("book", book);
+    params.set("chapter", chapter.toString());
+    params.set("verse", verse.toString());
+    navigate(`/reader?${params.toString()}`);
   };
 
   return (
@@ -88,9 +92,15 @@ const SearchPage = () => {
                     </p>
                   </DialogHeader>
                   <div className="flex-1 overflow-hidden px-6 py-4">
-                    <CrossReferenceViewer 
-                      onNavigate={(book, chapter) => {
-                        navigate(`/reader?book=${encodeURIComponent(book)}&chapter=${chapter}`);
+                    <CrossReferenceViewer
+                      onNavigate={(book, chapter, verse) => {
+                        const params = new URLSearchParams();
+                        params.set("book", book);
+                        params.set("chapter", chapter.toString());
+                        if (verse !== undefined) {
+                          params.set("verse", verse.toString());
+                        }
+                        navigate(`/reader?${params.toString()}`);
                       }}
                     />
                   </div>
