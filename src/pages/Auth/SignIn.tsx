@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { validateSignInInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function SignIn() {
@@ -20,12 +21,26 @@ export default function SignIn() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { sanitized, errors } = validateSignInInput({ email, password });
+
+    setEmail(sanitized.email);
+    setPassword(sanitized.password);
+
+    if (errors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: errors.join("\n"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: sanitized.email,
+        password: sanitized.password,
       });
 
       if (error) throw error;

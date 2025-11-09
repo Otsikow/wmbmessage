@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { validateSignUpInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function SignUp() {
@@ -22,10 +23,16 @@ export default function SignUp() {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
+    const { sanitized, errors } = validateSignUpInput({ name, email, password });
+
+    setName(sanitized.name);
+    setEmail(sanitized.email);
+    setPassword(sanitized.password);
+
+    if (errors.length > 0) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: "Validation Error",
+        description: errors.join("\n"),
         variant: "destructive",
       });
       return;
@@ -35,11 +42,11 @@ export default function SignUp() {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: sanitized.email,
+        password: sanitized.password,
         options: {
           data: {
-            full_name: name,
+            full_name: sanitized.name,
           },
           emailRedirectTo: `${window.location.origin}/`,
         },
@@ -189,7 +196,7 @@ export default function SignUp() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Must be at least 6 characters
+              Must be 8+ characters with upper, lower, number, and symbol
             </p>
           </div>
 
