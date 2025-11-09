@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Upload, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { BIBLE_BOOKS } from '@/hooks/useBibleData';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getFriendlyErrorMessage } from '@/lib/errorHandling';
 
 interface BibleVerse {
   id: string;
@@ -88,7 +89,11 @@ export default function BibleManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not load Bible verses. Please try again after checking your connection.',
+          'load-bible-verses'
+        ),
         variant: 'destructive',
       });
       setConfigError('Unable to load Bible verses. Please verify your Supabase setup or try again later.');
@@ -131,7 +136,11 @@ export default function BibleManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not save this verse. Please review the details and try again.',
+          editingVerse ? 'update-verse' : 'create-verse'
+        ),
         variant: 'destructive',
       });
     }
@@ -160,7 +169,11 @@ export default function BibleManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not delete this verse. Please try again shortly.',
+          'delete-verse'
+        ),
         variant: 'destructive',
       });
     }
@@ -244,7 +257,11 @@ export default function BibleManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not import these verses. Please check the file contents and try again.',
+          'bulk-import-verses'
+        ),
         variant: 'destructive',
       });
     }

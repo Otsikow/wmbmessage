@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function ForgotPassword() {
@@ -30,13 +30,17 @@ export default function ForgotPassword() {
       setSent(true);
       toast({
         title: "Recovery email sent",
-        description: "Check your inbox for password reset instructions",
+        description: "Check your inbox for password reset instructions.",
       });
     } catch (error) {
-      console.error("Password recovery request failed", error);
+      console.error("Password recovery request failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "forgot-password"),
+        description: getFriendlyErrorMessage(
+          error,
+          "We couldn't send the reset email. Please verify your address and try again.",
+          "forgot-password"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -60,8 +64,8 @@ export default function ForgotPassword() {
           <h1 className="text-2xl font-bold">Reset Password</h1>
           <p className="text-sm text-muted-foreground text-center">
             {sent
-              ? "We've sent password reset instructions to your email"
-              : "Enter your email address and we'll send you a link to reset your password"}
+              ? "We've sent password reset instructions to your email."
+              : "Enter your email address and we'll send you a link to reset your password."}
           </p>
         </div>
 

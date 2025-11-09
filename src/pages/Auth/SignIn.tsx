@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
+import { validateSignInInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function SignIn() {
@@ -21,27 +22,46 @@ export default function SignIn() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const { sanitized, errors } = validateSignInInput({ email, password });
+
+    setEmail(sanitized.email);
+    setPassword(sanitized.password);
+
+    if (errors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: errors.join("\n"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: sanitized.email,
+        password: sanitized.password,
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "You have been signed in",
+        description: "You have been signed in successfully.",
       });
 
       navigate("/");
     } catch (error) {
-      console.error("Email sign-in failed", error);
+      console.error("Email sign-in failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "sign-in"),
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign in. Please check your email and password and try again.",
+          "sign-in"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -53,17 +73,19 @@ export default function SignIn() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+        options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) throw error;
     } catch (error) {
-      console.error("Google sign-in failed", error);
+      console.error("Google sign-in failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "oauth"),
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign in with Google. Please try again later.",
+          "google sign-in"
+        ),
         variant: "destructive",
       });
     }
@@ -184,7 +206,7 @@ export default function SignIn() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-card px-2 text-muted-foreground">
-              Don't have an account?
+              Don’t have an account?
             </span>
           </div>
         </div>

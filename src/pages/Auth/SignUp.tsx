@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
+import { validateSignUpInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function SignUp() {
@@ -23,10 +24,16 @@ export default function SignUp() {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
+    const { sanitized, errors } = validateSignUpInput({ name, email, password });
+
+    setName(sanitized.name);
+    setEmail(sanitized.email);
+    setPassword(sanitized.password);
+
+    if (errors.length > 0) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: "Validation Error",
+        description: errors.join("\n"),
         variant: "destructive",
       });
       return;
@@ -36,11 +43,11 @@ export default function SignUp() {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: sanitized.email,
+        password: sanitized.password,
         options: {
           data: {
-            full_name: name,
+            full_name: sanitized.name,
           },
           emailRedirectTo: `${window.location.origin}/`,
         },
@@ -50,15 +57,20 @@ export default function SignUp() {
 
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description:
+          "Account created successfully! Please verify your email before signing in.",
       });
 
-      navigate("/");
+      navigate("/auth/sign-in");
     } catch (error) {
-      console.error("Email sign-up failed", error);
+      console.error("Email sign-up failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "sign-up"),
+        description: getFriendlyErrorMessage(
+          error,
+          "We couldn't create your account. Please review your details or try again later.",
+          "email sign-up"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -70,17 +82,19 @@ export default function SignUp() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+        options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) throw error;
     } catch (error) {
-      console.error("Google sign-up failed", error);
+      console.error("Google sign-up failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "oauth"),
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign up with Google right now. Please try again later.",
+          "google sign-up"
+        ),
         variant: "destructive",
       });
     }
@@ -192,7 +206,7 @@ export default function SignUp() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Must be at least 6 characters
+              Must be 8+ characters with upper, lower, number, and symbol.
             </p>
           </div>
 

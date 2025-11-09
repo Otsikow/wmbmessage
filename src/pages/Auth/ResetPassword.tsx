@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function ResetPassword() {
@@ -22,19 +22,21 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // ✅ Basic validation checks
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Passwords do not match",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: "Error",
-        description: "Password must be at least 6 characters",
+        description:
+          "Password must be at least 8 characters long and include upper, lower, number, and symbol.",
         variant: "destructive",
       });
       return;
@@ -43,23 +45,25 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      });
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Your password has been updated",
+        description: "Your password has been updated successfully.",
       });
 
       navigate("/auth/sign-in");
     } catch (error) {
-      console.error("Password reset failed", error);
+      console.error("Password reset failed:", error);
       toast({
         title: "Error",
-        description: getSanitizedAuthErrorMessage(error, "reset-password"),
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to update your password right now. Please try again shortly.",
+          "reset-password"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -74,7 +78,7 @@ export default function ResetPassword() {
           <img src={logo} alt="MessageGuide" className="h-16 w-16" />
           <h1 className="text-2xl font-bold">Create New Password</h1>
           <p className="text-sm text-muted-foreground text-center">
-            Enter your new password below
+            Enter your new password below.
           </p>
         </div>
 
@@ -102,6 +106,9 @@ export default function ResetPassword() {
                 )}
               </button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Must be 8+ characters with upper, lower, number, and symbol.
+            </p>
           </div>
 
           <div className="space-y-2">
