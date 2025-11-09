@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,13 @@ export default function HighlightMenu({
   const [open, setOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(currentColor || "yellow");
   const [note, setNote] = useState(currentNote || "");
+
+  useEffect(() => {
+    if (open) {
+      setSelectedColor(currentColor || "yellow");
+      setNote(currentNote || "");
+    }
+  }, [open, currentColor, currentNote]);
 
   const handleHighlight = () => {
     onHighlight(selectedColor, note.trim() || undefined);
@@ -59,11 +66,18 @@ export default function HighlightMenu({
           )}
           disabled={disabled}
           title="Highlight verse"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
         >
           <Highlighter className="h-3.5 w-3.5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="start">
+      <PopoverContent
+        className="w-80"
+        align="start"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Highlight Color</Label>
@@ -71,6 +85,7 @@ export default function HighlightMenu({
               {HIGHLIGHT_COLORS.map((color) => (
                 <button
                   key={color.value}
+                  type="button"
                   onClick={() => handleColorSelect(color.value)}
                   className={cn(
                     "h-10 w-10 rounded-md border-2 transition-all hover:scale-110",

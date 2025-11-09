@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -56,19 +56,63 @@ export default function VerseCard({
 }: VerseCardProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+
+      if (typeof document !== "undefined") {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.setAttribute("readonly", "");
+        textArea.style.position = "absolute";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+        return successful;
+      }
+    } catch (error) {
+      console.error("Fallback copy failed:", error);
+    }
+
+    return false;
+  };
 
   const handleCopy = async () => {
     const verseText = `${book} ${chapter}:${verse.number}\n${verse.text}`;
-    
+
     try {
-      await navigator.clipboard.writeText(verseText);
+      const copiedSuccessfully = await copyToClipboard(verseText);
+
+      if (!copiedSuccessfully) {
+        throw new Error("Copy command was unsuccessful");
+      }
+
       setCopied(true);
       toast({
         title: "Copied to clipboard",
         description: `${book} ${chapter}:${verse.number}`,
       });
-      
-      setTimeout(() => setCopied(false), 2000);
+
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
       toast({
