@@ -7,10 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Mail, Lock, LogOut } from 'lucide-react';
+import { Loader2, User, Mail, Lock, LogOut, CheckCircle2, Clock, RefreshCcw } from 'lucide-react';
 import Header from '@/components/Header';
 import { getFriendlyErrorMessage } from '@/lib/errorHandling';
+import { validateEmailOnly } from '@/lib/validation/auth';
+
+const RESEND_TIMEOUT_SECONDS = 60;
 
 export default function Profile() {
   const { user } = useAuth();
@@ -21,6 +25,8 @@ export default function Profile() {
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -48,6 +54,16 @@ export default function Profile() {
 
     fetchProfile();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setResendCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendCountdown]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -128,6 +144,49 @@ export default function Profile() {
     }
   };
 
+  const handleResendVerification = async () => {
+    const { sanitized, errors } = validateEmailOnly(email);
+    setEmail(sanitized.email);
+
+    if (errors.length > 0) {
+      toast({
+        title: 'Invalid email address',
+        description: errors.join('\n'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setResendLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: sanitized.email,
+      });
+
+      if (error) throw error;
+
+      setResendCountdown(RESEND_TIMEOUT_SECONDS);
+      toast({
+        title: 'Verification email sent',
+        description: 'We have sent a new verification link to your inbox.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to resend email',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not resend the verification email. Please try again later.',
+          'resend-verification'
+        ),
+        variant: 'destructive',
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -190,6 +249,17 @@ export default function Profile() {
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   Email
+                  {user?.email_confirmed_at ? (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      Pending verification
+                    </Badge>
+                  )}
                 </Label>
                 <Input
                   id="email"
@@ -197,6 +267,43 @@ export default function Profile() {
                   disabled
                   className="bg-muted"
                 />
+                {!user?.email_confirmed_at && (
+                  <div className="space-y-3 rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-4 text-sm">
+                    <div className="flex items-start gap-3 text-muted-foreground">
+                      <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <p>
+                        Your email is awaiting verification. Check your inbox or request a new
+                        confirmation email.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading || resendCountdown > 0}
+                      >
+                        {resendLoading ? (
+                          <>
+                            <RefreshCcw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                            Sending...
+                          </>
+                        ) : resendCountdown > 0 ? (
+                          `Resend in ${resendCountdown}s`
+                        ) : (
+                          <>
+                            <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+                            Resend verification email
+                          </>
+                        )}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        We'll send the link to {email || 'your registered email'}.
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <Button onClick={handleUpdateProfile} disabled={loading}>
