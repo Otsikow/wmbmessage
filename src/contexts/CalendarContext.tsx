@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React from "react";
 
 export interface CalendarEvent {
   id: string;
@@ -15,12 +15,12 @@ interface CalendarContextType {
   deleteEvent: (id: string) => void;
 }
 
-const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
+const CalendarContext = React.createContext<CalendarContextType | undefined>(undefined);
 
 const STORAGE_KEY = "calendar-events";
 
-export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+export function CalendarProvider({ children }: { children: React.ReactNode }) {
+  const [events, setEvents] = React.useState<CalendarEvent[]>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
@@ -49,7 +49,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     ];
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   }, [events]);
 
@@ -79,7 +79,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 }
 
 export function useCalendar() {
-  const context = useContext(CalendarContext);
+  const context = React.useContext(CalendarContext);
   if (!context) {
     throw new Error("useCalendar must be used within CalendarProvider");
   }
