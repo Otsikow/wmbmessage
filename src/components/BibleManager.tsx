@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ export default function BibleManager() {
   const [editingVerse, setEditingVerse] = useState<BibleVerse | null>(null);
   const [bulkImportData, setBulkImportData] = useState('');
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [bulkImportFileName, setBulkImportFileName] = useState('');
   const { toast } = useToast();
   const [configError, setConfigError] = useState<string | null>(null);
 
@@ -165,6 +166,42 @@ export default function BibleManager() {
     }
   };
 
+  const handleBulkFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const input = event.target;
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : '';
+
+      if (text) {
+        setBulkImportData(text);
+        setBulkImportFileName(file.name);
+        toast({
+          title: 'File loaded',
+          description: `${file.name} ready for import`,
+        });
+      }
+
+      input.value = '';
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: 'Error reading file',
+        description: 'Please verify the file format and try again.',
+        variant: 'destructive',
+      });
+      setBulkImportFileName('');
+      input.value = '';
+    };
+
+    reader.readAsText(file);
+  };
+
   const handleBulkImport = async () => {
     if (!isSupabaseConfigured) {
       toast({
@@ -202,6 +239,7 @@ export default function BibleManager() {
       });
       setIsBulkDialogOpen(false);
       setBulkImportData('');
+      setBulkImportFileName('');
       fetchVerses();
     } catch (error) {
       toast({
@@ -242,6 +280,14 @@ export default function BibleManager() {
     setIsDialogOpen(true);
   };
 
+  const handleBulkDialogChange = (open: boolean) => {
+    setIsBulkDialogOpen(open);
+    if (!open) {
+      setBulkImportData('');
+      setBulkImportFileName('');
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -250,7 +296,7 @@ export default function BibleManager() {
           <CardDescription>Add, edit, and manage Bible verses</CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+          <Dialog open={isBulkDialogOpen} onOpenChange={handleBulkDialogChange}>
             <DialogTrigger asChild>
               <Button variant="outline" disabled={!isSupabaseConfigured}>
                 <Upload className="h-4 w-4 mr-2" />
@@ -264,6 +310,20 @@ export default function BibleManager() {
                   Paste JSON array of verses to import. Format: {`[{"book": "Genesis", "chapter": 1, "verse": 1, "text": "...", "translation": "KJV", "is_jesus_words": false}]`}
                 </DialogDescription>
               </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="bulk-upload">Upload JSON file</Label>
+                <Input
+                  id="bulk-upload"
+                  type="file"
+                  accept="application/json"
+                  onChange={handleBulkFileChange}
+                />
+                {bulkImportFileName && (
+                  <p className="text-xs text-muted-foreground">
+                    Loaded file: <span className="font-medium">{bulkImportFileName}</span>
+                  </p>
+                )}
+              </div>
               <Textarea
                 placeholder="Paste JSON data here..."
                 value={bulkImportData}
