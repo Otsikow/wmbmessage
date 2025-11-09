@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import logo from "@/assets/logo.png";
 
 export default function ForgotPassword() {
@@ -32,9 +33,10 @@ export default function ForgotPassword() {
         description: "Check your inbox for password reset instructions",
       });
     } catch (error) {
+      console.error("Password recovery request failed", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getSanitizedAuthErrorMessage(error, "forgot-password"),
         variant: "destructive",
       });
     } finally {

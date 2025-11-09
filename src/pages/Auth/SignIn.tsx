@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import logo from "@/assets/logo.png";
 
 export default function SignIn() {
@@ -37,9 +38,10 @@ export default function SignIn() {
 
       navigate("/");
     } catch (error) {
+      console.error("Email sign-in failed", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getSanitizedAuthErrorMessage(error, "sign-in"),
         variant: "destructive",
       });
     } finally {
@@ -58,9 +60,10 @@ export default function SignIn() {
 
       if (error) throw error;
     } catch (error) {
+      console.error("Google sign-in failed", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getSanitizedAuthErrorMessage(error, "oauth"),
         variant: "destructive",
       });
     }

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import logo from "@/assets/logo.png";
 
 export default function ResetPassword() {
@@ -55,9 +56,10 @@ export default function ResetPassword() {
 
       navigate("/auth/sign-in");
     } catch (error) {
+      console.error("Password reset failed", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getSanitizedAuthErrorMessage(error, "reset-password"),
         variant: "destructive",
       });
     } finally {
