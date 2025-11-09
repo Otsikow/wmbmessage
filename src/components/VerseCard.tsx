@@ -136,10 +136,10 @@ export default function VerseCard({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-end gap-1.5 border-t border-border/60 pt-3 text-muted-foreground sm:justify-between">
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 border-t border-border/60 pt-3 text-muted-foreground">
+            <span className="sr-only">
               {book} {chapter}:{verse.number}
-            </div>
+            </span>
 
             {isSelected && (
               <div className="flex flex-wrap items-center gap-1.5 transition-all duration-200">
