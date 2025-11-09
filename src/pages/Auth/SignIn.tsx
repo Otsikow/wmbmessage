@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getFriendlyErrorMessage } from "@/lib/errorHandling";
+import { validateSignInInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function SignIn() {
@@ -21,19 +22,34 @@ export default function SignIn() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const { sanitized, errors } = validateSignInInput({ email, password });
+
+    setEmail(sanitized.email);
+    setPassword(sanitized.password);
+
+    if (errors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: errors.join("\n"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: sanitized.email,
+        password: sanitized.password,
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "You have been signed in",
+        description: "You have been signed in successfully.",
       });
 
       navigate("/");
@@ -42,7 +58,7 @@ export default function SignIn() {
         title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          "Unable to sign in. Please check your email and password and try again.",
+          "Unable to sign in. Please check your credentials and try again.",
           "sign-in"
         ),
         variant: "destructive",
@@ -56,9 +72,7 @@ export default function SignIn() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+        options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) throw error;
@@ -67,7 +81,7 @@ export default function SignIn() {
         title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          "Unable to sign in with Google at this time. Please try again later.",
+          "Unable to sign in with Google. Please try again later.",
           "google sign-in"
         ),
         variant: "destructive",
