@@ -65,7 +65,7 @@ export function useCrossReferences(
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        let userQuery = supabase
+        let userQuery = (supabase as any)
           .from('user_cross_references')
           .select('*')
           .eq('user_id', user.id)
@@ -80,7 +80,7 @@ export function useCrossReferences(
 
         if (userError) throw userError;
 
-        setUserCrossReferences(userData || []);
+        setUserCrossReferences(userData as any || []);
       }
     } catch (err) {
       console.error('Error fetching cross-references:', err);
@@ -104,7 +104,7 @@ export function useCrossReferences(
         throw new Error('You must be logged in to add custom cross-references');
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_cross_references')
         .insert([
           {
@@ -117,7 +117,7 @@ export function useCrossReferences(
 
       if (error) throw error;
 
-      setUserCrossReferences([...userCrossReferences, data]);
+      setUserCrossReferences([...userCrossReferences, data as any]);
     } catch (err) {
       console.error('Error adding cross-reference:', err);
       throw err;
@@ -126,7 +126,7 @@ export function useCrossReferences(
 
   const deleteUserCrossReference = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('user_cross_references')
         .delete()
         .eq('id', id);

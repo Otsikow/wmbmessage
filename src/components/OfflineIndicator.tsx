@@ -20,10 +20,10 @@ export const OfflineIndicator = () => {
         duration: 3000,
       });
 
-      // Trigger background sync
-      if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+      // Trigger background sync (if supported)
+      if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
         navigator.serviceWorker.ready.then((registration) => {
-          return registration.sync.register('sync-offline-changes');
+          return (registration as any).sync.register('sync-offline-changes');
         }).catch((error) => {
           console.error('Background sync registration failed:', error);
         });
@@ -69,9 +69,9 @@ export const OfflineIndicator = () => {
 
     setIsSyncing(true);
     try {
-      if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+      if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
         const registration = await navigator.serviceWorker.ready;
-        await registration.sync.register('sync-offline-changes');
+        await (registration as any).sync.register('sync-offline-changes');
         toast({
           title: 'Sync Complete',
           description: 'Your offline changes have been synced.',

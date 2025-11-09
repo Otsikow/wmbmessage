@@ -201,7 +201,7 @@ export function useBibleSearch() {
       }
 
       // Transform the results to match the expected format
-      const results: WMBSermonResult[] = data.map((row: { id: string; title: string; date: string; location: string; excerpt: string; paragraph: number }) => ({
+      const results: WMBSermonResult[] = (data as any[]).map((row: any) => ({
         sermon_id: row.sermon_id,
         title: row.sermon_title,
         date: new Date(row.sermon_date).toLocaleDateString('en-US', { 

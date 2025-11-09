@@ -334,7 +334,9 @@ export default function Reader() {
       <SermonCrossReferenceModal
         open={showSermonCrossRef}
         onOpenChange={setShowSermonCrossRef}
-        verseRef={`${currentBook} ${currentChapter}:${selectedVerse}`}
+        book={currentBook}
+        chapter={currentChapter}
+        verse={selectedVerse}
       />
 
       {/* Note Editor */}

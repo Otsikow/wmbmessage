@@ -36,9 +36,10 @@ export function useActivityLog() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("user_activity_log")
+      const { data, error } = await (supabase as any)
+        .from("activity_logs")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -60,15 +61,15 @@ export function useActivityLog() {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase
-        .from("user_activity_log")
+      const { data, error } = await (supabase as any)
+        .from("activity_logs")
         .insert([
           {
             user_id: user.id,
             action: input.action,
             source_type: input.source_type,
             source_id: input.source_id,
-            metadata: input.metadata || {},
+            metadata: input.metadata as any || {},
           },
         ])
         .select()

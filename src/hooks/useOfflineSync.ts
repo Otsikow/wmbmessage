@@ -155,25 +155,25 @@ export const useOfflineSync = () => {
         try {
           if (item.type === 'notes') {
             if (item.action === 'create' || item.action === 'update') {
-              await supabase
+              await (supabase as any)
                 .from('notes')
-                .upsert(item.data);
+                .upsert([item.data] as any);
             } else if (item.action === 'delete') {
-              await supabase
+              await (supabase as any)
                 .from('notes')
                 .delete()
-                .eq('id', item.data.id);
+                .eq('id', (item.data as any).id);
             }
           } else if (item.type === 'cross_references') {
             if (item.action === 'create' || item.action === 'update') {
-              await supabase
+              await (supabase as any)
                 .from('user_cross_references')
-                .upsert(item.data);
+                .upsert([item.data] as any);
             } else if (item.action === 'delete') {
-              await supabase
+              await (supabase as any)
                 .from('user_cross_references')
                 .delete()
-                .eq('id', item.data.id);
+                .eq('id', (item.data as any).id);
             }
           }
 

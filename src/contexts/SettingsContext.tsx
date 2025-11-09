@@ -72,13 +72,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
 
         if (data) {
-          const rawData = data as SupabaseSettingsRow;
+          const rawData = data as any;
           const loadedSettings: AppSettings = {
-            fontSize: parseInt(rawData.font_size || "16") || 16,
-            fontFamily: rawData.font_family || "sans-serif",
-            readerFontFamily: rawData.reader_font_family || "serif",
-            colorScheme: rawData.color_scheme || "default",
-            theme: rawData.theme || "light",
+            fontSize: parseInt(String(rawData.font_size || "16")) || 16,
+            fontFamily: (rawData.font_family || "sans-serif") as AppSettings['fontFamily'],
+            readerFontFamily: (rawData.reader_font_family || "serif") as AppSettings['readerFontFamily'],
+            colorScheme: (rawData.color_scheme || "default") as AppSettings['colorScheme'],
+            theme: (rawData.theme || "light") as AppSettings['theme'],
             bibleVersion: rawData.bible_version || "KJV",
           };
           setSettings(loadedSettings);
@@ -127,7 +127,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     // Save to Supabase if user is logged in
     if (user && isSupabaseConfigured) {
       try {
-        const supabasePayload: SupabaseSettingsUpsert = {
+        const supabasePayload: any = {
           user_id: user.id,
           font_size: newSettings.fontSize.toString(),
           font_family: newSettings.fontFamily,

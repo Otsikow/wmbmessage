@@ -59,7 +59,7 @@ export function useDailyContent() {
       // First, try to get today's content
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: initialData, error: fetchError } = await supabase
+      const { data: initialData, error: fetchError } = await (supabase as any)
         .from('daily_content')
         .select(`
           *,
@@ -77,49 +77,23 @@ export function useDailyContent() {
 
       let dailyData = initialData;
 
-      // If no content exists for today, generate it
+      // If no content exists for today, just return null (no auto-generation since RPC doesn't exist)
       if (!dailyData || fetchError) {
-        const { data: generated, error: generateError } = await supabase
-          .rpc('generate_daily_content');
-
-        if (generateError) {
-          throw generateError;
-        }
-
-        // Fetch the newly generated content with details
-        const { data: newData, error: newFetchError } = await supabase
-          .from('daily_content')
-          .select(`
-            *,
-            sermon_paragraph:sermon_paragraphs (
-              content,
-              sermon:sermons (
-                title,
-                date,
-                location
-              )
-            )
-          `)
-          .eq('id', generated.id)
-          .single();
-
-        if (newFetchError) {
-          throw newFetchError;
-        }
-
-        dailyData = newData;
+        setDailyContent(null);
+        setLoading(false);
+        return;
       }
 
       if (dailyData) {
         // Fetch the Bible verse text from the API
         const verseText = await fetchBibleVerseText(
-          dailyData.bible_book,
-          dailyData.bible_chapter,
-          dailyData.bible_verse
+          (dailyData as any).bible_book || (dailyData as any).verse_book,
+          (dailyData as any).bible_chapter || (dailyData as any).verse_chapter,
+          (dailyData as any).bible_verse || (dailyData as any).verse_verse
         );
 
         setDailyContent({
-          ...dailyData,
+          ...(dailyData as any),
           bible_verse_text: verseText,
         });
       }
@@ -140,70 +114,22 @@ export function useDailyContent() {
         throw new Error("Supabase is not configured. Daily content is unavailable.");
       }
 
-      // Generate new random content
-      const { data: generated, error: generateError } = await supabase
-        .rpc('generate_daily_content');
-
-      if (generateError) {
-        throw generateError;
-      }
-
-      // Delete old content for today and insert the new one
+      // Delete old content for today
       const today = new Date().toISOString().split('T')[0];
-      await supabase
+      await (supabase as any)
         .from('daily_content')
         .delete()
         .eq('date_generated', today);
 
-      // Call generate again to create fresh content
-      const { data: newGenerated, error: newGenerateError } = await supabase
-        .rpc('generate_daily_content');
-
-      if (newGenerateError) {
-        throw newGenerateError;
-      }
-
-      // Fetch the newly generated content with details
-      const { data: newData, error: newFetchError } = await supabase
-        .from('daily_content')
-        .select(`
-          *,
-          sermon_paragraph:sermon_paragraphs (
-            content,
-            sermon:sermons (
-              title,
-              date,
-              location
-            )
-          )
-        `)
-        .eq('id', newGenerated.id)
-        .single();
-
-      if (newFetchError) {
-        throw newFetchError;
-      }
-
-      if (newData) {
-        // Fetch the Bible verse text from the API
-        const verseText = await fetchBibleVerseText(
-          newData.bible_book,
-          newData.bible_chapter,
-          newData.bible_verse
-        );
-
-        setDailyContent({
-          ...newData,
-          bible_verse_text: verseText,
-        });
-      }
+      // Refetch after deletion
+      await fetchDailyContent();
     } catch (err) {
       console.error("Error refreshing daily content:", err);
       setError(err instanceof Error ? err.message : "Failed to refresh daily content");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchDailyContent]);
 
   useEffect(() => {
     fetchDailyContent();

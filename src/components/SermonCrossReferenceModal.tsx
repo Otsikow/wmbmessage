@@ -38,7 +38,7 @@ export default function SermonCrossReferenceModal({
   verse,
 }: SermonCrossReferenceModalProps) {
   const { toast } = useToast();
-  const { addNote } = useNotes();
+  const { createNote } = useNotes();
   const [isAddingNote, setIsAddingNote] = useState(false);
 
   const {
@@ -77,7 +77,7 @@ ${sermonReference.paragraph_content}
 ${sermonReference.reference_note ? `\n**Note:** ${sermonReference.reference_note}` : ''}
 `;
 
-      await addNote({
+      await createNote({
         title: `Cross-Reference: ${verseRef}`,
         content: noteContent,
         verse_reference: verseRef,

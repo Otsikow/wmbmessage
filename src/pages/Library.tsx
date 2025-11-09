@@ -69,8 +69,8 @@ interface LibraryTabProps<T extends LibraryDisplayItem = LibraryDisplayItem>
 
 export default function Library() {
   const navigate = useNavigate();
-  const { bookmarks, loading: bookmarksLoading, deleteBookmark } = useBookmarks();
-  const { highlights, loading: highlightsLoading, deleteHighlight } = useHighlights();
+  const { bookmarks, loading: bookmarksLoading, removeBookmark } = useBookmarks();
+  const { highlights, loading: highlightsLoading, removeHighlight } = useHighlights("", 0);
   const { notes, loading: notesLoading } = useNotes();
   const { activities, loading: activitiesLoading, getRecentActivity } = useActivityLog();
 
@@ -83,9 +83,16 @@ export default function Library() {
     if (!itemToDelete) return;
 
     if (itemToDelete.type === "bookmark") {
-      await deleteBookmark(itemToDelete.id);
+      // Extract sermon_id and paragraph_number from the bookmark ID
+      const bookmark = bookmarks.find(b => b.id === itemToDelete.id);
+      if (bookmark) {
+        await removeBookmark(bookmark.sermon_id as any, bookmark.paragraph_number as any);
+      }
     } else if (itemToDelete.type === "highlight") {
-      await deleteHighlight(itemToDelete.id);
+      const highlight = highlights.find(h => h.id === itemToDelete.id);
+      if (highlight) {
+        await removeHighlight(highlight.verse);
+      }
     }
 
     setDeleteDialogOpen(false);
@@ -148,7 +155,7 @@ export default function Library() {
             <LibrarySection
               title="Bookmarks"
               icon={BookmarkIcon}
-              items={bookmarks}
+              items={bookmarks as any}
               loading={bookmarksLoading}
               onDelete={(id) => openDeleteDialog("bookmark", id)}
               onNavigate={(b) => navigate(`/reader?book=${b.book}&chapter=${b.chapter}`)}
@@ -158,7 +165,7 @@ export default function Library() {
             <LibrarySection
               title="Highlights"
               icon={Highlighter}
-              items={highlights}
+              items={highlights as any}
               loading={highlightsLoading}
               colorMap={HIGHLIGHT_COLORS}
               onDelete={(id) => openDeleteDialog("highlight", id)}
@@ -169,7 +176,7 @@ export default function Library() {
             <LibrarySection
               title="Notes"
               icon={FileText}
-              items={notes}
+              items={notes as any}
               loading={notesLoading}
               onNavigate={() => navigate("/notes")}
             />
@@ -179,7 +186,7 @@ export default function Library() {
           <LibraryTab
             label="Bookmarks"
             icon={BookmarkIcon}
-            items={bookmarks}
+            items={bookmarks as any}
             loading={bookmarksLoading}
             emptyMessage="Start bookmarking verses to save them for later."
             onDelete={(id) => openDeleteDialog("bookmark", id)}
@@ -190,7 +197,7 @@ export default function Library() {
           <LibraryTab
             label="Highlights"
             icon={Highlighter}
-            items={highlights}
+            items={highlights as any}
             loading={highlightsLoading}
             emptyMessage="Start highlighting verses to remember important passages."
             onDelete={(id) => openDeleteDialog("highlight", id)}
@@ -202,7 +209,7 @@ export default function Library() {
           <LibraryTab
             label="Notes"
             icon={FileText}
-            items={notes}
+            items={notes as any}
             loading={notesLoading}
             emptyMessage="Create your first study note to get started."
             onNavigate={() => navigate("/notes")}
