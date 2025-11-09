@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +34,7 @@ interface VerseCardProps {
   onViewCrossReferences: (verseNumber: number) => void;
   onAddNote?: (verseNumber: number, event: MouseEvent<HTMLButtonElement>) => void;
   onSermonCrossRef?: (verseNumber: number) => void;
+  onSelect?: (verseNumber: number) => void;
   fontClass?: string;
 }
 
@@ -50,6 +51,7 @@ export default function VerseCard({
   onViewCrossReferences,
   onAddNote,
   onSermonCrossRef,
+  onSelect,
   fontClass = "",
 }: VerseCardProps) {
   const { toast } = useToast();
@@ -77,16 +79,33 @@ export default function VerseCard({
     }
   };
 
+  const handleSelectVerse = () => {
+    onSelect?.(verse.number);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelectVerse();
+    }
+  };
+
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/60 bg-card/80 p-4 sm:p-5 shadow-sm transition-all",
+        "group relative overflow-hidden rounded-xl border border-border/60 bg-card/80 p-4 sm:p-5 shadow-sm transition-all cursor-pointer",
         highlight
           ? getHighlightColorClass(highlight.color)
           : "hover:border-primary/50 hover:shadow-md",
         isSelected && "ring-2 ring-primary border-primary shadow-lg",
         "backdrop-blur-sm"
       )}
+      role="button"
+      aria-pressed={isSelected}
+      aria-label={`${book} ${chapter}:${verse.number} verse card`}
+      tabIndex={0}
+      onClick={handleSelectVerse}
+      onKeyDown={handleKeyDown}
     >
       <div className="grid grid-cols-[auto,1fr] gap-3 sm:gap-4">
         {/* Verse Number */}
@@ -122,12 +141,13 @@ export default function VerseCard({
               {book} {chapter}:{verse.number}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              <HighlightMenu
-                onHighlight={(color, noteValue) => onHighlight(verse.number, color, noteValue)}
-                onRemoveHighlight={
-                  highlight ? () => onRemoveHighlight(verse.number) : undefined
-                }
+            {isSelected && (
+              <div className="flex flex-wrap items-center gap-1.5 transition-all duration-200">
+                <HighlightMenu
+                  onHighlight={(color, noteValue) => onHighlight(verse.number, color, noteValue)}
+                  onRemoveHighlight={
+                    highlight ? () => onRemoveHighlight(verse.number) : undefined
+                  }
                 currentColor={highlight?.color}
                 currentNote={highlight?.note}
               />
@@ -137,7 +157,10 @@ export default function VerseCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={(event) => onAddNote(verse.number, event)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddNote(verse.number, event);
+                  }}
                   title="Add study note"
                 >
                   <NotebookPen className="h-3.5 w-3.5" />
@@ -149,7 +172,10 @@ export default function VerseCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => onSermonCrossRef(verse.number)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSermonCrossRef(verse.number);
+                  }}
                   title="View sermon references"
                 >
                   <AudioLines className="h-3.5 w-3.5" />
@@ -160,7 +186,10 @@ export default function VerseCard({
                 variant="ghost"
                 size="icon"
                 className={cn("h-8 w-8", isBookmarked && "text-primary")}
-                onClick={() => onToggleBookmark(verse.number)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleBookmark(verse.number);
+                }}
                 title={isBookmarked ? "Remove bookmark" : "Bookmark verse"}
               >
                 <Bookmark
@@ -175,7 +204,10 @@ export default function VerseCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => onViewCrossReferences(verse.number)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onViewCrossReferences(verse.number);
+                }}
                 title="View cross references"
               >
                 <Link2 className="h-3.5 w-3.5" />
@@ -185,7 +217,10 @@ export default function VerseCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={handleCopy}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleCopy();
+                }}
                 title="Copy verse"
               >
                 {copied ? (
@@ -194,7 +229,8 @@ export default function VerseCard({
                   <Copy className="h-3.5 w-3.5" />
                 )}
               </Button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

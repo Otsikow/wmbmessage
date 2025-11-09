@@ -71,7 +71,11 @@ export default function Reader() {
     setSelectedVerse(undefined);
   };
 
-  const handleVerseClick = (verseNumber: number) => {
+  const handleVerseSelect = (verseNumber: number) => {
+    setSelectedVerse(verseNumber);
+  };
+
+  const handleCrossReferenceClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
     setShowCrossRef(true);
   };
@@ -281,7 +285,8 @@ export default function Reader() {
                     onHighlight={handleHighlight}
                     onRemoveHighlight={handleRemoveHighlight}
                     onToggleBookmark={handleToggleBookmark}
-                    onViewCrossReferences={handleVerseClick}
+                    onViewCrossReferences={handleCrossReferenceClick}
+                    onSelect={handleVerseSelect}
                     onAddNote={handleAddNote}
                     onSermonCrossRef={handleSermonCrossRefClick}
                     fontClass={readerFontClass}
