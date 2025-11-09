@@ -8,6 +8,38 @@ export interface SermonCrossReference {
   sermonReference: SermonReference;
 }
 
+interface SupabaseSermonCrossReferenceRow {
+  id: string;
+  bible_book: string;
+  bible_chapter: number;
+  bible_verse: number;
+  reference_note: string | null;
+  sermon_id: string;
+  paragraph_id: string;
+  sermons:
+    | null
+    | {
+        title: string | null;
+        date: string | null;
+        location: string | null;
+      }
+    | Array<{
+        title: string | null;
+        date: string | null;
+        location: string | null;
+      }>;
+  sermon_paragraphs:
+    | null
+    | {
+        paragraph_number: number | null;
+        content: string | null;
+      }
+    | Array<{
+        paragraph_number: number | null;
+        content: string | null;
+      }>;
+}
+
 interface UseSermonCrossReferencesReturn {
   sermonCrossReferences: SermonCrossReference[];
   loading: boolean;
@@ -81,8 +113,10 @@ export function useSermonCrossReferences(
       }
 
       // Fetch Bible verse text for each reference
+      const typedData = data as SupabaseSermonCrossReferenceRow[];
+
       const references = await Promise.all(
-        data.map(async (item: any) => {
+        typedData.map(async (item) => {
           try {
             // Fetch verse text from getBible API
             const response = await fetch(
@@ -102,8 +136,8 @@ export function useSermonCrossReferences(
             }
 
             const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
-            const paragraph = Array.isArray(item.sermon_paragraphs) 
-              ? item.sermon_paragraphs[0] 
+            const paragraph = Array.isArray(item.sermon_paragraphs)
+              ? item.sermon_paragraphs[0]
               : item.sermon_paragraphs;
 
             return {
@@ -135,8 +169,8 @@ export function useSermonCrossReferences(
             console.error('Error fetching verse text:', err);
             // Return the reference even if we couldn't fetch the verse text
             const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
-            const paragraph = Array.isArray(item.sermon_paragraphs) 
-              ? item.sermon_paragraphs[0] 
+            const paragraph = Array.isArray(item.sermon_paragraphs)
+              ? item.sermon_paragraphs[0]
               : item.sermon_paragraphs;
 
             return {
