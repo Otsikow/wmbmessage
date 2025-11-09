@@ -131,6 +131,7 @@ export type Database = {
           source_id: string;
           content: string;
           tags: string[];
+          sermon_title: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -141,6 +142,7 @@ export type Database = {
           source_id: string;
           content: string;
           tags?: string[];
+          sermon_title?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -151,6 +153,7 @@ export type Database = {
           source_id?: string;
           content?: string;
           tags?: string[];
+          sermon_title?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export interface NoteEditorProps {
   open: boolean;
@@ -21,12 +22,14 @@ export interface NoteEditorProps {
     source_id: string;
     content: string;
     tags: string[];
+    sermon_title?: string | null;
   }) => void;
   initialData?: {
     source_type: "bible" | "sermon";
     source_id: string;
     content: string;
     tags: string[];
+    sermon_title?: string | null;
   };
   sourceType?: "bible" | "sermon";
   sourceId?: string;
@@ -43,13 +46,16 @@ export function NoteEditor({
   const [sourceReference, setSourceReference] = useState(sourceId);
   const [selectedSourceType, setSelectedSourceType] = useState<"bible" | "sermon">(sourceType);
   const [tags, setTags] = useState<string[]>([]);
+  const [sermonTitle, setSermonTitle] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (initialData) {
       setSourceReference(initialData.source_id);
       setSelectedSourceType(initialData.source_type);
       setTags(initialData.tags);
+      setSermonTitle(initialData.sermon_title || "");
       if (editorRef.current) {
         editorRef.current.innerHTML = initialData.content;
       }
@@ -57,11 +63,18 @@ export function NoteEditor({
       setSourceReference(sourceId);
       setSelectedSourceType(sourceType);
       setTags([]);
+      setSermonTitle("");
       if (editorRef.current) {
         editorRef.current.innerHTML = "";
       }
     }
   }, [initialData, sourceId, sourceType, open]);
+
+  useEffect(() => {
+    if (selectedSourceType !== "sermon") {
+      setSermonTitle("");
+    }
+  }, [selectedSourceType]);
 
   const applyFormat = (command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -75,21 +88,55 @@ export function NoteEditor({
   };
 
   const handleSave = () => {
-    if (!editorRef.current || !sourceReference.trim()) return;
+    if (!editorRef.current) return;
+
+    if (!sourceReference.trim()) {
+      toast({
+        title: "Reference required",
+        description:
+          selectedSourceType === "bible"
+            ? "Please add a verse reference before saving your note."
+            : "Please add a sermon reference before saving your note.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (
+      selectedSourceType === "sermon" &&
+      (!sermonTitle || sermonTitle.trim().length === 0)
+    ) {
+      toast({
+        title: "Sermon title required",
+        description: "Add a sermon title to save this note.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const content = editorRef.current.innerHTML;
-    if (!content.trim()) return;
+    if (!content.trim()) {
+      toast({
+        title: "Add note content",
+        description: "Write something in the note body before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     onSave({
       source_type: selectedSourceType,
       source_id: sourceReference,
       content,
       tags,
+      sermon_title:
+        selectedSourceType === "sermon" ? sermonTitle.trim() : null,
     });
 
     // Reset form
     setSourceReference("");
     setTags([]);
+    setSermonTitle("");
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
     }
@@ -101,6 +148,7 @@ export function NoteEditor({
     setSourceReference(sourceId);
     setSelectedSourceType(sourceType);
     setTags([]);
+    setSermonTitle("");
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
     }
@@ -156,6 +204,20 @@ export function NoteEditor({
               className="mt-1"
             />
           </div>
+
+          {/* Sermon Title */}
+          {selectedSourceType === "sermon" && (
+            <div>
+              <Label htmlFor="sermon-title">Sermon Title</Label>
+              <Input
+                id="sermon-title"
+                value={sermonTitle}
+                onChange={(e) => setSermonTitle(e.target.value)}
+                placeholder="e.g., Sunday Service: Faith and Hope"
+                className="mt-1"
+              />
+            </div>
+          )}
 
           {/* Tags */}
           <div>

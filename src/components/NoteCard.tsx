@@ -22,6 +22,7 @@ export interface UserNote {
   source_id: string;
   content: string;
   tags: string[];
+  sermon_title?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,9 +54,20 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
                 ) : (
                   <MessageSquare className="h-4 w-4 text-primary" />
                 )}
-                <h3 className="font-semibold text-base sm:text-lg">
-                  {note.source_id}
-                </h3>
+                {note.source_type === "sermon" && note.sermon_title ? (
+                  <div>
+                    <p className="font-semibold text-base sm:text-lg leading-tight">
+                      {note.sermon_title}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {note.source_id}
+                    </p>
+                  </div>
+                ) : (
+                  <h3 className="font-semibold text-base sm:text-lg">
+                    {note.source_id}
+                  </h3>
+                )}
               </div>
               
               {/* Tags */}
