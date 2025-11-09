@@ -36,6 +36,7 @@ export default function Notes() {
     source_id: string;
     content: string;
     tags: string[];
+    sermon_title?: string | null;
   }) => {
     if (selectedNote) {
       await updateUserNote(selectedNote.id, noteData);
@@ -222,6 +223,7 @@ export default function Notes() {
                 source_id: selectedNote.source_id,
                 content: selectedNote.content,
                 tags: selectedNote.tags,
+                sermon_title: selectedNote.sermon_title || null,
               }
             : undefined
         }
