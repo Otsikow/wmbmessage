@@ -40,7 +40,8 @@ export function useBookmarks(sermonId?: string) {
       });
 
       if (error) throw error;
-      setBookmarks(data || []);
+      const typedData = (data ?? []) as Bookmark[];
+      setBookmarks(typedData);
     } catch (error) {
       console.error("Error fetching bookmarks:", error);
       toast({
@@ -85,15 +86,21 @@ export function useBookmarks(sermonId?: string) {
 
       if (error) throw error;
 
-      setBookmarks([data, ...bookmarks]);
+      if (!data) {
+        return false;
+      }
+
+      const bookmark = data as Bookmark;
+      setBookmarks((prev) => [bookmark, ...prev]);
       toast({
         title: "Bookmark added",
         description: "Paragraph bookmarked successfully",
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error adding bookmark:", error);
-      if (error?.code === "23505") {
+      const supabaseError = error as { code?: string };
+      if (supabaseError?.code === "23505") {
         toast({
           title: "Already bookmarked",
           description: "This paragraph is already bookmarked",
@@ -126,8 +133,8 @@ export function useBookmarks(sermonId?: string) {
 
       if (error) throw error;
 
-      setBookmarks(
-        bookmarks.filter(
+      setBookmarks((prev) =>
+        prev.filter(
           (b) => !(b.sermon_id === sermon_id && b.paragraph_number === paragraph_number)
         )
       );

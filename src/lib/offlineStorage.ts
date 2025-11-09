@@ -20,9 +20,11 @@ export interface SyncQueueItem {
   id: string;
   type: 'notes' | 'cross_references';
   action: 'create' | 'update' | 'delete';
-  data: any;
+  data: SyncQueuePayload;
   timestamp: number;
 }
+
+export type SyncQueuePayload = Record<string, unknown>;
 
 class OfflineStorage {
   private db: IDBDatabase | null = null;
@@ -101,7 +103,11 @@ class OfflineStorage {
     });
   }
 
-  async getByIndex<T>(storeName: string, indexName: string, value: any): Promise<T[]> {
+  async getByIndex<T>(
+    storeName: string,
+    indexName: string,
+    value: IDBValidKey | IDBKeyRange
+  ): Promise<T[]> {
     return new Promise((resolve, reject) => {
       const store = this.getStore(storeName);
       const index = store.index(indexName);
@@ -111,7 +117,7 @@ class OfflineStorage {
     });
   }
 
-  async put(storeName: string, data: any): Promise<void> {
+  async put<T>(storeName: string, data: T): Promise<void> {
     return new Promise((resolve, reject) => {
       const store = this.getStore(storeName, 'readwrite');
       const request = store.put(data);
@@ -120,13 +126,13 @@ class OfflineStorage {
     });
   }
 
-  async putBulk(storeName: string, items: any[]): Promise<void> {
+  async putBulk<T>(storeName: string, items: T[]): Promise<void> {
     return new Promise((resolve, reject) => {
       const store = this.getStore(storeName, 'readwrite');
       let completed = 0;
       let hasError = false;
 
-      items.forEach(item => {
+      items.forEach((item) => {
         const request = store.put(item);
         request.onsuccess = () => {
           completed++;

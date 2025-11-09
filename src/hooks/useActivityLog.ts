@@ -11,7 +11,7 @@ export interface ActivityLog {
   action: ActivityAction;
   source_type: ActivitySourceType;
   source_id: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -19,7 +19,7 @@ export interface LogActivityInput {
   action: ActivityAction;
   source_type: ActivitySourceType;
   source_id: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export function useActivityLog() {
@@ -43,7 +43,8 @@ export function useActivityLog() {
         .limit(limit);
 
       if (error) throw error;
-      setActivities(data || []);
+      const typedData = (data ?? []) as ActivityLog[];
+      setActivities(typedData);
     } catch (error) {
       console.error("Error fetching activity log:", error);
     } finally {
@@ -55,7 +56,7 @@ export function useActivityLog() {
     fetchActivities();
   }, [user]);
 
-  const logActivity = async (input: LogActivityInput) => {
+  const logActivity = async (input: LogActivityInput): Promise<ActivityLog | null> => {
     if (!user) return null;
 
     try {
@@ -76,8 +77,13 @@ export function useActivityLog() {
       if (error) throw error;
 
       // Add to local state without showing toast
-      setActivities([data, ...activities]);
-      return data;
+      if (!data) {
+        return null;
+      }
+
+      const activity = data as ActivityLog;
+      setActivities((prev) => [activity, ...prev]);
+      return activity;
     } catch (error) {
       console.error("Error logging activity:", error);
       return null;
