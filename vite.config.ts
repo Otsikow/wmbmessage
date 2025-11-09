@@ -16,13 +16,11 @@ export default defineConfig(({ mode }) => ({
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
-    // Ensure libraries that bundle their own copy of React (for example
-    // @radix-ui packages) reuse the app instance so hooks don't throw
-    // "Cannot read properties of null (reading 'useRef')" at runtime.
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {
     include: ["react", "react-dom"],
+    force: true,
   },
   build: {
     rollupOptions: {
