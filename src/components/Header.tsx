@@ -13,7 +13,7 @@ import {
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo-final.png";
 
@@ -23,7 +23,9 @@ export default function Header() {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
     navigate('/');
   };
 
@@ -37,7 +39,7 @@ export default function Header() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <ThemeToggle />
           
           <nav className="hidden lg:flex items-center space-x-6">

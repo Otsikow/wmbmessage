@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Upload, Loader2, Search, ArrowRight } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import { BIBLE_BOOKS } from '@/hooks/useBibleData';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface CrossReference {
   id: string;
@@ -55,6 +56,7 @@ export default function CrossRefManager() {
   const [bulkImportData, setBulkImportData] = useState('');
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     from_book: '',
@@ -69,10 +71,17 @@ export default function CrossRefManager() {
   });
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setConfigError('Supabase is not configured. Cross reference tools are currently disabled.');
+      return;
+    }
+
     fetchCrossRefs();
   }, [searchTerm]);
 
   const fetchCrossRefs = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
       let query = supabase
@@ -91,12 +100,14 @@ export default function CrossRefManager() {
 
       if (error) throw error;
       setCrossRefs(data || []);
+      setConfigError(null);
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       });
+      setConfigError('Unable to load cross references. Please verify your Supabase configuration.');
     } finally {
       setLoading(false);
     }
@@ -104,6 +115,14 @@ export default function CrossRefManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to create or update cross references.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       if (editingCrossRef) {
         const { error } = await supabase
@@ -135,6 +154,14 @@ export default function CrossRefManager() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to delete cross references.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!confirm('Are you sure you want to delete this cross reference?')) return;
 
     try {
@@ -156,6 +183,14 @@ export default function CrossRefManager() {
   };
 
   const handleBulkImport = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: 'Supabase not configured',
+        description: 'Connect Supabase to import cross references.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const parsed = JSON.parse(bulkImportData) as BulkImportCrossRef[];
       
@@ -240,224 +275,229 @@ export default function CrossRefManager() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Cross References Management</CardTitle>
-            <CardDescription>Manage Bible verse cross-references and relationships</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Import
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle>Cross References Management</CardTitle>
+          <CardDescription>Manage Bible verse cross-references and relationships</CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={!isSupabaseConfigured}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[80vh] w-full max-w-3xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Bulk Import Cross References</DialogTitle>
+                <DialogDescription>
+                  Paste JSON array of cross references. Format: {`[{"from_book": "John", "from_chapter": 3, "from_verse": 16, "to_book": "Romans", "to_chapter": 5, "to_verse": 8, "relationship_type": "related", "notes": "..."}]`}
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Paste JSON data here..."
+                value={bulkImportData}
+                onChange={(e) => setBulkImportData(e.target.value)}
+                className="min-h-[320px] font-mono text-sm"
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                  Cancel
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Bulk Import Cross References</DialogTitle>
-                  <DialogDescription>
-                    Paste JSON array of cross references. Format: {`[{"from_book": "John", "from_chapter": 3, "from_verse": 16, "to_book": "Romans", "to_chapter": 5, "to_verse": 8, "relationship_type": "related", "notes": "..."}]`}
-                  </DialogDescription>
-                </DialogHeader>
-                <Textarea
-                  placeholder="Paste JSON data here..."
-                  value={bulkImportData}
-                  onChange={(e) => setBulkImportData(e.target.value)}
-                  className="min-h-[400px] font-mono text-sm"
-                />
+                <Button onClick={handleBulkImport} disabled={!bulkImportData.trim()}>
+                  Import Cross References
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNewDialog} disabled={!isSupabaseConfigured}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Cross Reference
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-full max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingCrossRef ? 'Edit Cross Reference' : 'Add New Cross Reference'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  {/* FROM verse section */}
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <h3 className="font-semibold text-sm">From Verse</h3>
+
+                    <div className="space-y-2">
+                      <Label>Book</Label>
+                      <Select
+                        value={formData.from_book}
+                        onValueChange={(value) => setFormData({ ...formData, from_book: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select book" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BIBLE_BOOKS.map((book) => (
+                            <SelectItem key={book.name} value={book.name}>
+                              {book.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Chapter</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.from_chapter}
+                          onChange={(e) =>
+                            setFormData({ ...formData, from_chapter: parseInt(e.target.value) })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Verse</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.from_verse}
+                          onChange={(e) =>
+                            setFormData({ ...formData, from_verse: parseInt(e.target.value) })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TO verse section */}
+                  <div className="space-y-4 rounded-lg border p-4">
+                    <h3 className="font-semibold text-sm">To Verse</h3>
+
+                    <div className="space-y-2">
+                      <Label>Book</Label>
+                      <Select
+                        value={formData.to_book}
+                        onValueChange={(value) => setFormData({ ...formData, to_book: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select book" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BIBLE_BOOKS.map((book) => (
+                            <SelectItem key={book.name} value={book.name}>
+                              {book.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label>Chapter</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.to_chapter}
+                          onChange={(e) =>
+                            setFormData({ ...formData, to_chapter: parseInt(e.target.value) })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Verse</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.to_verse}
+                          onChange={(e) =>
+                            setFormData({ ...formData, to_verse: parseInt(e.target.value) })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>End (opt)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.to_verse_end || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              to_verse_end: e.target.value ? parseInt(e.target.value) : null,
+                            })
+                          }
+                          placeholder="-"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Relationship Type</Label>
+                  <Select
+                    value={formData.relationship_type}
+                    onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RELATIONSHIP_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes (Optional)</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Add any additional notes about this cross reference..."
+                    rows={3}
+                  />
+                </div>
+
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleBulkImport}>
-                    Import Cross References
+                  <Button type="submit">
+                    {editingCrossRef ? 'Update' : 'Create'}
                   </Button>
                 </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={openNewDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Cross Reference
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingCrossRef ? 'Edit Cross Reference' : 'Add New Cross Reference'}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* FROM verse section */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h3 className="font-semibold text-sm">From Verse</h3>
-                      
-                      <div className="space-y-2">
-                        <Label>Book</Label>
-                        <Select
-                          value={formData.from_book}
-                          onValueChange={(value) => setFormData({ ...formData, from_book: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select book" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {BIBLE_BOOKS.map((book) => (
-                              <SelectItem key={book.name} value={book.name}>
-                                {book.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-2">
-                          <Label>Chapter</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.from_chapter}
-                            onChange={(e) =>
-                              setFormData({ ...formData, from_chapter: parseInt(e.target.value) })
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Verse</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.from_verse}
-                            onChange={(e) =>
-                              setFormData({ ...formData, from_verse: parseInt(e.target.value) })
-                            }
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* TO verse section */}
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <h3 className="font-semibold text-sm">To Verse</h3>
-                      
-                      <div className="space-y-2">
-                        <Label>Book</Label>
-                        <Select
-                          value={formData.to_book}
-                          onValueChange={(value) => setFormData({ ...formData, to_book: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select book" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {BIBLE_BOOKS.map((book) => (
-                              <SelectItem key={book.name} value={book.name}>
-                                {book.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="space-y-2">
-                          <Label>Chapter</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.to_chapter}
-                            onChange={(e) =>
-                              setFormData({ ...formData, to_chapter: parseInt(e.target.value) })
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Verse</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.to_verse}
-                            onChange={(e) =>
-                              setFormData({ ...formData, to_verse: parseInt(e.target.value) })
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>End (opt)</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={formData.to_verse_end || ''}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                to_verse_end: e.target.value ? parseInt(e.target.value) : null,
-                              })
-                            }
-                            placeholder="-"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Relationship Type</Label>
-                    <Select
-                      value={formData.relationship_type}
-                      onValueChange={(value) => setFormData({ ...formData, relationship_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {RELATIONSHIP_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Notes (Optional)</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Add any additional notes about this cross reference..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingCrossRef ? 'Update' : 'Create'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
+        {configError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Supabase connection required</AlertTitle>
+            <AlertDescription>{configError}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -475,7 +515,7 @@ export default function CrossRefManager() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -497,7 +537,7 @@ export default function CrossRefManager() {
                 ) : (
                   crossRefs.map((crossRef) => (
                     <TableRow key={crossRef.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium min-w-[180px] whitespace-normal break-words">
                         {formatVerseRef(
                           crossRef.from_book,
                           crossRef.from_chapter,
@@ -507,7 +547,7 @@ export default function CrossRefManager() {
                       <TableCell>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium min-w-[180px] whitespace-normal break-words">
                         {formatVerseRef(
                           crossRef.to_book,
                           crossRef.to_chapter,
@@ -516,15 +556,15 @@ export default function CrossRefManager() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="whitespace-nowrap">
                           {crossRef.relationship_type || 'related'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
+                      <TableCell className="max-w-xs whitespace-normal break-words text-sm text-muted-foreground">
                         {crossRef.notes || '-'}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
                             variant="ghost"

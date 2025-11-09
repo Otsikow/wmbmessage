@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import BibleManager from '@/components/BibleManager';
 import SermonManager from '@/components/SermonManager';
 import CrossRefManager from '@/components/CrossRefManager';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Profile {
   id: string;
@@ -37,6 +38,7 @@ export default function Admin() {
     sermons: 0,
     crossRefs: 0,
   });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -49,6 +51,12 @@ export default function Admin() {
       return;
     }
 
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setErrorMessage('Supabase is not configured. Connect your Supabase project to enable admin features.');
+      return;
+    }
+
     if (isAdmin) {
       fetchData();
       fetchStats();
@@ -56,6 +64,7 @@ export default function Admin() {
   }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchData = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       const [profilesRes, rolesRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -67,14 +76,17 @@ export default function Admin() {
 
       setProfiles(profilesRes.data || []);
       setUserRoles(rolesRes.data || []);
+      setErrorMessage(null);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setErrorMessage('Unable to load user information. Please check your connection and Supabase configuration.');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchStats = async () => {
+    if (!isSupabaseConfigured) return;
     try {
       const [versesCount, sermonsCount, crossRefsCount] = await Promise.all([
         supabase.from('bible_verses').select('*', { count: 'exact', head: true }),
@@ -87,8 +99,10 @@ export default function Admin() {
         sermons: sermonsCount.count || 0,
         crossRefs: crossRefsCount.count || 0,
       });
+      setErrorMessage(null);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setErrorMessage('Unable to load dashboard statistics. Please try again later.');
     }
   };
 
@@ -115,7 +129,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto max-w-6xl px-4 py-8">
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -127,29 +141,40 @@ export default function Admin() {
             </p>
           </div>
 
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertTitle>Admin data unavailable</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="bible">
+            <div className="overflow-x-auto">
+              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-5 md:gap-0">
+                <TabsTrigger value="overview" className="w-full whitespace-nowrap">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="bible" className="w-full whitespace-nowrap">
                 <Book className="h-4 w-4 mr-2" />
                 Bible
-              </TabsTrigger>
-              <TabsTrigger value="sermons">
+                </TabsTrigger>
+                <TabsTrigger value="sermons" className="w-full whitespace-nowrap">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Sermons
-              </TabsTrigger>
-              <TabsTrigger value="crossrefs">
+                </TabsTrigger>
+                <TabsTrigger value="crossrefs" className="w-full whitespace-nowrap">
                 <Link2 className="h-4 w-4 mr-2" />
                 Cross Refs
-              </TabsTrigger>
-              <TabsTrigger value="users">
+                </TabsTrigger>
+                <TabsTrigger value="users" className="w-full whitespace-nowrap">
                 <Users className="h-4 w-4 mr-2" />
                 Users
-              </TabsTrigger>
-            </TabsList>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
@@ -191,9 +216,9 @@ export default function Admin() {
                 </Card>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <CardTitle>System Status</CardTitle>
                     <CardDescription>Current system health</CardDescription>
                   </CardHeader>
@@ -214,7 +239,7 @@ export default function Admin() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <CardTitle>Admin Users</CardTitle>
                     <CardDescription>Current administrators</CardDescription>
                   </CardHeader>
@@ -258,39 +283,43 @@ export default function Admin() {
 
             <TabsContent value="users">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle>User Management</CardTitle>
                   <CardDescription>View and manage all users</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Joined</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {profiles.map((profile) => (
-                        <TableRow key={profile.id}>
-                          <TableCell className="font-medium">
-                            {profile.full_name || 'N/A'}
-                          </TableCell>
-                          <TableCell>{profile.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={getUserRole(profile.id) === 'admin' ? 'default' : 'secondary'}>
-                              {getUserRole(profile.id)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(profile.created_at).toLocaleDateString()}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Joined</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {profiles.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell className="font-medium">
+                              {profile.full_name || 'N/A'}
+                            </TableCell>
+                            <TableCell className="whitespace-normal break-words">
+                              {profile.email}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getUserRole(profile.id) === 'admin' ? 'default' : 'secondary'}>
+                                {getUserRole(profile.id)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(profile.created_at).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
