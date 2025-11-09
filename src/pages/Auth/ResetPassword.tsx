@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function ResetPassword() {
@@ -57,7 +58,11 @@ export default function ResetPassword() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to update your password right now. Please try again in a moment.",
+          "reset-password"
+        ),
         variant: "destructive",
       });
     } finally {

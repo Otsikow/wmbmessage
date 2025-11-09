@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function SignIn() {
@@ -39,7 +40,11 @@ export default function SignIn() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign in. Please check your email and password and try again.",
+          "sign-in"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -60,7 +65,11 @@ export default function SignIn() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign in with Google at this time. Please try again later.",
+          "google sign-in"
+        ),
         variant: "destructive",
       });
     }

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function SignUp() {
@@ -56,7 +57,11 @@ export default function SignUp() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "We couldn't create your account. Please review your details or try again later.",
+          "email sign-up"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -77,7 +82,11 @@ export default function SignUp() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign up with Google right now. Please try again later.",
+          "google sign-up"
+        ),
         variant: "destructive",
       });
     }

@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BIBLE_BOOKS } from '@/hooks/useBibleData';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getFriendlyErrorMessage } from '@/lib/errorHandling';
 
 interface CrossReference {
   id: string;
@@ -105,7 +106,11 @@ export default function CrossRefManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not load cross references. Please try again after checking your connection.',
+          'load-cross-references'
+        ),
         variant: 'destructive',
       });
       setConfigError('Unable to load cross references. Please verify your Supabase configuration.');
@@ -148,7 +153,11 @@ export default function CrossRefManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not save this cross reference. Please review the information and try again.',
+          editingCrossRef ? 'update-cross-reference' : 'create-cross-reference'
+        ),
         variant: 'destructive',
       });
     }
@@ -177,7 +186,11 @@ export default function CrossRefManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not delete this cross reference. Please try again shortly.',
+          'delete-cross-reference'
+        ),
         variant: 'destructive',
       });
     }
@@ -264,7 +277,11 @@ export default function CrossRefManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not import these cross references. Please check the file contents and try again.',
+          'bulk-import-cross-references'
+        ),
         variant: 'destructive',
       });
     }

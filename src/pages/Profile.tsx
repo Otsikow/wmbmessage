@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Mail, Lock, LogOut } from 'lucide-react';
 import Header from '@/components/Header';
+import { getFriendlyErrorMessage } from '@/lib/errorHandling';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -67,7 +68,11 @@ export default function Profile() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not update your profile. Please try again shortly.',
+          'update-profile'
+        ),
         variant: 'destructive',
       });
     } finally {
@@ -111,7 +116,11 @@ export default function Profile() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not update your password right now. Please try again later.',
+          'change-password'
+        ),
         variant: 'destructive',
       });
     } finally {
@@ -126,7 +135,11 @@ export default function Profile() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not sign you out safely. Please refresh and try again.',
+          'sign-out'
+        ),
         variant: 'destructive',
       });
     }

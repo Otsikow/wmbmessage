@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import logo from "@/assets/logo.png";
 
 export default function ForgotPassword() {
@@ -34,7 +35,11 @@ export default function ForgotPassword() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "We couldn't send the reset email. Please verify the address and try again.",
+          "forgot-password"
+        ),
         variant: "destructive",
       });
     } finally {
