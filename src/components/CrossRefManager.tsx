@@ -326,10 +326,14 @@ export default function CrossRefManager() {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {/* FROM verse section */}
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <h3 className="font-semibold text-sm">From Verse</h3>
+                  <div className="flex flex-col gap-4 rounded-xl border bg-muted/30 p-4 sm:p-6">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                        From Verse
+                      </h3>
+                    </div>
 
                     <div className="space-y-2">
                       <Label>Book</Label>
@@ -337,7 +341,7 @@ export default function CrossRefManager() {
                         value={formData.from_book}
                         onValueChange={(value) => setFormData({ ...formData, from_book: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10">
                           <SelectValue placeholder="Select book" />
                         </SelectTrigger>
                         <SelectContent>
@@ -350,7 +354,7 @@ export default function CrossRefManager() {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label>Chapter</Label>
                         <Input
@@ -380,8 +384,12 @@ export default function CrossRefManager() {
                   </div>
 
                   {/* TO verse section */}
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <h3 className="font-semibold text-sm">To Verse</h3>
+                  <div className="flex flex-col gap-4 rounded-xl border bg-muted/30 p-4 sm:p-6">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                        To Verse
+                      </h3>
+                    </div>
 
                     <div className="space-y-2">
                       <Label>Book</Label>
@@ -389,7 +397,7 @@ export default function CrossRefManager() {
                         value={formData.to_book}
                         onValueChange={(value) => setFormData({ ...formData, to_book: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10">
                           <SelectValue placeholder="Select book" />
                         </SelectTrigger>
                         <SelectContent>
@@ -402,7 +410,7 @@ export default function CrossRefManager() {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                       <div className="space-y-2">
                         <Label>Chapter</Label>
                         <Input
@@ -429,7 +437,7 @@ export default function CrossRefManager() {
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 sm:col-span-2 md:col-span-1">
                         <Label>End (opt)</Label>
                         <Input
                           type="number"
