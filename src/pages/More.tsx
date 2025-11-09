@@ -1,13 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, ArrowLeft, Library as LibraryIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Settings, HelpCircle, Info, Download, Share2, Calendar, MessageSquare, FileText, Library as LibraryIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
 
 export default function More() {
-  const navigate = useNavigate();
-  
   const sections = [
     {
       title: "Study Tools",
@@ -40,14 +38,7 @@ export default function More() {
       <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="md:hidden shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            <BackButton />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">More</h1>
           </div>
 

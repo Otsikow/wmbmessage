@@ -1,11 +1,9 @@
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, FileText, BookOpen } from "lucide-react";
+import { Download, FileText, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import BackButton from "@/components/BackButton";
 
 export default function Downloads() {
-  const navigate = useNavigate();
-  
   const downloads = [
     { id: 1, title: "Bible Reading Plan", type: "PDF", size: "2.3 MB", icon: BookOpen },
     { id: 2, title: "Sermon Notes Template", type: "PDF", size: "1.1 MB", icon: FileText },
@@ -16,14 +14,7 @@ export default function Downloads() {
       <div className="w-full py-6 sm:py-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/more")}
-              className="md:hidden shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            <BackButton fallbackPath="/more" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Downloads</h1>
           </div>
 

@@ -1,16 +1,15 @@
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Moon, Sun, Bell, Download, RotateCcw, BookOpen } from "lucide-react";
+import { Moon, Sun, Bell, Download, RotateCcw, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import SettingsFontControls from "@/components/SettingsFontControls";
 import { useSettings } from "@/contexts/SettingsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import BackButton from "@/components/BackButton";
 
 export default function Settings() {
-  const navigate = useNavigate();
   const { settings, updateSettings, resetSettings } = useSettings();
 
   const handleReset = () => {
@@ -23,14 +22,7 @@ export default function Settings() {
       <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/more")}
-              className="md:hidden shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            <BackButton fallbackPath="/more" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Settings</h1>
           </div>
 

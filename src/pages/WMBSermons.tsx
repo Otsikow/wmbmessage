@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowLeft, Calendar, MapPin, BookOpen, StickyNote } from "lucide-react";
+import { Search, Calendar, MapPin, BookOpen, StickyNote } from "lucide-react";
 import churchInteriorImage from "@/assets/church-interior.jpg";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
+import BackButton from "@/components/BackButton";
 
 export default function WMBSermons() {
-  const navigate = useNavigate();
   const { createUserNote } = useUserNotes();
   const [searchQuery, setSearchQuery] = useState("");
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
@@ -54,9 +53,7 @@ export default function WMBSermons() {
         <div className="absolute inset-0 flex items-center">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="md:hidden shrink-0">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <BackButton />
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">WMB Sermons</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">Explore William Marrion Branham's teachings</p>

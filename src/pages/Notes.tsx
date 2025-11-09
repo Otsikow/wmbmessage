@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, Loader2, Filter } from "lucide-react";
+import { Plus, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUserNotes } from "@/hooks/useNotes";
 import { NoteEditor } from "@/components/NoteEditor";
 import { NoteCard, UserNote } from "@/components/NoteCard";
 import { Badge } from "@/components/ui/badge";
+import BackButton from "@/components/BackButton";
 
 export default function Notes() {
   const navigate = useNavigate();
@@ -73,14 +74,7 @@ export default function Notes() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6 sm:mb-8">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 w-full">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/more")}
-                className="md:hidden shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <BackButton fallbackPath="/more" />
               <div className="flex-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                   Study Notes

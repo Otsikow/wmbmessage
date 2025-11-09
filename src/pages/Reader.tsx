@@ -1,15 +1,7 @@
 import { useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ArrowLeft,
-  Loader2,
-  Link2,
-  BookMarked,
-  Search,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Link2, BookMarked, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -36,6 +28,7 @@ import VerseCard from "@/components/VerseCard";
 import { useSettings } from "@/contexts/SettingsContext";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
+import BackButton from "@/components/BackButton";
 
 export default function Reader() {
   const navigate = useNavigate();
@@ -136,15 +129,7 @@ export default function Reader() {
       {/* Top Navigation */}
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-b border-border/70 shadow-sm">
         <div className="container flex items-center justify-between gap-2 sm:gap-3 py-2 sm:py-3 px-3 sm:px-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="md:hidden shrink-0"
-            aria-label="Go back to home"
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+          <BackButton aria-label="Go back to home" />
 
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <Select

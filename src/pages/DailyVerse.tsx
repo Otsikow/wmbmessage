@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DailyQuote from "@/components/DailyQuote";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
 
 export default function DailyVerse() {
   const navigate = useNavigate();
@@ -12,14 +12,7 @@ export default function DailyVerse() {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
         <div className="container flex items-center gap-3 py-3 px-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="md:hidden shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <BackButton />
           <h1 className="text-2xl font-bold">Daily Verse</h1>
         </div>
       </div>

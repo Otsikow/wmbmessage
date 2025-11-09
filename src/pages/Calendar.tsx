@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -7,14 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Calendar as CalendarIcon, Plus, Trash2, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import { useCalendar } from "@/contexts/CalendarContext";
+import BackButton from "@/components/BackButton";
 
 export default function Calendar() {
-  const navigate = useNavigate();
   const { events, addEvent, deleteEvent } = useCalendar();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -64,14 +63,7 @@ export default function Calendar() {
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
           <div className="flex items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/more")}
-                className="md:hidden shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <BackButton fallbackPath="/more" />
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Calendar</h1>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
