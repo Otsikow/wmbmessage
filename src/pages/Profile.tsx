@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +31,26 @@ import {
   CheckCircle2,
   Clock,
   RefreshCcw,
+  SunMoon,
+  Palette,
+  Type,
+  BookOpen,
+  RotateCcw,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import { validateEmailOnly } from "@/lib/validation/auth";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 
 interface AccountSettingsState {
   emailNotifications: boolean;
@@ -48,8 +64,15 @@ export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {
+    settings,
+    updateSettings,
+    resetSettings,
+    loading: settingsLoading,
+  } = useSettings();
 
-  const [loading, setLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -146,7 +169,7 @@ export default function Profile() {
 
   const handleUpdateProfile = async () => {
     if (!user) return;
-    setLoading(true);
+    setProfileSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
@@ -165,12 +188,12 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not update your profile. Please try again shortly.",
-          "update-profile"
+          "update-profile",
         ),
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setProfileSaving(false);
     }
   };
 
@@ -225,7 +248,7 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not upload your new avatar right now. Please try again.",
-          "upload-avatar"
+          "upload-avatar",
         ),
         variant: "destructive",
       });
@@ -264,7 +287,7 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not remove your avatar right now. Please try again later.",
-          "remove-avatar"
+          "remove-avatar",
         ),
         variant: "destructive",
       });
@@ -291,7 +314,7 @@ export default function Profile() {
       return;
     }
 
-    setLoading(true);
+    setPasswordSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
@@ -308,18 +331,18 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not update your password right now. Please try again later.",
-          "change-password"
+          "change-password",
         ),
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setPasswordSaving(false);
     }
   };
 
   const handleAccountSettingChange = async (
     key: keyof AccountSettingsState,
-    value: boolean
+    value: boolean,
   ) => {
     if (!user) return;
 
@@ -345,7 +368,7 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not update that preference right now. Please try again.",
-          "update-account-setting"
+          "update-account-setting",
         ),
         variant: "destructive",
       });
@@ -386,7 +409,7 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not resend the verification email. Please try again later.",
-          "resend-verification"
+          "resend-verification",
         ),
         variant: "destructive",
       });
@@ -405,252 +428,538 @@ export default function Profile() {
         description: getFriendlyErrorMessage(
           error,
           "We could not sign you out safely. Please refresh and try again.",
-          "sign-out"
+          "sign-out",
         ),
         variant: "destructive",
       });
     }
   };
 
+  const joinedAt = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not available";
+
+  const lastSignIn = user?.last_sign_in_at
+    ? new Date(user.last_sign_in_at).toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "Not recorded";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Profile Settings</h1>
+      <main className="container max-w-5xl mx-auto px-4 py-8">
+        <div className="space-y-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Your Profile</h1>
+              <p className="text-muted-foreground">
+                Manage your personal information, communication settings, and app
+                preferences.
+              </p>
+            </div>
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
           </div>
 
-          {/* Profile Section */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Personal Information
-              </CardTitle>
-              <CardDescription>Update your personal details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-20 w-20">
+            <CardContent className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
                   <AvatarImage src={avatarUrl ?? ""} />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="text-xl">
                     {fullName?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
-                  <div className="flex flex-wrap gap-2">
+                <div>
+                  <p className="text-xl font-semibold">
+                    {fullName || user?.email || "Unnamed user"}
+                  </p>
+                  <p className="text-sm text-muted-foreground break-all">{email}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {user?.email_confirmed_at ? (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Email verified
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        <Clock className="h-3.5 w-3.5" />
+                        Verification pending
+                      </Badge>
+                    )}
+                    <Badge variant="outline">Member</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 md:text-right">
+                <div>
+                  <p className="font-medium text-foreground">Member since</p>
+                  <p>{joinedAt}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Last active</p>
+                  <p>{lastSignIn}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="flex flex-wrap gap-2 bg-muted p-1">
+              <TabsTrigger value="overview" className="gap-2">
+                <User className="h-4 w-4" /> Overview
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="gap-2">
+                <SettingsIcon className="h-4 w-4" /> Preferences
+              </TabsTrigger>
+              <TabsTrigger value="security" className="gap-2">
+                <Lock className="h-4 w-4" /> Security
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Personal Information
+                  </CardTitle>
+                  <CardDescription>
+                    Update your name and profile image. Email changes require
+                    contacting support.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={avatarUrl ?? ""} />
+                        <AvatarFallback className="text-2xl">
+                          {fullName?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingAvatar}
+                          >
+                            {uploadingAvatar ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="h-4 w-4 mr-2" />
+                            )}
+                            Upload Avatar
+                          </Button>
+                          {avatarUrl && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={handleRemoveAvatar}
+                              disabled={uploadingAvatar}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Upload a square JPG or PNG (max 5MB).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        value={email}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+
+                  {!user?.email_confirmed_at && (
+                    <div className="space-y-3 rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-4 text-sm">
+                      <div className="flex items-start gap-3 text-muted-foreground">
+                        <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <p>
+                          Your email is awaiting verification. Check your inbox or
+                          request a new confirmation email.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={handleResendVerification}
+                          variant="secondary"
+                          disabled={resendLoading || resendCountdown > 0}
+                        >
+                          {resendLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                          ) : (
+                            <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+                          )}
+                          {resendCountdown > 0
+                            ? `Resend in ${resendCountdown}s`
+                            : "Resend verification email"}
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          We'll send the link to {email || "your registered email"}.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-3">
                     <Button
                       type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingAvatar}
+                      onClick={handleUpdateProfile}
+                      disabled={profileSaving}
                     >
-                      {uploadingAvatar ? (
+                      {profileSaving && (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Upload className="h-4 w-4 mr-2" />
                       )}
-                      Upload Avatar
+                      Save Changes
                     </Button>
-                    {avatarUrl && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleRemoveAvatar}
-                        disabled={uploadingAvatar}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remove
-                      </Button>
-                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Upload a square JPG or PNG (max 5MB).
-                  </p>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <SettingsIcon className="h-5 w-5" />
+                    Communication Preferences
+                  </CardTitle>
+                  <CardDescription>
+                    Decide how MessageGuide keeps you informed.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    {
+                      key: "emailNotifications",
+                      icon: <Bell className="h-5 w-5 text-muted-foreground" />,
+                      title: "Email notifications",
+                      desc: "Receive alerts about important account activity.",
+                    },
+                    {
+                      key: "weeklySummary",
+                      icon: <Calendar className="h-5 w-5 text-muted-foreground" />,
+                      title: "Weekly summary",
+                      desc: "Get a weekly recap of new sermons and study guides.",
+                    },
+                    {
+                      key: "productUpdates",
+                      icon: <Megaphone className="h-5 w-5 text-muted-foreground" />,
+                      title: "Product updates",
+                      desc: "Hear about new features and improvements first.",
+                    },
+                  ].map((setting) => (
+                    <div
+                      key={setting.key}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        {setting.icon}
+                        <div>
+                          <p className="font-medium">{setting.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {setting.desc}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={
+                          accountSettings[
+                            setting.key as keyof AccountSettingsState
+                          ]
+                        }
+                        onCheckedChange={(checked) =>
+                          handleAccountSettingChange(
+                            setting.key as keyof AccountSettingsState,
+                            checked,
+                          )
+                        }
+                        disabled={updatingSetting === setting.key}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email
-                  {user?.email_confirmed_at ? (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Verified
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      Pending verification
-                    </Badge>
-                  )}
-                </Label>
-                <Input id="email" value={email} disabled className="bg-muted" />
-                {!user?.email_confirmed_at && (
-                  <div className="space-y-3 rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-4 text-sm">
-                    <div className="flex items-start gap-3 text-muted-foreground">
-                      <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                      <p>
-                        Your email is awaiting verification. Check your inbox or request a new
-                        confirmation email.
+            <TabsContent value="preferences" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <SunMoon className="h-5 w-5" />
+                    Appearance & Theme
+                  </CardTitle>
+                  <CardDescription>
+                    Tailor the interface to suit your environment.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium">Dark mode</p>
+                      <p className="text-sm text-muted-foreground">
+                        Toggle between light and dark themes.
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResendVerification}
-                        disabled={resendLoading || resendCountdown > 0}
+                    <Switch
+                      checked={settings.theme === "dark"}
+                      onCheckedChange={(checked) =>
+                        updateSettings({ theme: checked ? "dark" : "light" })
+                      }
+                      disabled={settingsLoading}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="colorScheme" className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Color scheme
+                    </Label>
+                    <Select
+                      value={settings.colorScheme}
+                      onValueChange={(value) =>
+                        updateSettings({
+                          colorScheme: value as typeof settings.colorScheme,
+                        })
+                      }
+                      disabled={settingsLoading}
+                    >
+                      <SelectTrigger id="colorScheme">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="warm">Warm</SelectItem>
+                        <SelectItem value="cool">Cool</SelectItem>
+                        <SelectItem value="high-contrast">
+                          High contrast
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      Interface font size
+                    </Label>
+                    <Slider
+                      value={[settings.fontSize]}
+                      min={14}
+                      max={24}
+                      step={1}
+                      onValueChange={([value]) =>
+                        updateSettings({ fontSize: value ?? settings.fontSize })
+                      }
+                      disabled={settingsLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Current size: {settings.fontSize}px
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Reading Preferences
+                  </CardTitle>
+                  <CardDescription>
+                    Choose how scriptures and study notes are presented.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="fontFamily">App font family</Label>
+                      <Select
+                        value={settings.fontFamily}
+                        onValueChange={(value) =>
+                          updateSettings({
+                            fontFamily: value as typeof settings.fontFamily,
+                          })
+                        }
+                        disabled={settingsLoading}
                       >
-                        {resendLoading ? (
-                          <>
-                            <RefreshCcw className="mr-2 h-3.5 w-3.5 animate-spin" />
-                            Sending...
-                          </>
-                        ) : resendCountdown > 0 ? (
-                          `Resend in ${resendCountdown}s`
-                        ) : (
-                          <>
-                            <RefreshCcw className="mr-2 h-3.5 w-3.5" />
-                            Resend verification email
-                          </>
-                        )}
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        We'll send the link to {email || "your registered email"}.
-                      </span>
+                        <SelectTrigger id="fontFamily">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sans-serif">Sans Serif</SelectItem>
+                          <SelectItem value="serif">Serif</SelectItem>
+                          <SelectItem value="monospace">Monospace</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="readerFontFamily">Reader font</Label>
+                      <Select
+                        value={settings.readerFontFamily}
+                        onValueChange={(value) =>
+                          updateSettings({
+                            readerFontFamily:
+                              value as typeof settings.readerFontFamily,
+                          })
+                        }
+                        disabled={settingsLoading}
+                      >
+                        <SelectTrigger id="readerFontFamily">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="serif">Serif</SelectItem>
+                          <SelectItem value="sans-serif">Sans Serif</SelectItem>
+                          <SelectItem value="monospace">Monospace</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="bibleVersion">Preferred Bible translation</Label>
+                      <Select
+                        value={settings.bibleVersion}
+                        onValueChange={(value) =>
+                          updateSettings({ bibleVersion: value })
+                        }
+                        disabled={settingsLoading}
+                      >
+                        <SelectTrigger id="bibleVersion">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="KJV">King James (KJV)</SelectItem>
+                          <SelectItem value="NIV">
+                            New International (NIV)
+                          </SelectItem>
+                          <SelectItem value="ESV">English Standard (ESV)</SelectItem>
+                          <SelectItem value="NKJV">New King James (NKJV)</SelectItem>
+                          <SelectItem value="NLT">New Living (NLT)</SelectItem>
+                          <SelectItem value="NASB">
+                            New American Standard (NASB)
+                          </SelectItem>
+                          <SelectItem value="AMP">Amplified (AMP)</SelectItem>
+                          <SelectItem value="CSB">Christian Standard (CSB)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                )}
-              </div>
 
-              <Button onClick={handleUpdateProfile} disabled={loading}>
-                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Update Profile
-              </Button>
-            </CardContent>
-          </Card>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetSettings}
+                    disabled={settingsLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" /> Reset reading preferences
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Account Settings Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />
-                Account Settings
-              </CardTitle>
-              <CardDescription>Manage communication preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                {
-                  key: "emailNotifications",
-                  icon: <Bell className="h-5 w-5 text-muted-foreground" />,
-                  title: "Email notifications",
-                  desc: "Receive alerts about important account activity.",
-                },
-                {
-                  key: "weeklySummary",
-                  icon: <Calendar className="h-5 w-5 text-muted-foreground" />,
-                  title: "Weekly summary",
-                  desc: "Get a weekly recap of new sermons and study guides.",
-                },
-                {
-                  key: "productUpdates",
-                  icon: <Megaphone className="h-5 w-5 text-muted-foreground" />,
-                  title: "Product updates",
-                  desc: "Hear about new features and improvements first.",
-                },
-              ].map((setting) => (
-                <div
-                  key={setting.key}
-                  className="flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-3">
-                    {setting.icon}
-                    <div>
-                      <p className="font-medium">{setting.title}</p>
-                      <p className="text-sm text-muted-foreground">{setting.desc}</p>
+            <TabsContent value="security" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    Change Password
+                  </CardTitle>
+                  <CardDescription>
+                    Choose a strong password to keep your account secure.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                      />
                     </div>
                   </div>
-                  <Switch
-                    checked={
-                      accountSettings[
-                        setting.key as keyof AccountSettingsState
-                      ]
-                    }
-                    onCheckedChange={(checked) =>
-                      handleAccountSettingChange(
-                        setting.key as keyof AccountSettingsState,
-                        checked
-                      )
-                    }
-                    disabled={updatingSetting === setting.key}
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
 
-          {/* Password Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Change Password
-              </CardTitle>
-              <CardDescription>Update your password</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                />
-              </div>
-              <Button onClick={handleChangePassword} disabled={loading}>
-                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Change Password
-              </Button>
-            </CardContent>
-          </Card>
+                  <Button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={passwordSaving}
+                  >
+                    {passwordSaving && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
+                    Update Password
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
