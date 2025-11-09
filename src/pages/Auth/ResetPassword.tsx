@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { validateResetPasswordInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
 export default function ResetPassword() {
@@ -21,19 +22,18 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
+    const { sanitized, errors } = validateResetPasswordInput({
+      password,
+      confirmPassword,
+    });
 
-    if (password.length < 6) {
+    setPassword(sanitized.password);
+    setConfirmPassword(sanitized.confirmPassword);
+
+    if (errors.length > 0) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: "Validation Error",
+        description: errors.join("\n"),
         variant: "destructive",
       });
       return;
@@ -43,7 +43,7 @@ export default function ResetPassword() {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: password,
+        password: sanitized.password,
       });
 
       if (error) throw error;
