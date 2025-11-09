@@ -1,106 +1,85 @@
--- Insert sample William Branham sermons with full content
--- Sermon 1: Saved By Grace
+-- Insert William Branham sermons with representative paragraphs
 DO $$
 DECLARE
-  sermon1_id UUID;
+  spoken_seed_id UUID;
+  mystery_id UUID;
+  grace_id UUID;
+  ages_id UUID;
+  qa_id UUID;
+  rapture_id UUID;
 BEGIN
+  -- The Spoken Word Is The Original Seed
   INSERT INTO public.sermons (title, date, location)
-  VALUES ('Saved By Grace', '1963-01-19', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
-
-  -- Insert paragraphs for "Saved By Grace"
-  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'Good morning, friends. It''s certainly a privilege to be here this morning in the service of the Lord Jesus. And I was just thinking as I come in, how wonderful it is to be saved by the grace of God.'),
-  (sermon1_id, 2, 'You know, salvation is not what we do; it''s what God has done for us. It''s not by works of righteousness which we have done, but according to His mercy He saved us.'),
-  (sermon1_id, 56, 'For by grace are ye saved through faith; and that not of yourselves: it is the gift of God. Not of works, lest any man should boast. You can''t save yourself. It''s impossible for you to save yourself. God did the saving.'),
-  (sermon1_id, 57, 'When you were dead in trespasses and sin, you had no way to save yourself. You were helpless, hopeless, and undone. But God, rich in mercy, because of His great love wherewith He loved us, even when we were dead in sins, has quickened us together with Christ.'),
-  (sermon1_id, 58, 'That''s salvation: by grace through faith. Not by our goodness, not by our church membership, not by our denominations. But it''s the gift of God, freely given to whosoever will believe.'),
-  (sermon1_id, 59, 'Jesus said, "Verily, verily, I say unto you, he that heareth My Word and believeth on Him that sent Me, hath Everlasting Life, and shall not come into condemnation, but has passed from death unto Life."'),
-  (sermon1_id, 60, 'Oh, what a promise! What a salvation! We are saved by grace, kept by grace, and we will be glorified by grace. It''s all of God from start to finish.'),
-  (sermon1_id, 61, 'Many people think they have to work their way to heaven, but the Bible plainly says salvation is not of works. It''s the gift of God. When you try to work for it, you make void the grace of God.'),
-  (sermon1_id, 62, 'I''m so glad that salvation doesn''t depend on what I do, but on what He has done. I couldn''t keep myself saved five minutes if it depended on me. But thank God, He that began a good work in me will perform it until the day of Jesus Christ.');
-
-  -- Sermon 2: Perfect Faith
-  INSERT INTO public.sermons (title, date, location)
-  VALUES ('Perfect Faith', '1963-08-25', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
+  VALUES ('The Spoken Word Is The Original Seed', '1962-03-18', 'Jeffersonville, IN')
+  RETURNING id INTO spoken_seed_id;
 
   INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'Now, we are approaching a subject that to me is one of the most important subjects there is, and that''s the subject of faith. For without faith it''s impossible to please God.'),
-  (sermon1_id, 45, 'Faith is not something that you work up. You can''t manufacture faith. Faith is something that''s a gift of God. The Bible said, "Faith cometh by hearing, and hearing by the Word of God."'),
-  (sermon1_id, 46, 'When you hear the Word of God, then faith comes. You hear the promise, then faith comes to believe that promise. And when faith comes, and you act upon that faith, things happen!'),
-  (sermon1_id, 67, 'Perfect faith is not something you work up; it''s something that works through you by the Holy Spirit. It''s when God''s Spirit comes upon you and gives you perfect faith for the thing that you have need of.'),
-  (sermon1_id, 68, 'Perfect faith is a gift of God. And when God speaks to you, and faith comes, there''s nothing that can stop it. It''s already done. Before you pray, it''s already answered.'),
-  (sermon1_id, 69, 'That''s what Jesus meant when He said, "When you pray, believe that you receive it, and you shall have it." That''s perfect faith. You believe you have it before you see it in manifestation.');
+    (spoken_seed_id, 1, 'Good morning, friends. It''s a privilege to be with you again in the presence of the Lord, gathered to hear His Word and watch Him make It live among us.'),
+    (spoken_seed_id, 2, 'Jesus told us that the seed is the Word. Every promise God uttered carries His own life inside of it, waiting on fertile ground where faith will let it blossom.'),
+    (spoken_seed_id, 3, 'When the Word is spoken in season, the Holy Spirit broods over it just like in the beginning. That same creative presence wants to bring forth sons and daughters who believe.'),
+    (spoken_seed_id, 4, 'The same creative power that framed the worlds still rides on God''s spoken Word today. Let it fall into your heart, and do not mix it with doubt or creeds.'),
+    (spoken_seed_id, 5, 'If the Word finds good ground, it will reproduce exactly what God said. Healing will heal, salvation will save, and deliverance will deliver—because the Original Seed never fails.'),
+    (spoken_seed_id, 6, 'So guard that Seed. Keep it watered by prayer, warmed by love, and exposed to the Light of the Son. Then watch the harvest of God''s promise come to pass in your life.');
 
-  -- Sermon 3: The Token
-  INSERT INTO public.sermons (title, date, location)
-  VALUES ('The Token', '1963-09-14', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
-
-  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'I want to speak this morning on the subject of "The Token." And my text is found in Exodus 12:13, where God said, "When I see the blood, I will pass over you."'),
-  (sermon1_id, 23, 'The blood on the door was a token that the lamb had died. The blood was the token. And today, the Holy Spirit is God''s Token that Jesus Christ died for us and we have been redeemed.'),
-  (sermon1_id, 89, 'The Holy Spirit is God''s token of our redemption. Without the Token, you cannot pass. You must have the Token displayed. The Token must be on the door. The Token must be visible.'),
-  (sermon1_id, 90, 'Just like in the days of Egypt, when the death angel passed through, every house that didn''t have the token was visited by death. But where the token was applied, the death angel passed over.'),
-  (sermon1_id, 91, 'Today, we must have the Token. Not just a claim, not just a profession, not just being a church member. You must have the Token, the Holy Spirit, the evidence that you have passed from death unto Life.');
-
-  -- Sermon 4: Why Are We Not A Denomination
-  INSERT INTO public.sermons (title, date, location)
-  VALUES ('Why Are We Not A Denomination', '1958-09-27', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
-
-  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'Many people ask me, "Brother Branham, why don''t you organize? Why are we not a denomination?" And I want to answer that question this morning from the Word of God.'),
-  (sermon1_id, 45, 'The Holy Spirit leads us, not denomination. We follow the Spirit and the Word. Jesus never organized a denomination, and neither did His apostles.'),
-  (sermon1_id, 46, 'When you organize, you crystallize. You make a creed and you stop the moving of the Holy Spirit. God wants a people that will follow the Holy Ghost, not a bunch of creeds and dogmas.'),
-  (sermon1_id, 47, 'We believe in the Bible, the whole Bible, and nothing but the Bible. We don''t believe in adding creeds to it or taking away from it. We believe God''s Word is sufficient.'),
-  (sermon1_id, 48, 'God never did call us to be a denomination. He called us to be Christians, followers of the Lord Jesus Christ, led by the Holy Spirit, living by the Word of God.');
-
-  -- Sermon 5: Faith Is The Substance
-  INSERT INTO public.sermons (title, date, location)
-  VALUES ('Faith Is The Substance', '1961-12-02', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
-
-  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'Hebrews 11:1 says, "Faith is the substance of things hoped for, the evidence of things not seen." I want to talk about this faith that brings substance.'),
-  (sermon1_id, 23, 'Without faith it is impossible to please God, for he that cometh to God must believe that He is, and that He is a rewarder of them that diligently seek Him.'),
-  (sermon1_id, 24, 'Faith makes things real. Faith gives substance to the promises of God. When you have faith, God''s promises become real to you. They''re not just words on a page anymore.'),
-  (sermon1_id, 25, 'Abraham believed God, and it was counted unto him for righteousness. Abraham had faith that gave substance. He believed God''s promise even though he couldn''t see it in the natural.'),
-  (sermon1_id, 26, 'That''s real faith - when you can believe God''s promise even when you can''t see how it''s going to come to pass. You just believe it because God said it, and that settles it.');
-
-  -- Sermon 6: Christ Is The Mystery Of God Revealed
+  -- Christ Is The Mystery Of God Revealed
   INSERT INTO public.sermons (title, date, location)
   VALUES ('Christ Is The Mystery Of God Revealed', '1963-07-28', 'Jeffersonville, IN')
-  RETURNING id INTO sermon1_id;
+  RETURNING id INTO mystery_id;
 
   INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'This morning we want to speak on one of the greatest subjects that could ever be given to man, and that is, "Christ Is The Mystery Of God Revealed."'),
-  (sermon1_id, 12, 'Christ is God''s mystery revealed to His people in this last day through the Word. All down through the ages, God has been revealing Himself, little by little, until He was fully manifested in Christ Jesus.'),
-  (sermon1_id, 13, 'The mystery of God is Christ in you, the hope of glory. For years, God kept this hidden from the world. But now He has revealed it to His saints.'),
-  (sermon1_id, 14, 'Jesus Christ is God Himself manifested in flesh. He is the fullness of the Godhead bodily. He is not just a man, He is the God-man. He is very God and very man.'),
-  (sermon1_id, 15, 'Understanding who Christ is, is the key to everything. Once you understand that Jesus is God manifested in flesh, then you understand redemption, salvation, healing, everything!');
+    (mystery_id, 1, 'Thank you, Brother Neville. The Lord bless you. We approach sacred ground this morning, speaking on the mystery hidden from the foundation of the world.'),
+    (mystery_id, 2, 'All the fullness of God was pleased to dwell in Jesus Christ. He is the expressed image of the invisible God, and the Bible unfolds Him from Genesis to Revelation.'),
+    (mystery_id, 3, 'God''s great mystery is Christ in you—the Hope of Glory. Not a distant religion, but the very Life of Jesus Christ living, breathing, and working through His Bride.'),
+    (mystery_id, 4, 'When you receive the new birth, it is God unveiling Himself in flesh again. Every age, He reveals a little more of that mystery until it stands completed in the end-time Bride.'),
+    (mystery_id, 5, 'Therefore, the aim of every sermon, every song, and every testimony is to bring people to that personal union with Christ. Once He lives inside, the mystery is solved for you.'),
+    (mystery_id, 6, 'Hold to the Word. Stay humble. Let Christ live through you, and the world will know that Jesus Christ is the same yesterday, today, and forever.');
 
-  -- Sermon 7: The Rapture
+  -- The Message of Grace
+  INSERT INTO public.sermons (title, date, location)
+  VALUES ('The Message of Grace', '1961-08-06', 'Jeffersonville, IN')
+  RETURNING id INTO grace_id;
+
+  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
+    (grace_id, 1, 'Now in Saint John 3:16 we read how God so loved the world that He gave His only begotten Son. Love moved first; grace made the approach before we could even call.'),
+    (grace_id, 2, 'Grace is God''s unmerited favor. He loved us when we were unlovable, saved us while we were sinners, and keeps us not by our works but by His finished work at Calvary.'),
+    (grace_id, 3, 'If He gave His Son while we were enemies, how much more will He freely give all things now that we are His children? Grace opens the door for every promise we claim.'),
+    (grace_id, 4, 'Some people fear they cannot hold out, but grace is not you holding on to God. Grace is God holding on to you, keeping you by His Spirit until the day of redemption.'),
+    (grace_id, 5, 'So cast away your condemnation. Look to Jesus, the Author and Finisher of our faith. His grace is sufficient, and His strength is made perfect in weakness.'),
+    (grace_id, 6, 'Let that amazing grace soften your heart for others. Freely you have received; now freely give, reflecting the same mercy the Father showed to you.');
+
+  -- The Seven Church Ages
+  INSERT INTO public.sermons (title, date, location)
+  VALUES ('The Seven Church Ages', '1960-12-04', 'Jeffersonville, IN')
+  RETURNING id INTO ages_id;
+
+  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
+    (ages_id, 1, 'We turn tonight to the Book of Revelation, to the messages of the seven golden candlesticks. Each age shows Christ walking among His people.'),
+    (ages_id, 2, 'Ephesus, Smyrna, Pergamos, Thyatira, Sardis, Philadelphia, and Laodicea—each received a portion of the Word, and each messenger echoed the Life of Christ to his age.'),
+    (ages_id, 3, 'Though darkness rose, the Holy Ghost kept lighting the next lamp. The same Spirit that started the Church keeps it burning until the Bride is called out.'),
+    (ages_id, 4, 'We stand in Laodicea, the age of rights and lukewarmness, yet Christ is still knocking. He wants to step inside and sup with anyone who will open the door.'),
+    (ages_id, 5, 'So take heed to what the Spirit says to the churches. Overcomers are promised a throne, hidden manna, a new name, and a share in the Morning Star Himself.');
+
+  -- Questions and Answers
+  INSERT INTO public.sermons (title, date, location)
+  VALUES ('Questions and Answers', '1961-10-15', 'Jeffersonville, IN')
+  RETURNING id INTO qa_id;
+
+  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
+    (qa_id, 1, 'Tonight we gather around the Word and the stack of questions you have handed in. I don''t claim to know it all, but I look to the Scriptures for every answer.'),
+    (qa_id, 2, 'When believers sincerely ask, God honors that hunger. The Bible holds the pattern, and the Holy Spirit will always guide us back to what is written.'),
+    (qa_id, 3, 'Some questions deal with daily living—marriage, family, and conduct. Remember, the token is love: love for God, love for your spouse, love for the brethren.'),
+    (qa_id, 4, 'Others ask about prophecy and the end time. No matter how deep the mystery, keep your eyes on Jesus and stay filled with the Spirit; then you''ll be ready for anything.'),
+    (qa_id, 5, 'May every answer tonight draw you closer to Christ. If one remains unsettled, stay reverent and wait on Him—He will make all things plain in His time.');
+
+  -- The Rapture
   INSERT INTO public.sermons (title, date, location)
   VALUES ('The Rapture', '1965-12-04', 'Yuma, AZ')
-  RETURNING id INTO sermon1_id;
+  RETURNING id INTO rapture_id;
 
   INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'I want to speak this morning about the blessed hope of the Church, and that is the Rapture of the Church, when Jesus comes to take His Bride home.'),
-  (sermon1_id, 23, 'The church is waiting for the rapture, the coming of the Lord Jesus Christ in glory. We believe Jesus is coming soon. The signs are everywhere that we''re at the end of the age.'),
-  (sermon1_id, 24, 'Jesus said, "I will come again and receive you unto Myself, that where I am, there ye may be also." What a promise! What a hope! Jesus is coming for His Church!'),
-  (sermon1_id, 25, 'The trumpet shall sound, and the dead in Christ shall rise first. Then we which are alive and remain shall be caught up together with them in the clouds to meet the Lord in the air.');
-
-  -- Sermon 8: The Greatest Gift In The Bible
-  INSERT INTO public.sermons (title, date, location)
-  VALUES ('The Greatest Gift In The Bible', '1963-12-25', 'Phoenix, AZ')
-  RETURNING id INTO sermon1_id;
-
-  INSERT INTO public.sermon_paragraphs (sermon_id, paragraph_number, content) VALUES
-  (sermon1_id, 1, 'On this Christmas morning, I want to speak about the greatest gift that was ever given, the greatest gift in the Bible.'),
-  (sermon1_id, 12, 'God so loved the world that He gave His only begotten Son. Love is the greatest gift that was ever given to humanity. Not silver, not gold, but God gave Himself in the form of His Son.'),
-  (sermon1_id, 13, 'When you think about Christmas, don''t think about the tinsel and the gifts under the tree. Think about God''s gift to you - eternal life through Jesus Christ His Son.'),
-  (sermon1_id, 14, 'God gave the greatest gift, and it was wrapped in swaddling clothes and laid in a manger. It was love made manifest. God''s love coming down to save lost humanity.');
-
+    (rapture_id, 1, 'I want to speak about the blessed hope of the Church—the catching away of the Bride to meet her Lord in the air.'),
+    (rapture_id, 2, 'Paul said the trumpet will sound and the dead in Christ shall rise first. That promise is as sure as the God who spoke it.'),
+    (rapture_id, 3, 'The signs of the time show us we are at the evening hour. Israel is in her homeland, the church ages are fulfilled, and the Bride is trimming her lamp.'),
+    (rapture_id, 4, 'Do not look for a public parade. The Rapture is a revelation to the Bride. She hears the secret call and slips away while the world goes on unaware.'),
+    (rapture_id, 5, 'So comfort one another with these words. Live ready, keep the Token applied, and watch the eastern sky—our redemption draweth nigh.');
 END $$;
