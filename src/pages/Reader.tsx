@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -80,7 +81,7 @@ export default function Reader() {
     setShowSermonCrossRef(true);
   };
 
-  const handleAddNote = (verseNumber: number, e: React.MouseEvent) => {
+  const handleAddNote = (verseNumber: number, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const verseRef = `${currentBook} ${currentChapter}:${verseNumber}`;
     setNoteVerseContext(verseRef);
@@ -121,9 +122,9 @@ export default function Reader() {
       : "font-sans";
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
       {/* Top Navigation */}
-      <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-b border-border/70 shadow-sm">
         <div className="container flex items-center justify-between gap-2 sm:gap-3 py-2 sm:py-3 px-3 sm:px-4">
           <Button
             variant="ghost"
@@ -243,12 +244,15 @@ export default function Reader() {
       </div>
 
       {/* Bible Content */}
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-        <Card className="border border-border/50 shadow-sm">
-          <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-6 md:py-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8 text-center">
-              {currentBook} {currentChapter}
-            </h1>
+      <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
+        <Card className="border border-border/60 bg-card/95 shadow-xl">
+          <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-10 space-y-8">
+            <div className="space-y-2 text-center">
+              <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground/70">Holy Bible • King James Version</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
+                {currentBook} {currentChapter}
+              </h1>
+            </div>
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -257,7 +261,7 @@ export default function Reader() {
             ) : error ? (
               <div className="text-center py-12 text-destructive">{error}</div>
             ) : (
-              <div className={cn("space-y-3 sm:space-y-4 max-w-4xl mx-auto", readerFontClass)}>
+              <div className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}>
                 {verses.map((verse) => (
                   <VerseCard
                     key={verse.number}
@@ -287,7 +291,7 @@ export default function Reader() {
             )}
 
             {/* Chapter Navigation */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mt-8 pt-6 sm:pt-8 border-t border-border max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-8 border-t border-border/70 max-w-4xl mx-auto">
               <Button
                 variant="outline"
                 onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}

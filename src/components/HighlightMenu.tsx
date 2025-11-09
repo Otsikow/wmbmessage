@@ -54,7 +54,7 @@ export default function HighlightMenu({
           variant={currentColor ? "default" : "ghost"}
           size="icon"
           className={cn(
-            "h-7 w-7",
+            "h-8 w-8",
             currentColor && "bg-primary/10 hover:bg-primary/20"
           )}
           disabled={disabled}
