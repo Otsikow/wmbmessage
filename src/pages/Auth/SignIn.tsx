@@ -45,7 +45,25 @@ export default function SignIn() {
         password: sanitized.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        const errorMessage = error.message?.toLowerCase?.() ?? "";
+
+        if (errorMessage.includes("confirm") || errorMessage.includes("verify")) {
+          toast({
+            title: "Email verification required",
+            description:
+              "Please verify your email address before signing in. We've sent you instructions.",
+          });
+
+          navigate("/auth/verify-email", {
+            state: { email: sanitized.email },
+          });
+
+          return;
+        }
+
+        throw error;
+      }
 
       toast({
         title: "Success",

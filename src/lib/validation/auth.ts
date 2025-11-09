@@ -48,6 +48,10 @@ export interface ResetPasswordInput {
   confirmPassword: string;
 }
 
+export interface EmailOnlyInput {
+  email: string;
+}
+
 const nameSchema = z
   .string()
   .trim()
@@ -165,6 +169,25 @@ export function validateResetPasswordInput(
 
   if (result.success) {
     return { sanitized: result.data as ResetPasswordInput, errors: [] };
+  }
+
+  return {
+    sanitized,
+    errors: extractErrors(result.error),
+  };
+}
+
+export function validateEmailOnly(
+  email: string
+): ValidationResult<EmailOnlyInput> {
+  const sanitized = { email: sanitizeEmail(email) };
+  const result = emailSchema.safeParse(sanitized.email);
+
+  if (result.success) {
+    return {
+      sanitized: { email: result.data as string },
+      errors: [],
+    };
   }
 
   return {

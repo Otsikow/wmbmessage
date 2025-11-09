@@ -61,7 +61,9 @@ export default function SignUp() {
           "Account created successfully! Please verify your email before signing in.",
       });
 
-      navigate("/auth/sign-in");
+      navigate("/auth/verify-email", {
+        state: { email: sanitized.email },
+      });
     } catch (error) {
       console.error("Email sign-up failed:", error);
       toast({
