@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ArrowLeft,
   Calendar,
   MapPin,
   Bookmark,
@@ -19,9 +18,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import churchInteriorImage from "@/assets/church-interior.jpg";
+import BackButton from "@/components/BackButton";
 
 export default function MessageReader() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedSermon, setSelectedSermon] = useState<SermonWithParagraphs | null>(
     null
@@ -103,14 +102,7 @@ export default function MessageReader() {
         <div className="absolute inset-0 flex items-center">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/")}
-                className="shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <BackButton fallbackPath="/messages" />
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                   Message Reader

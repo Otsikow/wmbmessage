@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
   BookmarkIcon,
   Highlighter,
   FileText,
@@ -31,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import BackButton from "@/components/BackButton";
 
 const HIGHLIGHT_COLORS = {
   yellow: "bg-yellow-200 dark:bg-yellow-900",
@@ -109,14 +109,7 @@ export default function Library() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
         <div className="container flex items-center gap-3 py-3 px-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/more")}
-            className="md:hidden shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <BackButton fallbackPath="/more" />
           <div>
             <h1 className="text-2xl font-bold">My Library</h1>
             <p className="text-sm text-muted-foreground">

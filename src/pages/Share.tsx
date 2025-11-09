@@ -1,12 +1,10 @@
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2, Facebook, Twitter, Mail, Link as LinkIcon } from "lucide-react";
+import { Share2, Facebook, Twitter, Mail, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
+import BackButton from "@/components/BackButton";
 
 export default function Share() {
-  const navigate = useNavigate();
-  
   const handleShare = (platform: string) => {
     toast.success(`Sharing on ${platform}!`);
   };
@@ -21,14 +19,7 @@ export default function Share() {
       <div className="w-full py-6 sm:py-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/more")}
-              className="md:hidden shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            <BackButton fallbackPath="/more" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Share</h1>
           </div>
 

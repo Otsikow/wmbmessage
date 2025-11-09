@@ -1,14 +1,11 @@
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Info, Heart, Users, BookOpen } from "lucide-react";
+import { Info, Heart, Users, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import logoImage from "@/assets/logo-final.png";
 import crossImage from "@/assets/cross-sunrise.jpg";
+import BackButton from "@/components/BackButton";
 
 export default function About() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="relative h-48 md:h-64 overflow-hidden">
@@ -17,9 +14,7 @@ export default function About() {
         <div className="absolute inset-0 flex items-center">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/more")} className="md:hidden shrink-0">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <BackButton fallbackPath="/more" />
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">About MessageGuide</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">Our mission and vision</p>
