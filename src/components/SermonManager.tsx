@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, Upload, Loader2, Search, FileText } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getFriendlyErrorMessage } from '@/lib/errorHandling';
 
 interface Sermon {
   id: string;
@@ -88,7 +89,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not load sermons. Please try again after checking your connection.',
+          'load-sermons'
+        ),
         variant: 'destructive',
       });
       setConfigError('Unable to load sermons. Please check your Supabase configuration.');
@@ -111,7 +116,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not load the sermon details. Please try again.',
+          'load-sermon-paragraphs'
+        ),
         variant: 'destructive',
       });
     }
@@ -165,7 +174,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not save this sermon. Please review the information and try again.',
+          editingSermon ? 'update-sermon' : 'create-sermon'
+        ),
         variant: 'destructive',
       });
     }
@@ -224,7 +237,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not delete this sermon. Please try again shortly.',
+          'delete-sermon'
+        ),
         variant: 'destructive',
       });
     }
@@ -321,7 +338,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not import these sermons. Please check the file contents and try again.',
+          'bulk-import-sermons'
+        ),
         variant: 'destructive',
       });
     }
@@ -370,7 +391,11 @@ export default function SermonManager() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: getFriendlyErrorMessage(
+          error,
+          'We could not load the sermon paragraphs for editing. Please try again.',
+          'load-sermon-for-edit'
+        ),
         variant: 'destructive',
       });
     }

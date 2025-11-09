@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import { validateSignUpInput } from "@/lib/validation/auth";
 import logo from "@/assets/logo.png";
 
@@ -56,14 +57,19 @@ export default function SignUp() {
 
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description:
+          "Account created successfully! Please verify your email before signing in.",
       });
 
-      navigate("/");
+      navigate("/auth/sign-in");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "We couldn't create your account. Please review your details or try again later.",
+          "email sign-up"
+        ),
         variant: "destructive",
       });
     } finally {
@@ -75,16 +81,18 @@ export default function SignUp() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+        options: { redirectTo: `${window.location.origin}/` },
       });
 
       if (error) throw error;
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: getFriendlyErrorMessage(
+          error,
+          "Unable to sign up with Google right now. Please try again later.",
+          "google sign-up"
+        ),
         variant: "destructive",
       });
     }
@@ -196,7 +204,7 @@ export default function SignUp() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Must be 8+ characters with upper, lower, number, and symbol
+              Must be 8+ characters with upper, lower, number, and symbol.
             </p>
           </div>
 
