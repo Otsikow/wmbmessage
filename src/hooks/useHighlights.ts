@@ -45,19 +45,74 @@ export function useHighlights(book: string, chapter: number) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const isSupabaseConfigured = Boolean(
+    import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  );
+
+  const canUseSupabase = Boolean(isSupabaseConfigured && user);
+
+  const getLocalStorageKey = (type: "highlights" | "bookmarks") =>
+    `reader:${type}:${book}:${chapter}`;
+
+  const readLocalStorage = <T,>(key: string): T | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.localStorage.getItem(key);
+      return stored ? (JSON.parse(stored) as T) : null;
+    } catch (error) {
+      console.warn("Failed to parse reader storage", error);
+      return null;
+    }
+  };
+
+  const writeLocalStorage = <T,>(key: string, value: T) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn("Failed to persist reader storage", error);
+    }
+  };
+
+  const loadLocalHighlights = () =>
+    readLocalStorage<Highlight[]>(getLocalStorageKey("highlights")) || [];
+
+  const loadLocalBookmarks = () =>
+    readLocalStorage<Bookmark[]>(getLocalStorageKey("bookmarks")) || [];
+
+  const persistLocalHighlights = (data: Highlight[]) =>
+    writeLocalStorage(getLocalStorageKey("highlights"), data);
+
+  const persistLocalBookmarks = (data: Bookmark[]) =>
+    writeLocalStorage(getLocalStorageKey("bookmarks"), data);
+
+  const generateId = () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
   // Fetch highlights and bookmarks for current chapter
   useEffect(() => {
-    if (!user) {
-      setHighlights([]);
-      setBookmarks([]);
-      return;
-    }
     fetchHighlightsAndBookmarks();
-  }, [user, book, chapter]);
+  }, [user?.id, book, chapter, canUseSupabase]);
 
   const fetchHighlightsAndBookmarks = async () => {
-    if (!user) return;
     setLoading(true);
+
+    if (!canUseSupabase) {
+      const localHighlights = loadLocalHighlights();
+      const localBookmarks = loadLocalBookmarks();
+      setHighlights(localHighlights);
+      setBookmarks(localBookmarks);
+      setLoading(false);
+      return;
+    }
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const [highlightsResult, bookmarksResult] = await Promise.all([
         supabase
@@ -92,6 +147,43 @@ export function useHighlights(book: string, chapter: number) {
   };
 
   const addHighlight = async (verse: number, color: string, note?: string): Promise<boolean> => {
+    if (!canUseSupabase) {
+      const now = new Date().toISOString();
+      setHighlights((prev) => {
+        const existing = prev.find((h) => h.verse === verse);
+        const updatedHighlight: Highlight = existing
+          ? {
+              ...existing,
+              color,
+              note,
+              updated_at: now,
+            }
+          : {
+              id: generateId(),
+              user_id: user?.id || "local",
+              book,
+              chapter,
+              verse,
+              color,
+              note,
+              created_at: now,
+              updated_at: now,
+            };
+
+        const filtered = prev.filter((h) => h.verse !== verse);
+        const next = [...filtered, updatedHighlight].sort((a, b) => a.verse - b.verse);
+        persistLocalHighlights(next);
+        return next;
+      });
+
+      toast({
+        title: "Highlight added",
+        description: `${book} ${chapter}:${verse} has been highlighted.`,
+      });
+
+      return true;
+    }
+
     if (!user) {
       toast({
         title: "Sign in required",
@@ -143,6 +235,21 @@ export function useHighlights(book: string, chapter: number) {
   };
 
   const removeHighlight = async (verse: number): Promise<boolean> => {
+    if (!canUseSupabase) {
+      setHighlights((prev) => {
+        const next = prev.filter((h) => h.verse !== verse);
+        persistLocalHighlights(next);
+        return next;
+      });
+
+      toast({
+        title: "Highlight removed",
+        description: `Removed highlight from ${book} ${chapter}:${verse}.`,
+      });
+
+      return true;
+    }
+
     if (!user) return false;
 
     try {
@@ -175,6 +282,42 @@ export function useHighlights(book: string, chapter: number) {
   };
 
   const toggleBookmark = async (verse: number, note?: string): Promise<boolean> => {
+    if (!canUseSupabase) {
+      setBookmarks((prev) => {
+        const existingBookmark = prev.find((b) => b.verse === verse);
+        let next: Bookmark[];
+
+        if (existingBookmark) {
+          next = prev.filter((b) => b.verse !== verse);
+          toast({
+            title: "Bookmark removed",
+            description: `Removed bookmark from ${book} ${chapter}:${verse}.`,
+          });
+        } else {
+          const now = new Date().toISOString();
+          const newBookmark: Bookmark = {
+            id: generateId(),
+            user_id: user?.id || "local",
+            book,
+            chapter,
+            verse,
+            note,
+            created_at: now,
+          };
+          next = [...prev, newBookmark];
+          toast({
+            title: "Bookmark added",
+            description: `${book} ${chapter}:${verse} has been bookmarked.`,
+          });
+        }
+
+        persistLocalBookmarks(next);
+        return next;
+      });
+
+      return true;
+    }
+
     if (!user) {
       toast({
         title: "Sign in required",
