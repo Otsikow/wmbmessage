@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CrossReferenceViewerProps {
-  onNavigate?: (book: string, chapter: number) => void;
+  onNavigate?: (book: string, chapter: number, verse?: number) => void;
   currentBook?: string;
   currentChapter?: number;
   currentVerse?: number;
@@ -201,10 +201,10 @@ export default function CrossReferenceViewer({
                     </div>
                     <div className="space-y-3">
                       {searchResults.map((result, index) => (
-                        <Card 
+                        <Card
                           key={index}
                           className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all"
-                          onClick={() => onNavigate?.(result.book, result.chapter)}
+                          onClick={() => onNavigate?.(result.book, result.chapter, result.verse)}
                         >
                           <CardHeader className="pb-2">
                             <div className="flex items-start justify-between gap-2">
@@ -421,7 +421,7 @@ export default function CrossReferenceViewer({
 interface ManualReferenceDisplayProps {
   reference: ParsedReference;
   onRemove: () => void;
-  onNavigate?: (book: string, chapter: number) => void;
+  onNavigate?: (book: string, chapter: number, verse?: number) => void;
 }
 
 function ManualReferenceDisplay({ reference, onRemove, onNavigate }: ManualReferenceDisplayProps) {
@@ -437,9 +437,15 @@ function ManualReferenceDisplay({ reference, onRemove, onNavigate }: ManualRefer
     <Card className="border-l-4 border-l-primary/50">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle 
+          <CardTitle
             className="text-sm font-semibold text-primary cursor-pointer hover:underline flex items-center gap-2"
-            onClick={() => onNavigate?.(reference.book, reference.chapter)}
+            onClick={() =>
+              onNavigate?.(
+                reference.book,
+                reference.chapter,
+                reference.startVerse ?? reference.endVerse ?? undefined
+              )
+            }
           >
             <BookOpen className="h-3.5 w-3.5" />
             {formatReference(reference)}
@@ -493,7 +499,7 @@ interface CrossReferenceDisplayProps {
     relationship_type?: string | null;
     notes?: string | null;
   };
-  onNavigate?: (book: string, chapter: number) => void;
+  onNavigate?: (book: string, chapter: number, verse?: number) => void;
   isUserRef?: boolean;
 }
 
@@ -511,16 +517,19 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
     : `${crossRef.to_book} ${crossRef.to_chapter}:${crossRef.to_verse}`;
 
   return (
-    <Card className={cn(
-      "border-l-4 transition-all hover:shadow-md",
-      isUserRef ? "border-l-amber-500/50" : "border-l-primary/50"
-    )}>
+    <Card
+      className={cn(
+        "border-l-4 transition-all hover:shadow-md cursor-pointer",
+        isUserRef ? "border-l-amber-500/50" : "border-l-primary/50"
+      )}
+      onClick={() => onNavigate?.(crossRef.to_book, crossRef.to_chapter, crossRef.to_verse)}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
-            <CardTitle 
+            <CardTitle
               className="text-sm font-semibold text-primary cursor-pointer hover:underline flex items-center gap-2"
-              onClick={() => onNavigate?.(crossRef.to_book, crossRef.to_chapter)}
+              onClick={() => onNavigate?.(crossRef.to_book, crossRef.to_chapter, crossRef.to_verse)}
             >
               <BookOpen className="h-3.5 w-3.5" />
               {referenceText}
