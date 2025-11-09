@@ -54,11 +54,12 @@ export default function SignIn() {
 
       navigate("/");
     } catch (error) {
+      console.error("Email sign-in failed:", error);
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
           error,
-          "Unable to sign in. Please check your credentials and try again.",
+          "Unable to sign in. Please check your email and password and try again.",
           "sign-in"
         ),
         variant: "destructive",
@@ -77,6 +78,7 @@ export default function SignIn() {
 
       if (error) throw error;
     } catch (error) {
+      console.error("Google sign-in failed:", error);
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
@@ -204,7 +206,7 @@ export default function SignIn() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-card px-2 text-muted-foreground">
-              Don't have an account?
+              Don’t have an account?
             </span>
           </div>
         </div>

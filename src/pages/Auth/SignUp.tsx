@@ -63,6 +63,7 @@ export default function SignUp() {
 
       navigate("/auth/sign-in");
     } catch (error) {
+      console.error("Email sign-up failed:", error);
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
@@ -86,6 +87,7 @@ export default function SignUp() {
 
       if (error) throw error;
     } catch (error) {
+      console.error("Google sign-up failed:", error);
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
