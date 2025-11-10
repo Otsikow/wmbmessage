@@ -44,21 +44,14 @@ const HIGHLIGHT_COLORS = {
   orange: "bg-orange-200 dark:bg-orange-900",
 };
 
-interface LibraryDisplayItem {
+type LibraryDisplayItem = LibraryBookmark | LibraryHighlight | {
   id: string;
-  book?: string;
-  chapter?: number;
-  verse?: number;
-  verse_text?: string;
-  color?: string;
-  note?: string | null;
   title?: string | null;
   content?: string | null;
   source_id?: string | null;
   tags?: string[];
   created_at?: string;
-  [key: string]: unknown;
-}
+};
 
 interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem> {
   title: string;
@@ -136,7 +129,7 @@ export default function Library() {
   };
 
   const formatPendingItem = itemToDelete
-    ? formatLibraryItemReference(itemToDelete.item)
+    ? formatLibraryItemReference(itemToDelete.item as any)
     : "this item";
 
   return (
@@ -375,7 +368,7 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
       ) : (
         <div className="space-y-2">
           {items.slice(0, 5).map((item) => {
-            const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+            const colorClass = 'color' in item && item.color && colorMap ? colorMap[item.color] : undefined;
             const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
@@ -462,7 +455,7 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
-            const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+            const colorClass = 'color' in item && item.color && colorMap ? colorMap[item.color] : undefined;
             const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
@@ -521,7 +514,7 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   );
 }
 
-function formatLibraryItemReference(item: LibraryDisplayItem): string {
+function formatLibraryItemReference(item: any): string {
   if (item.book && item.chapter && item.verse) {
     return `${item.book} ${item.chapter}:${item.verse}`;
   }
@@ -537,7 +530,7 @@ function formatLibraryItemReference(item: LibraryDisplayItem): string {
   return "this item";
 }
 
-function getLibraryItemDetails(item: LibraryDisplayItem) {
+function getLibraryItemDetails(item: any) {
   const reference = formatLibraryItemReference(item);
 
   const description = (() => {

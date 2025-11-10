@@ -177,7 +177,9 @@ export function validateResetPasswordInput(
   };
 }
 
-// Validate email address only
+/**
+ * Validate email address only
+ */
 export function validateEmailOnly(
   email: string
 ): ValidationResult<EmailOnlyInput> {
