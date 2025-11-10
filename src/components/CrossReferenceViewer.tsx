@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,21 +18,25 @@ interface CrossReferenceViewerProps {
   currentBook?: string;
   currentChapter?: number;
   currentVerse?: number;
+  initialSearchQuery?: string;
+  initialTab?: "search" | "cross-refs";
 }
 
-export default function CrossReferenceViewer({ 
+export default function CrossReferenceViewer({
   onNavigate,
   currentBook,
   currentChapter,
-  currentVerse
+  currentVerse,
+  initialSearchQuery = "",
+  initialTab,
 }: CrossReferenceViewerProps) {
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState(initialSearchQuery);
   const [manualReferences, setManualReferences] = useState<ParsedReference[]>([]);
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
   const [sermonResults, setSermonResults] = useState<WMBSermonResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("search");
-  
+  const [activeTab, setActiveTab] = useState<string>(initialTab ?? "search");
+
   const { searchBible, searchWMBSermons, loading: searchLoading, error: searchError } = useBibleSearch();
   
   // Fetch cross-references for current verse if viewing a specific verse
@@ -55,35 +59,52 @@ export default function CrossReferenceViewer({
     }
   }, [currentBook, currentChapter, currentVerse, crossReferences.length, userCrossReferences.length]);
 
-  const handleSearch = async () => {
-    if (!searchInput.trim()) return;
+  const performSearch = useCallback(
+    async (
+      rawQuery: string,
+      options: { keepInput?: boolean; skipTabSwitch?: boolean } = {}
+    ) => {
+      const query = rawQuery.trim();
+      if (!query) return;
 
-    // Check if input is a verse reference
-    const parsed = parseVerseReference(searchInput);
-    
-    if (parsed) {
-      // It's a verse reference - add to manual references
-      const exists = manualReferences.some(ref => 
-        ref.book === parsed.book && 
-        ref.chapter === parsed.chapter && 
-        ref.startVerse === parsed.startVerse
-      );
-      
-      if (!exists) {
-        setManualReferences([...manualReferences, parsed]);
+      const parsed = parseVerseReference(query);
+
+      if (parsed) {
+        setManualReferences((previous) => {
+          const exists = previous.some(
+            (ref) =>
+              ref.book === parsed.book &&
+              ref.chapter === parsed.chapter &&
+              ref.startVerse === parsed.startVerse
+          );
+
+          if (exists) {
+            return previous;
+          }
+
+          return [...previous, parsed];
+        });
+
+        if (!options.keepInput) {
+          setSearchInput("");
+        }
+        setSearchResults([]);
+        setSermonResults([]);
+        if (!options.skipTabSwitch) {
+          setActiveTab("search");
+        }
+        return;
       }
-      setSearchInput("");
-      setSearchResults([]);
-      setSermonResults([]);
-      setActiveTab("search");
-    } else {
-      // It's a keyword search - search both Bible and sermons
+
       setIsSearching(true);
-      setActiveTab("search");
+      if (!options.skipTabSwitch) {
+        setActiveTab("search");
+      }
+
       try {
         const [bibleData, sermonData] = await Promise.all([
-          searchBible(searchInput),
-          searchWMBSermons(searchInput)
+          searchBible(query),
+          searchWMBSermons(query),
         ]);
         setSearchResults(bibleData);
         setSermonResults(sermonData);
@@ -92,7 +113,12 @@ export default function CrossReferenceViewer({
       } finally {
         setIsSearching(false);
       }
-    }
+    },
+    [searchBible, searchWMBSermons]
+  );
+
+  const handleSearch = async () => {
+    await performSearch(searchInput);
   };
 
   const handleRemoveReference = (index: number) => {
@@ -109,10 +135,29 @@ export default function CrossReferenceViewer({
     setSearchInput("");
     setSearchResults([]);
     setSermonResults([]);
+    setManualReferences([]);
   };
 
   const totalCrossRefs = crossReferences.length + userCrossReferences.length;
   const hasSearchResults = searchResults.length > 0 || sermonResults.length > 0 || manualReferences.length > 0;
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (initialSearchQuery) {
+      setSearchInput(initialSearchQuery);
+      setManualReferences([]);
+      performSearch(initialSearchQuery, { keepInput: true });
+    } else {
+      setSearchResults([]);
+      setSermonResults([]);
+      setManualReferences([]);
+    }
+  }, [initialSearchQuery, performSearch]);
 
   return (
     <div className="flex flex-col h-full space-y-4">
