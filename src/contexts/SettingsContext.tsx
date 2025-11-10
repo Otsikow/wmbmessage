@@ -1,4 +1,4 @@
-import React from "react";
+import { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "./AuthContext";
 
@@ -40,19 +40,19 @@ interface SupabaseSettingsUpsert extends SupabaseSettingsRow {
   user_id: string;
 }
 
-const SettingsContext = React.createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const authContext = React.useContext(AuthContext);
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
-  const [loading, setLoading] = React.useState(true);
-  const [settings, setSettings] = React.useState<AppSettings>(() => {
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem("app-settings");
     return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
   });
 
   // Load settings from Supabase when user logs in
-  React.useEffect(() => {
+  useEffect(() => {
     const loadUserSettings = async () => {
       if (!user) {
         setLoading(false);
@@ -96,7 +96,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // Apply settings to DOM
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem("app-settings", JSON.stringify(settings));
     
     // Apply theme
@@ -179,7 +179,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useSettings() {
-  const context = React.useContext(SettingsContext);
+  const context = useContext(SettingsContext);
   if (!context) {
     // Return a default context if provider is not available
     // This prevents the app from crashing if there's a provider initialization issue
