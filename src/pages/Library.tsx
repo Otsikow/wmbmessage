@@ -8,11 +8,13 @@ import {
   Clock,
   Loader2,
   Trash2,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import {
@@ -51,6 +53,7 @@ type LibraryDisplayItem = LibraryBookmark | LibraryHighlight | {
   source_id?: string | null;
   tags?: string[];
   created_at?: string;
+  sermon_title?: string | null;
 };
 
 interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem> {
@@ -61,6 +64,7 @@ interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem>
   onDelete?: (item: T) => void;
   onNavigate: (item: T) => void;
   colorMap?: Record<string, string>;
+  searchQuery?: string;
 }
 
 interface LibraryTabProps<T extends LibraryDisplayItem = LibraryDisplayItem>
@@ -91,6 +95,8 @@ export default function Library() {
     | null
   >(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const recentActivities = getRecentActivity(20);
 
   const noteDisplayItems = useMemo<LibraryDisplayItem[]>(
@@ -102,8 +108,24 @@ export default function Library() {
         content: note.content,
         tags: note.tags,
         created_at: note.created_at,
+        sermon_title: note.sermon_title ?? null,
       })),
     [userNotes]
+  );
+
+  const filteredBookmarks = useMemo(
+    () => filterLibraryItems(bookmarks, searchQuery),
+    [bookmarks, searchQuery]
+  );
+
+  const filteredHighlights = useMemo(
+    () => filterLibraryItems(highlights, searchQuery),
+    [highlights, searchQuery]
+  );
+
+  const filteredNotes = useMemo(
+    () => filterLibraryItems(noteDisplayItems, searchQuery),
+    [noteDisplayItems, searchQuery]
   );
 
   const handleDelete = async () => {
@@ -129,7 +151,7 @@ export default function Library() {
   };
 
   const formatPendingItem = itemToDelete
-    ? formatLibraryItemReference(itemToDelete.item as any)
+    ? formatLibraryItemReference(itemToDelete.item)
     : "this item";
 
   return (
@@ -149,6 +171,19 @@ export default function Library() {
 
       {/* Content */}
       <div className="flex-1 container max-w-6xl mx-auto px-4 py-8 pb-24 md:pb-8">
+        <div className="max-w-xl mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search by text or Bible reference"
+              className="pl-9"
+              aria-label="Search saved items"
+            />
+          </div>
+        </div>
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="all">All</TabsTrigger>
@@ -176,7 +211,7 @@ export default function Library() {
             <LibrarySection
               title="Bookmarks"
               icon={BookmarkIcon}
-              items={bookmarks}
+              items={filteredBookmarks}
               loading={bookmarksLoading}
               onDelete={(item) => openDeleteDialog("bookmark", item)}
               onNavigate={(b) =>
@@ -184,13 +219,14 @@ export default function Library() {
                   `/reader?book=${encodeURIComponent(b.book)}&chapter=${b.chapter}&verse=${b.verse}`
                 )
               }
+              searchQuery={searchQuery}
             />
 
             {/* Highlights Section */}
             <LibrarySection
               title="Highlights"
               icon={Highlighter}
-              items={highlights}
+              items={filteredHighlights}
               loading={highlightsLoading}
               colorMap={HIGHLIGHT_COLORS}
               onDelete={(item) => openDeleteDialog("highlight", item)}
@@ -199,15 +235,17 @@ export default function Library() {
                   `/reader?book=${encodeURIComponent(h.book)}&chapter=${h.chapter}&verse=${h.verse}`
                 )
               }
+              searchQuery={searchQuery}
             />
 
             {/* Notes Section */}
             <LibrarySection
               title="Notes"
               icon={FileText}
-              items={noteDisplayItems}
+              items={filteredNotes}
               loading={notesLoading}
               onNavigate={() => navigate("/notes")}
+              searchQuery={searchQuery}
             />
           </TabsContent>
 
@@ -215,7 +253,7 @@ export default function Library() {
           <LibraryTab
             label="Bookmarks"
               icon={BookmarkIcon}
-            items={bookmarks}
+            items={filteredBookmarks}
             loading={bookmarksLoading}
             emptyMessage="Start bookmarking verses to save them for later."
             onDelete={(item) => openDeleteDialog("bookmark", item)}
@@ -224,13 +262,14 @@ export default function Library() {
                 `/reader?book=${encodeURIComponent(b.book)}&chapter=${b.chapter}&verse=${b.verse}`
               )
             }
+            searchQuery={searchQuery}
           />
 
           {/* Highlights Tab */}
           <LibraryTab
             label="Highlights"
               icon={Highlighter}
-            items={highlights}
+            items={filteredHighlights}
             loading={highlightsLoading}
             emptyMessage="Start highlighting verses to remember important passages."
             onDelete={(item) => openDeleteDialog("highlight", item)}
@@ -240,16 +279,18 @@ export default function Library() {
               )
             }
             colorMap={HIGHLIGHT_COLORS}
+            searchQuery={searchQuery}
           />
 
           {/* Notes Tab */}
           <LibraryTab
             label="Notes"
               icon={FileText}
-            items={noteDisplayItems}
+            items={filteredNotes}
             loading={notesLoading}
             emptyMessage="Create your first study note to get started."
             onNavigate={() => navigate("/notes")}
+            searchQuery={searchQuery}
           />
 
           {/* Recent Activity Tab */}
@@ -347,7 +388,10 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
   onDelete,
   onNavigate,
   colorMap,
+  searchQuery,
 }: LibrarySectionProps<T>) {
+  const hasSearch = Boolean(searchQuery && searchQuery.trim().length > 0);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -363,12 +407,15 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
         </div>
       ) : items.length === 0 ? (
         <Card className="p-6 text-center text-muted-foreground">
-          No {title.toLowerCase()} yet
+          {hasSearch
+            ? `No ${title.toLowerCase()} match your search.`
+            : `No ${title.toLowerCase()} yet`}
         </Card>
       ) : (
         <div className="space-y-2">
           {items.slice(0, 5).map((item) => {
-            const colorClass = 'color' in item && item.color && colorMap ? colorMap[item.color] : undefined;
+            const colorClass =
+              "color" in item && item.color && colorMap ? colorMap[item.color] : undefined;
             const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
@@ -439,7 +486,10 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   onDelete,
   onNavigate,
   colorMap,
+  searchQuery,
 }: LibraryTabProps<T>) {
+  const hasSearch = Boolean(searchQuery && searchQuery.trim().length > 0);
+
   return (
     <TabsContent value={label.toLowerCase()}>
       {loading ? (
@@ -449,13 +499,20 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
       ) : items.length === 0 ? (
         <Card className="p-12 text-center">
           <Icon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No {label} Yet</h3>
-          <p className="text-muted-foreground">{emptyMessage}</p>
+          <h3 className="text-lg font-semibold mb-2">
+            {hasSearch ? "No Results Found" : `No ${label} Yet`}
+          </h3>
+          <p className="text-muted-foreground">
+            {hasSearch
+              ? `Try adjusting your search to find saved ${label.toLowerCase()}.`
+              : emptyMessage}
+          </p>
         </Card>
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
-            const colorClass = 'color' in item && item.color && colorMap ? colorMap[item.color] : undefined;
+            const colorClass =
+              "color" in item && item.color && colorMap ? colorMap[item.color] : undefined;
             const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
@@ -514,43 +571,138 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   );
 }
 
-function formatLibraryItemReference(item: any): string {
-  if (item.book && item.chapter && item.verse) {
+function filterLibraryItems<T extends LibraryDisplayItem>(items: T[], query: string): T[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return items;
+  }
+
+  return items.filter((item) => matchesLibraryItemQuery(item, normalizedQuery));
+}
+
+function matchesLibraryItemQuery(item: LibraryDisplayItem, normalizedQuery: string): boolean {
+  const { reference, description, note, tags } = getLibraryItemDetails(item);
+  const searchableValues: string[] = [];
+
+  const addValue = (value?: string | number | null) => {
+    if (value === null || value === undefined) return;
+
+    const normalized = String(value).trim().toLowerCase();
+    if (normalized) {
+      searchableValues.push(normalized);
+    }
+  };
+
+  addValue(reference);
+  addValue(description);
+  addValue(note);
+
+  tags.forEach(addValue);
+
+  if ("source_id" in item) {
+    addValue(item.source_id);
+  }
+
+  if ("sermon_title" in item) {
+    addValue(item.sermon_title);
+  }
+
+  if ("title" in item) {
+    addValue(item.title);
+  }
+
+  if ("content" in item) {
+    addValue(item.content);
+  }
+
+  if ("verse_text" in item) {
+    addValue(item.verse_text);
+  }
+
+  if ("note" in item) {
+    addValue(item.note);
+  }
+
+  if ("book" in item && typeof item.book === "string" && item.book.trim().length > 0) {
+    const book = item.book.trim();
+    addValue(book);
+
+    if ("chapter" in item && typeof item.chapter === "number") {
+      addValue(`${book} ${item.chapter}`);
+
+      if ("verse" in item && typeof item.verse === "number") {
+        addValue(`${book} ${item.chapter}:${item.verse}`);
+      }
+    }
+  }
+
+  if ("chapter" in item && typeof item.chapter === "number") {
+    addValue(item.chapter);
+  }
+
+  if ("verse" in item && typeof item.verse === "number") {
+    addValue(item.verse);
+  }
+
+  if (
+    "chapter" in item &&
+    typeof item.chapter === "number" &&
+    "verse" in item &&
+    typeof item.verse === "number"
+  ) {
+    addValue(`${item.chapter}:${item.verse}`);
+  }
+
+  return searchableValues.some((value) => value.includes(normalizedQuery));
+}
+
+function formatLibraryItemReference(item: LibraryDisplayItem): string {
+  if (
+    "book" in item &&
+    typeof item.book === "string" &&
+    item.book.trim().length > 0 &&
+    "chapter" in item &&
+    typeof item.chapter === "number" &&
+    "verse" in item &&
+    typeof item.verse === "number"
+  ) {
     return `${item.book} ${item.chapter}:${item.verse}`;
   }
 
-  if (typeof item.source_id === "string" && item.source_id.trim().length > 0) {
+  if ("source_id" in item && typeof item.source_id === "string" && item.source_id.trim().length > 0) {
     return item.source_id;
   }
 
-  if (typeof item.title === "string" && item.title.trim().length > 0) {
+  if ("title" in item && typeof item.title === "string" && item.title.trim().length > 0) {
     return item.title;
   }
 
   return "this item";
 }
 
-function getLibraryItemDetails(item: any) {
+function getLibraryItemDetails(item: LibraryDisplayItem) {
   const reference = formatLibraryItemReference(item);
 
   const description = (() => {
-    if (typeof item.verse_text === "string" && item.verse_text.trim().length > 0) {
+    if ("verse_text" in item && typeof item.verse_text === "string" && item.verse_text.trim()) {
       return item.verse_text.trim();
     }
-    if (typeof item.content === "string" && item.content.trim().length > 0) {
+    if ("content" in item && typeof item.content === "string" && item.content.trim()) {
       return item.content.trim();
     }
     return undefined;
   })();
 
   const note =
-    typeof item.note === "string" && item.note.trim().length > 0
+    "note" in item && typeof item.note === "string" && item.note.trim().length > 0
       ? item.note.trim()
       : undefined;
 
-  const tags = Array.isArray(item.tags)
-    ? item.tags.filter((tag) => typeof tag === "string" && tag.trim().length > 0)
-    : [];
+  const tags =
+    "tags" in item && Array.isArray(item.tags)
+      ? item.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
+      : [];
 
   return { reference, description, note, tags };
 }
