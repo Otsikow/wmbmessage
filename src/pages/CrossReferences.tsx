@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -7,6 +6,8 @@ import BackButton from "@/components/BackButton";
 
 export default function CrossReferences() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("query") ?? "";
 
   const handleNavigateToVerse = (book: string, chapter: number, verse?: number) => {
     const params = new URLSearchParams();
@@ -32,7 +33,11 @@ export default function CrossReferences() {
 
       <div className="flex-1 container max-w-6xl mx-auto px-4 py-8 pb-24 md:pb-8">
         <div className="h-[calc(100vh-200px)] md:h-[calc(100vh-250px)]">
-          <CrossReferenceViewer onNavigate={handleNavigateToVerse} />
+          <CrossReferenceViewer
+            onNavigate={handleNavigateToVerse}
+            initialSearchQuery={initialQuery}
+            initialTab={initialQuery ? "search" : undefined}
+          />
         </div>
       </div>
 
