@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { STATIC_CROSS_REFERENCES } from "@/data/staticCrossReferences";
 
 export interface CrossReference {
   id: string;
@@ -39,8 +40,95 @@ export function useCrossReferences(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const filterStaticCrossReferences = useCallback(() => {
+    if (!book || !chapter) return [] as CrossReference[];
+
+    const normalize = (value: string) =>
+      value.replace(/\s+/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+    const normalizedBook = normalize(book);
+
+    return STATIC_CROSS_REFERENCES.filter((ref) => {
+      const sameBook = normalize(ref.from_book) === normalizedBook;
+      if (!sameBook) return false;
+      if (ref.from_chapter !== chapter) return false;
+      if (verse === undefined) return true;
+      return ref.from_verse === verse;
+    });
+  }, [book, chapter, verse]);
+
+  const mergeCrossReferences = useCallback((
+    staticRefs: CrossReference[],
+    dynamicRefs: CrossReference[]
+  ) => {
+    const seen = new Set<string>();
+    const combined: CrossReference[] = [];
+
+    const relationshipPriority = (type?: string | null) => {
+      const priorities: Record<string, number> = {
+        fulfillment: 0,
+        prophecy: 1,
+        quotation: 2,
+        parallel: 3,
+        related: 4,
+        vision: 5,
+      };
+      if (!type) return priorities.related;
+      return priorities[type] ?? priorities.related;
+    };
+
+    const addReference = (ref: CrossReference) => {
+      const key = [
+        ref.from_book.toLowerCase(),
+        ref.from_chapter,
+        ref.from_verse,
+        ref.to_book.toLowerCase(),
+        ref.to_chapter,
+        ref.to_verse,
+        ref.to_verse_end ?? "",
+      ].join("|");
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push({
+          ...ref,
+          relationship_type: ref.relationship_type || "related",
+        });
+      }
+    };
+
+    staticRefs.forEach(addReference);
+    dynamicRefs.forEach(addReference);
+
+    return combined
+      .slice()
+      .sort((a, b) => {
+        const typeDiff = relationshipPriority(a.relationship_type) - relationshipPriority(b.relationship_type);
+        if (typeDiff !== 0) return typeDiff;
+
+        const bookCompare = a.to_book.localeCompare(b.to_book);
+        if (bookCompare !== 0) return bookCompare;
+
+        if (a.to_chapter !== b.to_chapter) {
+          return a.to_chapter - b.to_chapter;
+        }
+
+        return a.to_verse - b.to_verse;
+      });
+  }, []);
+
   const fetchCrossReferences = useCallback(async () => {
-    setLoading(true);
+    if (!book || !chapter) {
+      setCrossReferences([]);
+      setUserCrossReferences([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const staticMatches = filterStaticCrossReferences();
+    setCrossReferences(mergeCrossReferences(staticMatches, []));
+    setLoading(staticMatches.length === 0);
     setError(null);
 
     try {
@@ -59,11 +147,12 @@ export function useCrossReferences(
 
       if (publicError) throw publicError;
 
-      setCrossReferences(publicData || []);
+      const merged = mergeCrossReferences(staticMatches, publicData || []);
+      setCrossReferences(merged);
 
       // Fetch user's custom cross-references if authenticated
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         let userQuery = (supabase as any)
           .from('user_cross_references')
@@ -88,7 +177,7 @@ export function useCrossReferences(
     } finally {
       setLoading(false);
     }
-  }, [book, chapter, verse]);
+  }, [book, chapter, verse, filterStaticCrossReferences, mergeCrossReferences]);
 
   useEffect(() => {
     fetchCrossReferences();

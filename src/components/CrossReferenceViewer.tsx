@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,37 @@ import { Loader2, X, BookOpen, Search, ExternalLink, BookMarked, AlertCircle } f
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  fulfillment: "Prophecy Fulfilled",
+  prophecy: "Prophetic Link",
+  quotation: "Direct Quotation",
+  parallel: "Parallel Passage",
+  related: "Related Insight",
+  vision: "Prophetic Vision",
+};
+
+const RELATIONSHIP_ORDER = [
+  "fulfillment",
+  "prophecy",
+  "quotation",
+  "parallel",
+  "related",
+  "vision",
+];
+
+function formatRelationshipType(type?: string | null): string {
+  if (!type) return RELATIONSHIP_LABELS.related;
+  const normalized = type.toLowerCase();
+  return (
+    RELATIONSHIP_LABELS[normalized] ||
+    normalized
+      .split(/[-_\s]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+  );
+}
 
 interface CrossReferenceViewerProps {
   onNavigate?: (book: string, chapter: number, verse?: number) => void;
@@ -140,6 +171,35 @@ export default function CrossReferenceViewer({
 
   const totalCrossRefs = crossReferences.length + userCrossReferences.length;
   const hasSearchResults = searchResults.length > 0 || sermonResults.length > 0 || manualReferences.length > 0;
+
+  const groupedCrossReferences = useMemo(() => {
+    if (crossReferences.length === 0) return [] as { type: string; items: typeof crossReferences }[];
+
+    const groups = new Map<string, typeof crossReferences>();
+
+    crossReferences.forEach((ref) => {
+      const key = (ref.relationship_type ?? "related").toLowerCase();
+      const existing = groups.get(key);
+      if (existing) {
+        existing.push(ref);
+      } else {
+        groups.set(key, [ref]);
+      }
+    });
+
+    const orderIndex = (type: string) => {
+      const index = RELATIONSHIP_ORDER.indexOf(type);
+      return index === -1 ? RELATIONSHIP_ORDER.length : index;
+    };
+
+    return Array.from(groups.entries())
+      .sort((a, b) => {
+        const diff = orderIndex(a[0]) - orderIndex(b[0]);
+        if (diff !== 0) return diff;
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([type, items]) => ({ type, items }));
+  }, [crossReferences]);
 
   useEffect(() => {
     if (initialTab) {
@@ -382,22 +442,42 @@ export default function CrossReferenceViewer({
                     </div>
 
                     {/* Public Cross References */}
-                    {crossReferences.length > 0 && (
-                      <div className="space-y-4 mb-6">
-                        <div className="flex items-center gap-2">
-                          <BookMarked className="h-4 w-4 text-primary" />
-                          <h4 className="font-semibold text-sm">Related Verses</h4>
-                          <Badge variant="secondary" className="ml-auto">
-                            {crossReferences.length}
-                          </Badge>
+                    {groupedCrossReferences.length > 0 && (
+                      <div className="space-y-6 mb-6">
+                        <div className="flex flex-wrap gap-2">
+                          {groupedCrossReferences.map((group) => (
+                            <Badge
+                              key={group.type}
+                              variant="outline"
+                              className="text-xs capitalize"
+                            >
+                              {formatRelationshipType(group.type)} · {group.items.length}
+                            </Badge>
+                          ))}
                         </div>
-                        <div className="space-y-3">
-                          {crossReferences.map((crossRef) => (
-                            <CrossReferenceDisplay
-                              key={crossRef.id}
-                              crossRef={crossRef}
-                              onNavigate={onNavigate}
-                            />
+
+                        <div className="space-y-6">
+                          {groupedCrossReferences.map((group) => (
+                            <div key={group.type} className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <BookMarked className="h-4 w-4 text-primary" />
+                                <h4 className="font-semibold text-sm">
+                                  {formatRelationshipType(group.type)}
+                                </h4>
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  {group.items.length}
+                                </Badge>
+                              </div>
+                              <div className="space-y-3">
+                                {group.items.map((crossRef) => (
+                                  <CrossReferenceDisplay
+                                    key={crossRef.id}
+                                    crossRef={crossRef}
+                                    onNavigate={onNavigate}
+                                  />
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -581,8 +661,8 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
               <ExternalLink className="h-3 w-3 opacity-60" />
             </CardTitle>
             {crossRef.relationship_type && (
-              <Badge variant="outline" className="text-xs">
-                {crossRef.relationship_type}
+              <Badge variant="outline" className="text-xs capitalize">
+                {formatRelationshipType(crossRef.relationship_type)}
               </Badge>
             )}
           </div>
