@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -15,9 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { useBookmarks } from "@/hooks/useBookmarks";
-import { useHighlights } from "@/hooks/useHighlights";
-import { useNotes } from "@/hooks/useNotes";
+import {
+  useLibraryItems,
+  type LibraryBookmark,
+  type LibraryHighlight,
+} from "@/hooks/useLibraryItems";
+import { useUserNotes } from "@/hooks/useNotes";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -38,6 +41,7 @@ const HIGHLIGHT_COLORS = {
   blue: "bg-blue-200 dark:bg-blue-900",
   pink: "bg-pink-200 dark:bg-pink-900",
   purple: "bg-purple-200 dark:bg-purple-900",
+  orange: "bg-orange-200 dark:bg-orange-900",
 };
 
 interface LibraryDisplayItem {
@@ -47,7 +51,12 @@ interface LibraryDisplayItem {
   verse?: number;
   verse_text?: string;
   color?: string;
-  note?: string;
+  note?: string | null;
+  title?: string | null;
+  content?: string | null;
+  source_id?: string | null;
+  tags?: string[];
+  created_at?: string;
   [key: string]: unknown;
 }
 
@@ -56,7 +65,7 @@ interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem>
   icon: LucideIcon;
   items: T[];
   loading: boolean;
-  onDelete?: (id: string) => void;
+  onDelete?: (item: T) => void;
   onNavigate: (item: T) => void;
   colorMap?: Record<string, string>;
 }
@@ -69,40 +78,66 @@ interface LibraryTabProps<T extends LibraryDisplayItem = LibraryDisplayItem>
 
 export default function Library() {
   const navigate = useNavigate();
-  const { bookmarks, loading: bookmarksLoading, removeBookmark } = useBookmarks();
-  const { highlights, loading: highlightsLoading, removeHighlight } = useHighlights("", 0);
-  const { notes, loading: notesLoading } = useNotes();
+  const {
+    bookmarks,
+    highlights,
+    bookmarksLoading,
+    highlightsLoading,
+    removeBookmark,
+    removeHighlight,
+  } = useLibraryItems();
+  const { userNotes, loading: notesLoading } = useUserNotes();
   const { activities, loading: activitiesLoading, getRecentActivity } = useActivityLog();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: string; id: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<
+    | {
+        type: "bookmark" | "highlight";
+        item: LibraryBookmark | LibraryHighlight;
+      }
+    | null
+  >(null);
 
   const recentActivities = getRecentActivity(20);
+
+  const noteDisplayItems = useMemo<LibraryDisplayItem[]>(
+    () =>
+      userNotes.map((note) => ({
+        id: note.id,
+        title: note.tags?.[0] ?? null,
+        source_id: note.source_id,
+        content: note.content,
+        tags: note.tags,
+        created_at: note.created_at,
+      })),
+    [userNotes]
+  );
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
-    if (itemToDelete.type === "bookmark") {
-      // Extract sermon_id and paragraph_number from the bookmark ID
-      const bookmark = bookmarks.find(b => b.id === itemToDelete.id);
-      if (bookmark) {
-        await removeBookmark(bookmark.sermon_id as any, bookmark.paragraph_number as any);
-      }
-    } else if (itemToDelete.type === "highlight") {
-      const highlight = highlights.find(h => h.id === itemToDelete.id);
-      if (highlight) {
-        await removeHighlight(highlight.verse);
-      }
-    }
+    const success =
+      itemToDelete.type === "bookmark"
+        ? await removeBookmark(itemToDelete.item as LibraryBookmark)
+        : await removeHighlight(itemToDelete.item as LibraryHighlight);
 
-    setDeleteDialogOpen(false);
-    setItemToDelete(null);
+    if (success) {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
   };
 
-  const openDeleteDialog = (type: string, id: string) => {
-    setItemToDelete({ type, id });
+  const openDeleteDialog = (
+    type: "bookmark" | "highlight",
+    item: LibraryBookmark | LibraryHighlight
+  ) => {
+    setItemToDelete({ type, item });
     setDeleteDialogOpen(true);
   };
+
+  const formatPendingItem = itemToDelete
+    ? formatLibraryItemReference(itemToDelete.item)
+    : "this item";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -148,28 +183,36 @@ export default function Library() {
             <LibrarySection
               title="Bookmarks"
               icon={BookmarkIcon}
-              items={bookmarks as any}
+              items={bookmarks}
               loading={bookmarksLoading}
-              onDelete={(id) => openDeleteDialog("bookmark", id)}
-              onNavigate={(b) => navigate(`/reader?book=${b.book}&chapter=${b.chapter}`)}
+              onDelete={(item) => openDeleteDialog("bookmark", item)}
+              onNavigate={(b) =>
+                navigate(
+                  `/reader?book=${encodeURIComponent(b.book)}&chapter=${b.chapter}&verse=${b.verse}`
+                )
+              }
             />
 
             {/* Highlights Section */}
             <LibrarySection
               title="Highlights"
               icon={Highlighter}
-              items={highlights as any}
+              items={highlights}
               loading={highlightsLoading}
               colorMap={HIGHLIGHT_COLORS}
-              onDelete={(id) => openDeleteDialog("highlight", id)}
-              onNavigate={(h) => navigate(`/reader?book=${h.book}&chapter=${h.chapter}`)}
+              onDelete={(item) => openDeleteDialog("highlight", item)}
+              onNavigate={(h) =>
+                navigate(
+                  `/reader?book=${encodeURIComponent(h.book)}&chapter=${h.chapter}&verse=${h.verse}`
+                )
+              }
             />
 
             {/* Notes Section */}
             <LibrarySection
               title="Notes"
               icon={FileText}
-              items={notes as any}
+              items={noteDisplayItems}
               loading={notesLoading}
               onNavigate={() => navigate("/notes")}
             />
@@ -178,31 +221,39 @@ export default function Library() {
           {/* Bookmarks Tab */}
           <LibraryTab
             label="Bookmarks"
-            icon={BookmarkIcon}
-            items={bookmarks as any}
+              icon={BookmarkIcon}
+            items={bookmarks}
             loading={bookmarksLoading}
             emptyMessage="Start bookmarking verses to save them for later."
-            onDelete={(id) => openDeleteDialog("bookmark", id)}
-            onNavigate={(b) => navigate(`/reader?book=${b.book}&chapter=${b.chapter}`)}
+            onDelete={(item) => openDeleteDialog("bookmark", item)}
+            onNavigate={(b) =>
+              navigate(
+                `/reader?book=${encodeURIComponent(b.book)}&chapter=${b.chapter}&verse=${b.verse}`
+              )
+            }
           />
 
           {/* Highlights Tab */}
           <LibraryTab
             label="Highlights"
-            icon={Highlighter}
-            items={highlights as any}
+              icon={Highlighter}
+            items={highlights}
             loading={highlightsLoading}
             emptyMessage="Start highlighting verses to remember important passages."
-            onDelete={(id) => openDeleteDialog("highlight", id)}
-            onNavigate={(h) => navigate(`/reader?book=${h.book}&chapter=${h.chapter}`)}
+            onDelete={(item) => openDeleteDialog("highlight", item)}
+            onNavigate={(h) =>
+              navigate(
+                `/reader?book=${encodeURIComponent(h.book)}&chapter=${h.chapter}&verse=${h.verse}`
+              )
+            }
             colorMap={HIGHLIGHT_COLORS}
           />
 
           {/* Notes Tab */}
           <LibraryTab
             label="Notes"
-            icon={FileText}
-            items={notes as any}
+              icon={FileText}
+            items={noteDisplayItems}
             loading={notesLoading}
             emptyMessage="Create your first study note to get started."
             onNavigate={() => navigate("/notes")}
@@ -275,11 +326,11 @@ export default function Library() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {itemToDelete?.type}
+              Delete {itemToDelete?.type === "bookmark" ? "Bookmark" : "Highlight"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {itemToDelete?.type}? This
-              action cannot be undone.
+              Are you sure you want to delete {formatPendingItem}? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -325,6 +376,7 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
         <div className="space-y-2">
           {items.slice(0, 5).map((item) => {
             const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+            const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
               <Card
@@ -338,14 +390,28 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
                       {colorClass && (
                         <div className={`w-3 h-3 rounded-full ${colorClass}`} />
                       )}
-                      <span className="font-semibold text-sm">
-                        {item.book} {item.chapter}:{item.verse}
-                      </span>
+                      {reference && (
+                        <span className="font-semibold text-sm">{reference}</span>
+                      )}
                     </div>
-                    {item.verse_text && (
+                    {description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.verse_text}
+                        {description}
                       </p>
+                    )}
+                    {note && (
+                      <p className="text-xs text-muted-foreground italic border-l-2 border-muted pl-3 mt-2">
+                        {note}
+                      </p>
+                    )}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {tags.slice(0, 3).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
                     )}
                   </div>
                   {onDelete && (
@@ -354,7 +420,7 @@ function LibrarySection<T extends LibraryDisplayItem = LibraryDisplayItem>({
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDelete(item.id);
+                        onDelete(item);
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -397,6 +463,7 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
         <div className="space-y-3">
           {items.map((item) => {
             const colorClass = item.color && colorMap ? colorMap[item.color] : undefined;
+            const { reference, description, note, tags } = getLibraryItemDetails(item);
 
             return (
               <Card
@@ -410,19 +477,26 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
                       {colorClass && (
                         <div className={`w-4 h-4 rounded-full ${colorClass}`} />
                       )}
-                      <span className="font-semibold">
-                        {item.book} {item.chapter}:{item.verse}
-                      </span>
+                      {reference && <span className="font-semibold">{reference}</span>}
                     </div>
-                    {item.verse_text && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {item.verse_text}
+                    {description && (
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-3">
+                        {description}
                       </p>
                     )}
-                    {item.note && (
+                    {note && (
                       <p className="text-xs text-muted-foreground italic border-l-2 border-muted pl-3">
-                        {item.note}
+                        {note}
                       </p>
+                    )}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {tags.slice(0, 5).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
                     )}
                   </div>
                   {onDelete && (
@@ -431,7 +505,7 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDelete(item.id);
+                        onDelete(item);
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -445,4 +519,45 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
       )}
     </TabsContent>
   );
+}
+
+function formatLibraryItemReference(item: LibraryDisplayItem): string {
+  if (item.book && item.chapter && item.verse) {
+    return `${item.book} ${item.chapter}:${item.verse}`;
+  }
+
+  if (typeof item.source_id === "string" && item.source_id.trim().length > 0) {
+    return item.source_id;
+  }
+
+  if (typeof item.title === "string" && item.title.trim().length > 0) {
+    return item.title;
+  }
+
+  return "this item";
+}
+
+function getLibraryItemDetails(item: LibraryDisplayItem) {
+  const reference = formatLibraryItemReference(item);
+
+  const description = (() => {
+    if (typeof item.verse_text === "string" && item.verse_text.trim().length > 0) {
+      return item.verse_text.trim();
+    }
+    if (typeof item.content === "string" && item.content.trim().length > 0) {
+      return item.content.trim();
+    }
+    return undefined;
+  })();
+
+  const note =
+    typeof item.note === "string" && item.note.trim().length > 0
+      ? item.note.trim()
+      : undefined;
+
+  const tags = Array.isArray(item.tags)
+    ? item.tags.filter((tag) => typeof tag === "string" && tag.trim().length > 0)
+    : [];
+
+  return { reference, description, note, tags };
 }
