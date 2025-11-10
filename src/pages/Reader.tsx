@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Loader2, Link2, BookMarked, Search } from "lucide-react";
@@ -30,26 +30,116 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
 
+const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
+
 export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { createUserNote } = useUserNotes();
 
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const [currentBook, setCurrentBook] = useState(searchParams.get("book") || "Genesis");
-  const [currentChapter, setCurrentChapter] = useState(
-    parseInt(searchParams.get("chapter") || "1")
+  const searchParams = useMemo(() => {
+    if (typeof window === "undefined") {
+      return new URLSearchParams();
+    }
+
+    return new URLSearchParams(window.location.search);
+  }, []);
+
+  const initialLocation = useMemo(() => {
+    const availableBooks = new Set(BIBLE_BOOKS.map((b) => b.name));
+
+    const getValidChapter = (book: string, chapter: number) => {
+      const bookData = BIBLE_BOOKS.find((b) => b.name === book);
+      if (!bookData) {
+        return 1;
+      }
+
+      if (Number.isNaN(chapter) || chapter < 1) {
+        return 1;
+      }
+
+      return Math.min(chapter, bookData.chapters);
+    };
+
+    const parseVerse = (value: string | null) => {
+      if (!value) {
+        return undefined;
+      }
+
+      const verseNumber = parseInt(value, 10);
+
+      if (Number.isNaN(verseNumber) || verseNumber <= 0) {
+        return undefined;
+      }
+
+      return verseNumber;
+    };
+
+    const bookParam = searchParams.get("book");
+    const chapterParam = searchParams.get("chapter");
+    const verseFromParams = parseVerse(searchParams.get("verse"));
+
+    if (bookParam && availableBooks.has(bookParam) && chapterParam) {
+      const chapterNumber = parseInt(chapterParam, 10);
+
+      if (!Number.isNaN(chapterNumber)) {
+        return {
+          book: bookParam,
+          chapter: getValidChapter(bookParam, chapterNumber),
+          verse: verseFromParams,
+        };
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      const storedLocation = window.localStorage.getItem(LAST_LOCATION_STORAGE_KEY);
+
+      if (storedLocation) {
+        try {
+          const parsed = JSON.parse(storedLocation) as {
+            book?: string;
+            chapter?: number;
+            verse?: number | null;
+          };
+
+          if (
+            parsed.book &&
+            availableBooks.has(parsed.book) &&
+            typeof parsed.chapter === "number" &&
+            !Number.isNaN(parsed.chapter)
+          ) {
+            return {
+              book: parsed.book,
+              chapter: getValidChapter(parsed.book, parsed.chapter),
+              verse:
+                typeof parsed.verse === "number" &&
+                !Number.isNaN(parsed.verse) &&
+                parsed.verse > 0
+                  ? parsed.verse
+                  : undefined,
+            };
+          }
+        } catch (error) {
+          console.warn("Failed to parse stored reader location", error);
+        }
+      }
+    }
+
+    return {
+      book: "Genesis",
+      chapter: 1,
+      verse: undefined,
+    };
+  }, [searchParams]);
+
+  const [currentBook, setCurrentBook] = useState(initialLocation.book);
+  const [currentChapter, setCurrentChapter] = useState(initialLocation.chapter);
+  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(
+    initialLocation.verse
   );
 
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
-  const initialVerseParam = searchParams.get("verse");
-  const initialVerseNumber = initialVerseParam ? parseInt(initialVerseParam, 10) : undefined;
-  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(
-    initialVerseNumber !== undefined && !Number.isNaN(initialVerseNumber)
-      ? initialVerseNumber
-      : undefined
-  );
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
@@ -73,6 +163,21 @@ export default function Reader() {
   const handleVerseSelect = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      LAST_LOCATION_STORAGE_KEY,
+      JSON.stringify({
+        book: currentBook,
+        chapter: currentChapter,
+        verse: selectedVerse ?? null,
+      })
+    );
+  }, [currentBook, currentChapter, selectedVerse]);
 
   const handleCrossReferenceClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
@@ -137,6 +242,7 @@ export default function Reader() {
               onValueChange={(value) => {
                 setCurrentBook(value);
                 setCurrentChapter(1);
+                setSelectedVerse(undefined);
               }}
             >
               <SelectTrigger className="w-[100px] sm:w-[130px] md:w-[160px] shrink-0">
@@ -164,7 +270,10 @@ export default function Reader() {
 
             <Select
               value={currentChapter.toString()}
-              onValueChange={(value) => setCurrentChapter(parseInt(value))}
+              onValueChange={(value) => {
+                setCurrentChapter(parseInt(value, 10));
+                setSelectedVerse(undefined);
+              }}
             >
               <SelectTrigger className="w-[80px] sm:w-[100px] shrink-0">
                 <SelectValue placeholder="Chapter" />
@@ -290,7 +399,10 @@ export default function Reader() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-8 border-t border-border/70 max-w-4xl mx-auto">
               <Button
                 variant="outline"
-                onClick={() => setCurrentChapter(Math.max(1, currentChapter - 1))}
+                onClick={() => {
+                  setCurrentChapter(Math.max(1, currentChapter - 1));
+                  setSelectedVerse(undefined);
+                }}
                 disabled={currentChapter <= 1}
                 className="w-full sm:w-auto justify-center sm:justify-start"
                 size="lg"
@@ -301,7 +413,10 @@ export default function Reader() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCurrentChapter(Math.min(maxChapter, currentChapter + 1))}
+                onClick={() => {
+                  setCurrentChapter(Math.min(maxChapter, currentChapter + 1));
+                  setSelectedVerse(undefined);
+                }}
                 disabled={currentChapter >= maxChapter}
                 className="w-full sm:w-auto justify-center sm:justify-end"
                 size="lg"
