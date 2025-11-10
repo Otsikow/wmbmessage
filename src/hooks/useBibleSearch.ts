@@ -16,6 +16,9 @@ export interface WMBSermonResult {
   location: string;
   excerpt: string;
   paragraph: number;
+  year?: number;
+  themes?: string[];
+  bibleReferences?: string[];
 }
 
 interface BibleVerseData {
@@ -201,18 +204,38 @@ export function useBibleSearch() {
       }
 
       // Transform the results to match the expected format
-      const results: WMBSermonResult[] = (data as any[]).map((row: any) => ({
-        sermon_id: row.sermon_id,
-        title: row.sermon_title,
-        date: new Date(row.sermon_date).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
-        location: row.sermon_location,
-        excerpt: row.content,
-        paragraph: row.paragraph_number,
-      }));
+      const results: WMBSermonResult[] = (data as any[]).map((row: any) => {
+        const rawDate = row.sermon_date ? new Date(row.sermon_date) : null;
+        const formattedDate = rawDate
+          ? rawDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })
+          : row.sermon_date ?? 'Unknown date';
+
+        const themeTags: string[] = Array.isArray(row.themes)
+          ? row.themes
+          : Array.isArray(row.theme_tags)
+            ? row.theme_tags
+            : [];
+
+        const bibleReferences: string[] = Array.isArray(row.bible_references)
+          ? row.bible_references
+          : [];
+
+        return {
+          sermon_id: row.sermon_id,
+          title: row.sermon_title,
+          date: formattedDate,
+          location: row.sermon_location,
+          excerpt: row.content,
+          paragraph: row.paragraph_number,
+          year: rawDate?.getFullYear(),
+          themes: themeTags,
+          bibleReferences,
+        } satisfies WMBSermonResult;
+      });
 
       return results;
     } catch (err) {
