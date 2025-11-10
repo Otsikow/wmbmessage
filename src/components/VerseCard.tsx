@@ -10,6 +10,11 @@ import {
   NotebookPen,
   AudioLines,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import HighlightMenu from "@/components/HighlightMenu";
 import { getHighlightColorClass } from "@/hooks/useHighlights";
 import { useToast } from "@/hooks/use-toast";
@@ -197,82 +202,108 @@ export default function VerseCard({
               />
 
               {onAddNote && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onAddNote(verse.number, event);
-                  }}
-                  title="Add study note"
-                >
-                  <NotebookPen className="h-3.5 w-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onAddNote(verse.number, event);
+                      }}
+                    >
+                      <NotebookPen className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Add study note</TooltipContent>
+                </Tooltip>
               )}
 
               {onSermonCrossRef && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onSermonCrossRef(verse.number);
-                  }}
-                  title="View sermon references"
-                >
-                  <AudioLines className="h-3.5 w-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onSermonCrossRef(verse.number);
+                      }}
+                    >
+                      <AudioLines className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    View sermon references
+                  </TooltipContent>
+                </Tooltip>
               )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn("h-8 w-8", isBookmarked && "text-primary")}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleBookmark(verse.number);
-                }}
-                title={isBookmarked ? "Remove bookmark" : "Bookmark verse"}
-              >
-                <Bookmark
-                  className={cn(
-                    "h-3.5 w-3.5",
-                    isBookmarked && "fill-current"
-                  )}
-                />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("h-8 w-8", isBookmarked && "text-primary")}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleBookmark(verse.number);
+                    }}
+                  >
+                    <Bookmark
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        isBookmarked && "fill-current"
+                      )}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {isBookmarked ? "Remove bookmark" : "Bookmark verse"}
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onViewCrossReferences(verse.number);
-                }}
-                title="View cross references"
-              >
-                <Link2 className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onViewCrossReferences(verse.number);
+                    }}
+                  >
+                    <Link2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">View cross references</TooltipContent>
+              </Tooltip>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleCopy();
-                }}
-                title="Copy verse"
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleCopy();
+                    }}
+                  >
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {copied ? "Copied" : "Copy verse"}
+                </TooltipContent>
+              </Tooltip>
               </div>
             )}
           </div>
