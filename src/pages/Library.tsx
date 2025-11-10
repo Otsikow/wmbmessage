@@ -8,6 +8,9 @@ import {
   Clock,
   Loader2,
   Trash2,
+  Download,
+  FileDown,
+  FileJson,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,7 +36,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import BackButton from "@/components/BackButton";
+import { useToast } from "@/components/ui/use-toast";
 
 const HIGHLIGHT_COLORS = {
   yellow: "bg-yellow-200 dark:bg-yellow-900",
@@ -51,6 +61,11 @@ type LibraryDisplayItem = LibraryBookmark | LibraryHighlight | {
   source_id?: string | null;
   tags?: string[];
   created_at?: string;
+  note?: string | null;
+  verse_text?: string | null;
+  book?: string;
+  chapter?: number;
+  verse?: number;
 };
 
 interface LibrarySectionProps<T extends LibraryDisplayItem = LibraryDisplayItem> {
@@ -81,6 +96,7 @@ export default function Library() {
   } = useLibraryItems();
   const { userNotes, loading: notesLoading } = useUserNotes();
   const { activities, loading: activitiesLoading, getRecentActivity } = useActivityLog();
+  const { toast } = useToast();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<
@@ -90,6 +106,7 @@ export default function Library() {
       }
     | null
   >(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const recentActivities = getRecentActivity(20);
 
@@ -105,6 +122,181 @@ export default function Library() {
       })),
     [userNotes]
   );
+
+  const totalLibraryItems =
+    bookmarks.length + highlights.length + noteDisplayItems.length;
+
+  const isLoadingData = bookmarksLoading || highlightsLoading || notesLoading;
+
+  const buildExportData = () => ({
+    generatedAt: new Date().toISOString(),
+    totals: {
+      bookmarks: bookmarks.length,
+      highlights: highlights.length,
+      notes: userNotes.length,
+    },
+    bookmarks: bookmarks.map((bookmark) => ({
+      ...bookmark,
+      reference: formatLibraryItemReference(bookmark),
+    })),
+    highlights: highlights.map((highlight) => ({
+      ...highlight,
+      reference: formatLibraryItemReference(highlight),
+    })),
+    notes: userNotes.map((note) => ({
+      ...note,
+      tags: Array.isArray(note.tags) ? note.tags : [],
+    })),
+  });
+
+  const handleExportJSON = async () => {
+    if (totalLibraryItems === 0) {
+      toast({
+        title: "Nothing to export",
+        description: "Add bookmarks, highlights, or notes before exporting.",
+      });
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const exportData = buildExportData();
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sermon-scrolls-library-${new Date()
+        .toISOString()
+        .split("T")[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export ready",
+        description: "Your library has been saved as a JSON file.",
+      });
+    } catch (error) {
+      console.error("Failed to export library as JSON", error);
+      toast({
+        title: "Export failed",
+        description: "We couldn't export your library. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (totalLibraryItems === 0) {
+      toast({
+        title: "Nothing to export",
+        description: "Add bookmarks, highlights, or notes before exporting.",
+      });
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const pdfLines: string[] = [];
+
+      const appendWrappedLines = (text: string) => {
+        wrapTextForPdf(text).forEach((line) => {
+          pdfLines.push(line);
+        });
+      };
+
+      appendWrappedLines("My Library Export");
+      appendWrappedLines(`Generated on ${new Date().toLocaleString()}`);
+      pdfLines.push("");
+
+      const appendSection = <T extends LibraryDisplayItem>(
+        title: string,
+        items: T[],
+        formatter?: (item: T) => string | undefined
+      ) => {
+        appendWrappedLines(title);
+
+        if (items.length === 0) {
+          appendWrappedLines("No entries available yet.");
+          pdfLines.push("");
+          return;
+        }
+
+        items.forEach((item, index) => {
+          const { reference, description, note, tags } = getLibraryItemDetails(item);
+          appendWrappedLines(`${index + 1}. ${reference}`);
+
+          if (description) {
+            appendWrappedLines(description);
+          }
+
+          if (note) {
+            appendWrappedLines(`Note: ${note}`);
+          }
+
+          if (formatter) {
+            const extra = formatter(item);
+            if (extra) {
+              appendWrappedLines(extra);
+            }
+          }
+
+          if (tags.length > 0) {
+            appendWrappedLines(`Tags: ${tags.join(", ")}`);
+          }
+
+          appendWrappedLines(
+            `Saved on ${"created_at" in item && item.created_at
+              ? new Date(item.created_at).toLocaleString()
+              : "Unknown date"}`
+          );
+
+          pdfLines.push("");
+        });
+
+        pdfLines.push("");
+      };
+
+      appendSection("Bookmarks", bookmarks);
+      appendSection("Highlights", highlights, (item) =>
+        "color" in item && item.color ? `Highlight color: ${item.color}` : undefined
+      );
+      appendSection("Notes", noteDisplayItems, (item) =>
+        "source_id" in item && item.source_id ? `Source: ${item.source_id}` : undefined
+      );
+
+      const pdfBlob = generateSimplePdf(pdfLines);
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sermon-scrolls-library-${new Date()
+        .toISOString()
+        .split("T")[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export ready",
+        description: "Your library has been saved as a PDF file.",
+      });
+    } catch (error) {
+      console.error("Failed to export library as PDF", error);
+      toast({
+        title: "Export failed",
+        description: "We couldn't export your library. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
@@ -129,7 +321,7 @@ export default function Library() {
   };
 
   const formatPendingItem = itemToDelete
-    ? formatLibraryItemReference(itemToDelete.item as any)
+    ? formatLibraryItemReference(itemToDelete.item)
     : "this item";
 
   return (
@@ -143,6 +335,51 @@ export default function Library() {
             <p className="text-sm text-muted-foreground">
               Your personal Bible study collection
             </p>
+          </div>
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isExporting || isLoadingData}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Export
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void handleExportPDF();
+                  }}
+                  disabled={isExporting || isLoadingData}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void handleExportJSON();
+                  }}
+                  disabled={isExporting || isLoadingData}
+                >
+                  <FileJson className="mr-2 h-4 w-4" />
+                  Export as JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -514,7 +751,7 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   );
 }
 
-function formatLibraryItemReference(item: any): string {
+function formatLibraryItemReference(item: LibraryDisplayItem): string {
   if (item.book && item.chapter && item.verse) {
     return `${item.book} ${item.chapter}:${item.verse}`;
   }
@@ -530,7 +767,7 @@ function formatLibraryItemReference(item: any): string {
   return "this item";
 }
 
-function getLibraryItemDetails(item: any) {
+function getLibraryItemDetails(item: LibraryDisplayItem) {
   const reference = formatLibraryItemReference(item);
 
   const description = (() => {
@@ -553,4 +790,170 @@ function getLibraryItemDetails(item: any) {
     : [];
 
   return { reference, description, note, tags };
+}
+
+function wrapTextForPdf(text: string, maxLength = 90): string[] {
+  const segments = String(text).split(/\r?\n/);
+  const wrapped: string[] = [];
+
+  segments.forEach((segment) => {
+    if (segment.trim().length === 0) {
+      wrapped.push("");
+      return;
+    }
+
+    const words = segment.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      wrapped.push("");
+      return;
+    }
+
+    let currentLine = "";
+
+    const pushCurrentLine = () => {
+      if (currentLine.length > 0) {
+        wrapped.push(currentLine);
+        currentLine = "";
+      }
+    };
+
+    words.forEach((word) => {
+      if (word.length > maxLength) {
+        pushCurrentLine();
+        for (let i = 0; i < word.length; i += maxLength) {
+          wrapped.push(word.slice(i, i + maxLength));
+        }
+        return;
+      }
+
+      if (currentLine.length === 0) {
+        currentLine = word;
+        return;
+      }
+
+      if ((currentLine + " " + word).length <= maxLength) {
+        currentLine = `${currentLine} ${word}`;
+      } else {
+        wrapped.push(currentLine);
+        currentLine = word;
+      }
+    });
+
+    pushCurrentLine();
+  });
+
+  return wrapped;
+}
+
+function generateSimplePdf(lines: string[]): Blob {
+  const sanitizedLines = (lines.length > 0 ? lines : [""]).map((line) =>
+    typeof line === "string" ? line : String(line)
+  );
+
+  const pageWidth = 612; // 8.5 inches
+  const pageHeight = 792; // 11 inches
+  const margin = 72; // 1 inch margins
+  const fontSize = 12;
+  const lineHeight = 16;
+  const linesPerPage = Math.max(1, Math.floor((pageHeight - margin * 2) / lineHeight));
+
+  const pages: string[][] = [];
+  for (let i = 0; i < sanitizedLines.length; i += linesPerPage) {
+    pages.push(sanitizedLines.slice(i, i + linesPerPage));
+  }
+
+  const objects: { id: number; content: string }[] = [];
+  const reserveObject = () => {
+    const id = objects.length + 1;
+    objects.push({ id, content: "" });
+    return id;
+  };
+  const addObject = (content: string) => {
+    const id = objects.length + 1;
+    objects.push({ id, content });
+    return id;
+  };
+
+  const catalogId = reserveObject();
+  const pagesId = reserveObject();
+  const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+
+  const encoder = new TextEncoder();
+  const pageIds: number[] = [];
+
+  pages.forEach((pageLines) => {
+    const streamParts: string[] = [
+      "BT",
+      `/F1 ${fontSize} Tf`,
+      `${lineHeight} TL`,
+      `1 0 0 1 ${margin} ${pageHeight - margin} Tm`,
+    ];
+
+    pageLines.forEach((line, index) => {
+      const escaped = escapePdfText(line);
+      const safeLine = escaped.length === 0 ? " " : escaped;
+
+      if (index === 0) {
+        streamParts.push(`(${safeLine}) Tj`);
+      } else {
+        streamParts.push("T*");
+        streamParts.push(`(${safeLine}) Tj`);
+      }
+    });
+
+    streamParts.push("ET");
+
+    const streamContent = streamParts.join("\n");
+    const streamLength = encoder.encode(streamContent).length;
+
+    const contentId = addObject(
+      `<< /Length ${streamLength} >>\nstream\n${streamContent}\nendstream`
+    );
+
+    const pageContent = [
+      "<< /Type /Page",
+      `/Parent ${pagesId} 0 R`,
+      "/MediaBox [0 0 612 792]",
+      `/Contents ${contentId} 0 R`,
+      `/Resources << /Font << /F1 ${fontId} 0 R >> >>`,
+      ">>",
+    ].join("\n");
+
+    const pageId = addObject(pageContent);
+    pageIds.push(pageId);
+  });
+
+  objects[pagesId - 1].content = [
+    "<< /Type /Pages",
+    `/Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}]`,
+    `/Count ${pageIds.length}`,
+    ">>",
+  ].join("\n");
+
+  objects[catalogId - 1].content = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+
+  let pdf = "%PDF-1.4\n";
+  const xrefPositions: number[] = [0];
+
+  objects.forEach((obj) => {
+    xrefPositions.push(pdf.length);
+    pdf += `${obj.id} 0 obj\n${obj.content}\nendobj\n`;
+  });
+
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += "0000000000 65535 f \n";
+  for (let i = 1; i <= objects.length; i += 1) {
+    const offset = xrefPositions[i];
+    pdf += `${offset.toString().padStart(10, "0")} 00000 n \n`;
+  }
+
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\n`;
+  pdf += `startxref\n${xrefOffset}\n%%EOF`;
+
+  return new Blob([pdf], { type: "application/pdf" });
+}
+
+function escapePdfText(text: string): string {
+  return String(text).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
