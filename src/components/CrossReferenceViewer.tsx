@@ -5,10 +5,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { parseVerseReference, formatReference, ParsedReference } from "@/lib/verseParser";
+import { type CrossReferenceRecord } from "@/lib/crossReferenceSearch";
 import { useBibleData } from "@/hooks/useBibleData";
 import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
 import { useCrossReferences } from "@/hooks/useCrossReferences";
-import { Loader2, X, BookOpen, Search, ExternalLink, BookMarked, AlertCircle } from "lucide-react";
+import { useCrossReferenceSearch } from "@/hooks/useCrossReferenceSearch";
+import {
+  Loader2,
+  X,
+  BookOpen,
+  Search,
+  ExternalLink,
+  BookMarked,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -53,6 +63,18 @@ interface CrossReferenceViewerProps {
   initialTab?: "search" | "cross-refs";
 }
 
+function formatReferenceString(
+  book: string,
+  chapter: number,
+  verse: number,
+  verseEnd?: number | null
+): string {
+  if (!verseEnd || verseEnd === verse) {
+    return `${book} ${chapter}:${verse}`;
+  }
+  return `${book} ${chapter}:${verse}-${verseEnd}`;
+}
+
 export default function CrossReferenceViewer({
   onNavigate,
   currentBook,
@@ -65,10 +87,18 @@ export default function CrossReferenceViewer({
   const [manualReferences, setManualReferences] = useState<ParsedReference[]>([]);
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
   const [sermonResults, setSermonResults] = useState<WMBSermonResult[]>([]);
+  const [crossReferenceSearchResults, setCrossReferenceSearchResults] = useState<
+    CrossReferenceRecord[]
+  >([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(initialTab ?? "search");
 
   const { searchBible, searchWMBSermons, loading: searchLoading, error: searchError } = useBibleSearch();
+  const {
+    searchCrossReferences: performCrossReferenceSearch,
+    loading: crossReferenceSearchLoading,
+    error: crossReferenceSearchError,
+  } = useCrossReferenceSearch();
   
   // Fetch cross-references for current verse if viewing a specific verse
   const { 
@@ -121,6 +151,7 @@ export default function CrossReferenceViewer({
         }
         setSearchResults([]);
         setSermonResults([]);
+        setCrossReferenceSearchResults([]);
         if (!options.skipTabSwitch) {
           setActiveTab("search");
         }
@@ -133,19 +164,21 @@ export default function CrossReferenceViewer({
       }
 
       try {
-        const [bibleData, sermonData] = await Promise.all([
+        const [bibleData, sermonData, crossReferenceData] = await Promise.all([
           searchBible(query),
           searchWMBSermons(query),
+          performCrossReferenceSearch(query),
         ]);
         setSearchResults(bibleData);
         setSermonResults(sermonData);
+        setCrossReferenceSearchResults(crossReferenceData);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
         setIsSearching(false);
       }
     },
-    [searchBible, searchWMBSermons]
+    [searchBible, searchWMBSermons, performCrossReferenceSearch]
   );
 
   const handleSearch = async () => {
@@ -167,10 +200,20 @@ export default function CrossReferenceViewer({
     setSearchResults([]);
     setSermonResults([]);
     setManualReferences([]);
+    setCrossReferenceSearchResults([]);
   };
 
   const totalCrossRefs = crossReferences.length + userCrossReferences.length;
-  const hasSearchResults = searchResults.length > 0 || sermonResults.length > 0 || manualReferences.length > 0;
+  const hasSearchResults =
+    searchResults.length > 0 ||
+    sermonResults.length > 0 ||
+    manualReferences.length > 0 ||
+    crossReferenceSearchResults.length > 0;
+  const totalSearchItems =
+    searchResults.length +
+    sermonResults.length +
+    manualReferences.length +
+    crossReferenceSearchResults.length;
 
   const groupedCrossReferences = useMemo(() => {
     if (crossReferences.length === 0) return [] as { type: string; items: typeof crossReferences }[];
@@ -243,8 +286,16 @@ export default function CrossReferenceViewer({
               </Button>
             )}
           </div>
-          <Button onClick={handleSearch} disabled={searchLoading || isSearching || !searchInput.trim()}>
-            {searchLoading || isSearching ? (
+          <Button
+            onClick={handleSearch}
+            disabled={
+              searchLoading ||
+              crossReferenceSearchLoading ||
+              isSearching ||
+              !searchInput.trim()
+            }
+          >
+            {searchLoading || crossReferenceSearchLoading || isSearching ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <Search className="h-4 w-4 mr-2" />
@@ -259,6 +310,14 @@ export default function CrossReferenceViewer({
             <AlertDescription className="text-sm">{searchError}</AlertDescription>
           </Alert>
         )}
+        {crossReferenceSearchError && (
+          <Alert variant="destructive" className="py-3">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              {crossReferenceSearchError}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       {/* Tabs for organizing content */}
@@ -269,7 +328,7 @@ export default function CrossReferenceViewer({
             Search Results
             {hasSearchResults && (
               <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
-                {searchResults.length + sermonResults.length + manualReferences.length}
+                {totalSearchItems}
               </Badge>
             )}
           </TabsTrigger>
@@ -287,7 +346,7 @@ export default function CrossReferenceViewer({
         {/* Search Results Tab */}
         <TabsContent value="search" className="mt-4 flex-1 overflow-hidden">
           <ScrollArea className="h-full rounded-md border p-4">
-            {searchLoading || isSearching ? (
+            {searchLoading || crossReferenceSearchLoading || isSearching ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Searching the Bible...</p>
@@ -327,6 +386,29 @@ export default function CrossReferenceViewer({
                             </p>
                           </CardContent>
                         </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cross Reference Matches */}
+                {crossReferenceSearchResults.length > 0 && (
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center gap-2 sticky top-0 bg-background pb-2">
+                      <BookMarked className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">Cross References</h4>
+                      <Badge variant="secondary" className="ml-auto">
+                        {crossReferenceSearchResults.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-3">
+                      {crossReferenceSearchResults.map((crossRef) => (
+                        <CrossReferenceSearchResultCard
+                          key={`${crossRef.from_book}-${crossRef.from_chapter}-${crossRef.from_verse}-${crossRef.to_book}-${crossRef.to_chapter}-${crossRef.to_verse}`}
+                          crossRef={crossRef}
+                          searchTerm={searchInput}
+                          onNavigate={onNavigate}
+                        />
                       ))}
                     </div>
                   </div>
@@ -540,6 +622,68 @@ export default function CrossReferenceViewer({
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+interface CrossReferenceSearchResultCardProps {
+  crossRef: CrossReferenceRecord;
+  searchTerm: string;
+  onNavigate?: (book: string, chapter: number, verse?: number) => void;
+}
+
+function CrossReferenceSearchResultCard({
+  crossRef,
+  searchTerm,
+  onNavigate,
+}: CrossReferenceSearchResultCardProps) {
+  const fromReference = formatReferenceString(
+    crossRef.from_book,
+    crossRef.from_chapter,
+    crossRef.from_verse
+  );
+  const toReference = formatReferenceString(
+    crossRef.to_book,
+    crossRef.to_chapter,
+    crossRef.to_verse,
+    crossRef.to_verse_end
+  );
+
+  return (
+    <Card
+      className="border-l-4 border-l-primary/50 transition-all hover:shadow-md cursor-pointer"
+      onClick={() => onNavigate?.(crossRef.to_book, crossRef.to_chapter, crossRef.to_verse)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1">
+            <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+              <BookMarked className="h-3.5 w-3.5" />
+              {fromReference} → {toReference}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Links {fromReference} to {toReference}.
+            </p>
+          </div>
+          <Badge variant="outline" className="text-xs capitalize">
+            {formatRelationshipType(crossRef.relationship_type)}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-3">
+        {crossRef.notes ? (
+          <p className="text-sm leading-relaxed text-muted-foreground break-words">
+            {highlightSearchTerm(crossRef.notes, searchTerm)}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No notes available for this cross-reference.
+          </p>
+        )}
+        <p className="mt-3 text-xs text-muted-foreground/70">
+          Click to open {toReference} in the Bible reader.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
