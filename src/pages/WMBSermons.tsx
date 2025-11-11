@@ -77,16 +77,14 @@ export default function WMBSermons() {
     source_type: "bible" | "sermon";
     source_id: string;
     content: string;
-    tags: string[];
-    sermon_title?: string | null;
+    title?: string;
   }) => {
     await createUserNote({
       ...noteData,
-      sermon_title:
-        noteData.sermon_title ?? selectedSermonForNote?.title ?? null,
+      title: noteData.title || selectedSermonForNote?.title || "Sermon note",
     });
     recordActivity("note-created", {
-      description: noteData.sermon_title ?? selectedSermonForNote?.title ?? "Sermon note",
+      description: selectedSermonForNote?.title ?? "Sermon note",
     });
     setIsNoteEditorOpen(false);
     setSelectedSermonForNote(undefined);
@@ -267,17 +265,6 @@ export default function WMBSermons() {
         onSave={handleSaveNote}
         sourceType="sermon"
         sourceId={selectedSermonForNote?.title ?? ""}
-        initialData={
-          selectedSermonForNote
-            ? {
-                source_type: "sermon",
-                source_id: selectedSermonForNote.title,
-                content: "",
-                tags: ["Sermon"],
-                sermon_title: selectedSermonForNote.title,
-              }
-            : undefined
-        }
       />
 
       <Footer />

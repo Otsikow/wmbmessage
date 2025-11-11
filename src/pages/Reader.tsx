@@ -208,9 +208,13 @@ export default function Reader() {
     source_type: "bible" | "sermon";
     source_id: string;
     content: string;
-    tags: string[];
+    title?: string;
+    verse_reference?: string | null;
   }) => {
-    await createUserNote(noteData);
+    await createUserNote({
+      ...noteData,
+      title: noteData.title || noteVerseContext || "New study note",
+    });
     recordActivity("note-created", {
       description: noteVerseContext || "New study note",
     });
@@ -457,12 +461,8 @@ export default function Reader() {
         open={isNoteEditorOpen}
         onOpenChange={setIsNoteEditorOpen}
         onSave={handleSaveNote}
-        initialData={{
-          source_type: "bible",
-          source_id: noteVerseContext,
-          content: "",
-          tags: ["Bible"],
-        }}
+        sourceType="bible"
+        sourceId={noteVerseContext}
       />
     </div>
   );

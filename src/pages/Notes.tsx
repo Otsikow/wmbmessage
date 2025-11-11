@@ -17,15 +17,10 @@ export default function Notes() {
   const [selectedNote, setSelectedNote] = useState<UserNote | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<"all" | string>("all");
 
-  // Group notes by tags and source type
+  // Group notes by source type
   const groupedNotes = useMemo(() => {
     const groups: { [key: string]: UserNote[] } = {
       all: userNotes,
-      bible: userNotes.filter((note) => note.tags.includes("Bible")),
-      message: userNotes.filter((note) => note.tags.includes("Message")),
-      prayer: userNotes.filter((note) => note.tags.includes("Prayer")),
-      personal: userNotes.filter((note) => note.tags.includes("Personal")),
-      untagged: userNotes.filter((note) => note.tags.length === 0),
       bibleVerses: userNotes.filter((note) => note.source_type === "bible"),
       sermonNotes: userNotes.filter((note) => note.source_type === "sermon"),
     };
@@ -35,14 +30,17 @@ export default function Notes() {
   const handleSaveNote = async (noteData: {
     source_type: "bible" | "sermon";
     source_id: string;
+    title?: string;
     content: string;
-    tags: string[];
-    sermon_title?: string | null;
+    verse_reference?: string | null;
   }) => {
     if (selectedNote) {
       await updateUserNote(selectedNote.id, noteData);
     } else {
-      await createUserNote(noteData);
+      await createUserNote({
+        ...noteData,
+        title: noteData.title || noteData.source_id,
+      });
     }
     setIsEditorOpen(false);
     setSelectedNote(null);
@@ -113,9 +111,9 @@ export default function Notes() {
               </p>
             </Card>
             <Card className="p-4">
-              <p className="text-xs text-muted-foreground">Tagged</p>
+              <p className="text-xs text-muted-foreground">This Month</p>
               <p className="text-2xl font-bold">
-                {userNotes.length - (groupedNotes.untagged?.length || 0)}
+                {userNotes.filter(n => new Date(n.created_at).getMonth() === new Date().getMonth()).length}
               </p>
             </Card>
           </div>
@@ -135,32 +133,18 @@ export default function Notes() {
                 All ({userNotes.length})
               </Badge>
               <Badge
-                variant={selectedFilter === "bible" ? "default" : "outline"}
+                variant={selectedFilter === "bibleVerses" ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => setSelectedFilter("bible")}
+                onClick={() => setSelectedFilter("bibleVerses")}
               >
-                Bible ({groupedNotes.bible?.length || 0})
+                Bible Verses ({groupedNotes.bibleVerses?.length || 0})
               </Badge>
               <Badge
-                variant={selectedFilter === "message" ? "default" : "outline"}
+                variant={selectedFilter === "sermonNotes" ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => setSelectedFilter("message")}
+                onClick={() => setSelectedFilter("sermonNotes")}
               >
-                Message ({groupedNotes.message?.length || 0})
-              </Badge>
-              <Badge
-                variant={selectedFilter === "prayer" ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSelectedFilter("prayer")}
-              >
-                Prayer ({groupedNotes.prayer?.length || 0})
-              </Badge>
-              <Badge
-                variant={selectedFilter === "personal" ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSelectedFilter("personal")}
-              >
-                Personal ({groupedNotes.personal?.length || 0})
+                Sermons ({groupedNotes.sermonNotes?.length || 0})
               </Badge>
             </div>
           </div>
@@ -213,11 +197,11 @@ export default function Notes() {
         initialData={
           selectedNote
             ? {
-                source_type: selectedNote.source_type,
+                source_type: selectedNote.source_type as "bible" | "sermon",
                 source_id: selectedNote.source_id,
+                title: selectedNote.title,
                 content: selectedNote.content,
-                tags: selectedNote.tags,
-                sermon_title: selectedNote.sermon_title || null,
+                verse_reference: selectedNote.verse_reference,
               }
             : undefined
         }

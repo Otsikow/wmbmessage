@@ -20,16 +20,16 @@ export interface NoteEditorProps {
   onSave: (note: {
     source_type: "bible" | "sermon";
     source_id: string;
+    title?: string;
     content: string;
-    tags: string[];
-    sermon_title?: string | null;
+    verse_reference?: string | null;
   }) => void;
   initialData?: {
     source_type: "bible" | "sermon";
     source_id: string;
+    title?: string;
     content: string;
-    tags: string[];
-    sermon_title?: string | null;
+    verse_reference?: string | null;
   };
   sourceType?: "bible" | "sermon";
   sourceId?: string;
@@ -45,8 +45,7 @@ export function NoteEditor({
 }: NoteEditorProps) {
   const [sourceReference, setSourceReference] = useState(sourceId);
   const [selectedSourceType, setSelectedSourceType] = useState<"bible" | "sermon">(sourceType);
-  const [tags, setTags] = useState<string[]>([]);
-  const [sermonTitle, setSermonTitle] = useState("");
+  const [title, setTitle] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -54,37 +53,23 @@ export function NoteEditor({
     if (initialData) {
       setSourceReference(initialData.source_id);
       setSelectedSourceType(initialData.source_type);
-      setTags(initialData.tags);
-      setSermonTitle(initialData.sermon_title || "");
+      setTitle(initialData.title || "");
       if (editorRef.current) {
         editorRef.current.innerHTML = initialData.content;
       }
     } else {
       setSourceReference(sourceId);
       setSelectedSourceType(sourceType);
-      setTags([]);
-      setSermonTitle("");
+      setTitle("");
       if (editorRef.current) {
         editorRef.current.innerHTML = "";
       }
     }
   }, [initialData, sourceId, sourceType, open]);
 
-  useEffect(() => {
-    if (selectedSourceType !== "sermon") {
-      setSermonTitle("");
-    }
-  }, [selectedSourceType]);
-
   const applyFormat = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
-  };
-
-  const toggleTag = (tag: string) => {
-    setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
   };
 
   const handleSave = () => {
@@ -97,18 +82,6 @@ export function NoteEditor({
           selectedSourceType === "bible"
             ? "Please add a verse reference before saving your note."
             : "Please add a sermon reference before saving your note.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (
-      selectedSourceType === "sermon" &&
-      (!sermonTitle || sermonTitle.trim().length === 0)
-    ) {
-      toast({
-        title: "Sermon title required",
-        description: "Add a sermon title to save this note.",
         variant: "destructive",
       });
       return;
@@ -127,16 +100,14 @@ export function NoteEditor({
     onSave({
       source_type: selectedSourceType,
       source_id: sourceReference,
+      title: title.trim() || sourceReference,
       content,
-      tags,
-      sermon_title:
-        selectedSourceType === "sermon" ? sermonTitle.trim() : null,
+      verse_reference: selectedSourceType === "bible" ? sourceReference : null,
     });
 
     // Reset form
     setSourceReference("");
-    setTags([]);
-    setSermonTitle("");
+    setTitle("");
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
     }
@@ -147,8 +118,7 @@ export function NoteEditor({
     // Reset form on close
     setSourceReference(sourceId);
     setSelectedSourceType(sourceType);
-    setTags([]);
-    setSermonTitle("");
+    setTitle("");
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
     }
@@ -205,53 +175,16 @@ export function NoteEditor({
             />
           </div>
 
-          {/* Sermon Title */}
-          {selectedSourceType === "sermon" && (
-            <div>
-              <Label htmlFor="sermon-title">Sermon Title</Label>
-              <Input
-                id="sermon-title"
-                value={sermonTitle}
-                onChange={(e) => setSermonTitle(e.target.value)}
-                placeholder="e.g., Sunday Service: Faith and Hope"
-                className="mt-1"
-              />
-            </div>
-          )}
-
-          {/* Tags */}
+          {/* Note Title */}
           <div>
-            <Label>Tags</Label>
-            <div className="flex gap-2 mt-2">
-              <Badge
-                variant={tags.includes("Bible") ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleTag("Bible")}
-              >
-                Bible
-              </Badge>
-              <Badge
-                variant={tags.includes("Message") ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleTag("Message")}
-              >
-                Message
-              </Badge>
-              <Badge
-                variant={tags.includes("Prayer") ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleTag("Prayer")}
-              >
-                Prayer
-              </Badge>
-              <Badge
-                variant={tags.includes("Personal") ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleTag("Personal")}
-              >
-                Personal
-              </Badge>
-            </div>
+            <Label htmlFor="note-title">Title (Optional)</Label>
+            <Input
+              id="note-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Key insight about faith"
+              className="mt-1"
+            />
           </div>
 
           {/* Rich Text Editor */}

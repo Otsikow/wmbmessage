@@ -54,32 +54,10 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
                 ) : (
                   <MessageSquare className="h-4 w-4 text-primary" />
                 )}
-                {note.source_type === "sermon" && note.sermon_title ? (
-                  <div>
-                    <p className="font-semibold text-base sm:text-lg leading-tight">
-                      {note.sermon_title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {note.source_id}
-                    </p>
-                  </div>
-                ) : (
-                  <h3 className="font-semibold text-base sm:text-lg">
-                    {note.source_id}
-                  </h3>
-                )}
+                <h3 className="font-semibold text-base sm:text-lg">
+                  {note.title || note.source_id}
+                </h3>
               </div>
-              
-              {/* Tags */}
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {note.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Actions */}

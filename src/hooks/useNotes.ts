@@ -34,7 +34,7 @@ export interface CreateNoteInput {
 export interface CreateUserNoteInput {
   source_type: string;
   source_id: string;
-  title: string;
+  title?: string;
   content: string;
   verse_reference?: string | null;
 }
@@ -48,9 +48,9 @@ export interface UpdateNoteInput {
 export interface UpdateUserNoteInput {
   source_type?: "bible" | "sermon";
   source_id?: string;
+  title?: string;
   content?: string;
-  tags?: string[];
-  sermon_title?: string | null;
+  verse_reference?: string | null;
 }
 
 // Legacy hook for old notes table
@@ -285,11 +285,7 @@ export function useUserNotes() {
     try {
       const { data, error } = await supabase
         .from("user_notes")
-        .update({
-          ...input,
-          sermon_title:
-            input.sermon_title !== undefined ? input.sermon_title : undefined,
-        })
+        .update(input)
         .eq("id", id)
         .select()
         .single();

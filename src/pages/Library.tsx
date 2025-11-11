@@ -147,12 +147,10 @@ export default function Library() {
     () =>
       userNotes.map((note) => ({
         id: note.id,
-        title: note.tags?.[0] ?? null,
+        title: note.title,
         source_id: note.source_id,
         content: note.content,
-        tags: note.tags,
         created_at: note.created_at,
-        sermon_title: note.sermon_title ?? null,
       })),
     [userNotes]
   );
@@ -171,10 +169,7 @@ export default function Library() {
     },
     bookmarks: bookmarks.map((b) => ({ ...b, reference: formatLibraryItemReference(b) })),
     highlights: highlights.map((h) => ({ ...h, reference: formatLibraryItemReference(h) })),
-    notes: userNotes.map((n) => ({
-      ...n,
-      tags: Array.isArray(n.tags) ? n.tags : [],
-    })),
+    notes: userNotes,
   });
 
   const handleExportJSON = async () => {

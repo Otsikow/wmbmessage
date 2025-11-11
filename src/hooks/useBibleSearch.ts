@@ -272,7 +272,6 @@ export function useBibleSearch() {
               location: sermon.location,
               excerpt: para.content,
               paragraph: para.paragraph_number,
-              relevance: 1,
             });
           }
         });

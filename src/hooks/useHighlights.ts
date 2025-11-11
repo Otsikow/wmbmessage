@@ -311,8 +311,7 @@ export function useHighlights(book: string, chapter: number) {
   const getVerseHighlight = (verse: number): Highlight | undefined =>
     highlights.find((h) => h.verse === verse);
 
-  const isVerseBookmarked = (verse: number): boolean =>
-    bookmarks.some((b) => b.verse === verse);
+  const isVerseBookmarked = (verse: number): boolean => false; // Bookmarks are for sermons only
 
   return {
     highlights,
