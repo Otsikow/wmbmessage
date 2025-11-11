@@ -175,7 +175,7 @@ export default function VerseCard({
         <div className="flex flex-col gap-3">
           <p
             className={cn(
-              "text-sm sm:text-base leading-relaxed text-foreground/90",
+              "text-sm sm:text-base leading-relaxed text-foreground",
               verse.isJesusWords && "text-jesus-words font-medium",
               fontClass
             )}

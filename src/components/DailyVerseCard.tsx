@@ -130,7 +130,7 @@ const DailyVerseCard = () => {
               {dailyContent.bible_book} {dailyContent.bible_chapter}:{dailyContent.bible_verse}
             </h3>
           </div>
-          <p className="text-muted-foreground italic leading-relaxed">
+          <p className="reader-typography text-muted-foreground italic leading-relaxed">
             "{dailyContent.bible_verse_text}"
           </p>
         </div>
@@ -152,7 +152,7 @@ const DailyVerseCard = () => {
               })}{" "}
               • {dailyContent.sermon_paragraph.sermon.location}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="reader-typography text-muted-foreground leading-relaxed">
               {dailyContent.sermon_paragraph.content}
             </p>
           </div>
