@@ -29,6 +29,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
+import { useEngagement } from "@/contexts/EngagementContext";
 
 const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
@@ -36,6 +37,7 @@ export default function Reader() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { createUserNote } = useUserNotes();
+  const { recordActivity } = useEngagement();
 
   const searchParams = useMemo(() => {
     if (typeof window === "undefined") {
@@ -179,6 +181,12 @@ export default function Reader() {
     );
   }, [currentBook, currentChapter, selectedVerse]);
 
+  useEffect(() => {
+    recordActivity("bible-reading", {
+      description: `Read ${currentBook} ${currentChapter}`,
+    });
+  }, [currentBook, currentChapter, recordActivity]);
+
   const handleCrossReferenceClick = (verseNumber: number) => {
     setSelectedVerse(verseNumber);
     setShowCrossRef(true);
@@ -203,6 +211,9 @@ export default function Reader() {
     tags: string[];
   }) => {
     await createUserNote(noteData);
+    recordActivity("note-created", {
+      description: noteVerseContext || "New study note",
+    });
     setIsNoteEditorOpen(false);
     setNoteVerseContext("");
   };

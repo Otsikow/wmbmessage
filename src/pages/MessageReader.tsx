@@ -19,6 +19,7 @@ import Footer from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import churchInteriorImage from "@/assets/church-interior.jpg";
 import BackButton from "@/components/BackButton";
+import { useEngagement } from "@/contexts/EngagementContext";
 
 export default function MessageReader() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,6 +31,7 @@ export default function MessageReader() {
 
   const { sermons, loading, fetchSermonWithParagraphs } = useSermons();
   const { bookmarks } = useBookmarks(selectedSermon?.id);
+  const { recordActivity } = useEngagement();
 
   // Get sermon ID from URL params
   const sermonIdFromUrl = searchParams.get("sermon");
@@ -88,6 +90,13 @@ export default function MessageReader() {
 
   // Get bookmarked paragraph numbers for quick access
   const bookmarkedParagraphs = bookmarks.map((b) => b.paragraph_number).sort((a, b) => a - b);
+
+  useEffect(() => {
+    if (!selectedSermon) return;
+    recordActivity("sermon-reading", {
+      description: selectedSermon.title,
+    });
+  }, [recordActivity, selectedSermon]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

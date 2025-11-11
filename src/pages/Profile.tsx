@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
+import EngagementSummary from "@/components/engagement/EngagementSummary";
+import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 
 interface AccountSettingsState {
   emailNotifications: boolean;
@@ -518,10 +520,15 @@ export default function Profile() {
                   <p>{lastSignIn}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
 
-          <Tabs defaultValue="overview" className="space-y-6">
+        <div className="space-y-4">
+          <EngagementPrompt />
+          <EngagementSummary />
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="flex flex-wrap gap-2 bg-muted p-1">
               <TabsTrigger value="overview" className="gap-2">
                 <User className="h-4 w-4" /> Overview

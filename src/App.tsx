@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
+import { EngagementProvider } from "@/contexts/EngagementContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 
@@ -52,90 +53,92 @@ const App = () => (
     <AuthProvider>
       <SettingsProvider>
         <CalendarProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <OfflineIndicator />
-            <BrowserRouter>
-              <Routes>
-                {/* Home Page */}
-                <Route path="/" element={<Index />} />
+          <EngagementProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <OfflineIndicator />
+              <BrowserRouter>
+                <Routes>
+                  {/* Home Page */}
+                  <Route path="/" element={<Index />} />
 
-                {/* Main Navigation Routes */}
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/bible" element={<Reader />} />
-                <Route path="/reader" element={<Reader />} /> {/* Legacy route */}
-                <Route path="/messages" element={<WMBSermons />} />
-                <Route path="/wmb-sermons" element={<WMBSermons />} /> {/* Legacy route */}
-                <Route path="/message-reader" element={<MessageReader />} />
-                <Route path="/cross-references" element={<CrossReferences />} />
-                <Route
-                  path="/notes"
-                  element={
-                    <ProtectedRoute>
-                      <Notes />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/daily" element={<DailyVerse />} />
-                <Route
-                  path="/library"
-                  element={
-                    <ProtectedRoute>
-                      <Library />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/settings" element={<Settings />} />
+                  {/* Main Navigation Routes */}
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/bible" element={<Reader />} />
+                  <Route path="/reader" element={<Reader />} /> {/* Legacy route */}
+                  <Route path="/messages" element={<WMBSermons />} />
+                  <Route path="/wmb-sermons" element={<WMBSermons />} /> {/* Legacy route */}
+                  <Route path="/message-reader" element={<MessageReader />} />
+                  <Route path="/cross-references" element={<CrossReferences />} />
+                  <Route
+                    path="/notes"
+                    element={
+                      <ProtectedRoute>
+                        <Notes />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/daily" element={<DailyVerse />} />
+                  <Route
+                    path="/library"
+                    element={
+                      <ProtectedRoute>
+                        <Library />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/settings" element={<Settings />} />
 
-                {/* Additional Pages */}
-                <Route
-                  path="/collections"
-                  element={
-                    <ProtectedRoute>
-                      <Collections />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/more" element={<More />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/downloads" element={<Downloads />} />
-                <Route path="/share" element={<Share />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/about" element={<About />} />
+                  {/* Additional Pages */}
+                  <Route
+                    path="/collections"
+                    element={
+                      <ProtectedRoute>
+                        <Collections />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/more" element={<More />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/downloads" element={<Downloads />} />
+                  <Route path="/share" element={<Share />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/about" element={<About />} />
 
-                {/* Auth Routes */}
-                <Route path="/auth/sign-in" element={<SignIn />} />
-                <Route path="/auth/sign-up" element={<SignUp />} />
-                <Route path="/auth/verify-email" element={<VerifyEmail />} />
-                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-                <Route path="/auth/reset-password" element={<ResetPassword />} />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Auth Routes */}
+                  <Route path="/auth/sign-in" element={<SignIn />} />
+                  <Route path="/auth/sign-up" element={<SignUp />} />
+                  <Route path="/auth/verify-email" element={<VerifyEmail />} />
+                  <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/auth/reset-password" element={<ResetPassword />} />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute>
+                        <Admin />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Legal Pages */}
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
+                  {/* Legal Pages */}
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
 
-                {/* Catch-All Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+                  {/* Catch-All Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </EngagementProvider>
         </CalendarProvider>
       </SettingsProvider>
     </AuthProvider>
