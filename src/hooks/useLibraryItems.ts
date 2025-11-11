@@ -108,6 +108,8 @@ export function useLibraryItems() {
   const [highlightsLoading, setHighlightsLoading] = useState(true);
   const bookmarkFallbackNotified = useRef(false);
   const highlightFallbackNotified = useRef(false);
+  const bookmarkErrorNotified = useRef(false);
+  const highlightErrorNotified = useRef(false);
 
   const canUseSupabase = useMemo(() => SUPABASE_CONFIGURED && Boolean(user), [user]);
 
@@ -161,18 +163,21 @@ export function useLibraryItems() {
 
       const remoteBookmarks = (data || []) as LibraryBookmark[];
       setBookmarks(remoteBookmarks);
+      bookmarkFallbackNotified.current = false;
+      bookmarkErrorNotified.current = false;
     } catch (error) {
       console.error("Failed to load bookmarks", error);
       const localBookmarks = loadLocalBookmarks();
       if (localBookmarks.length > 0) {
         setBookmarks(localBookmarks);
         notifyFallback("bookmark");
-      } else {
+      } else if (!bookmarkErrorNotified.current) {
         toast({
           title: "Error",
           description: "We couldn't load your bookmarks right now.",
           variant: "destructive",
         });
+        bookmarkErrorNotified.current = true;
       }
     } finally {
       setBookmarksLoading(false);
@@ -199,18 +204,21 @@ export function useLibraryItems() {
 
       const remoteHighlights = (data || []) as LibraryHighlight[];
       setHighlights(remoteHighlights);
+      highlightFallbackNotified.current = false;
+      highlightErrorNotified.current = false;
     } catch (error) {
       console.error("Failed to load highlights", error);
       const localHighlights = loadLocalHighlights();
       if (localHighlights.length > 0) {
         setHighlights(localHighlights);
         notifyFallback("highlight");
-      } else {
+      } else if (!highlightErrorNotified.current) {
         toast({
           title: "Error",
           description: "We couldn't load your highlights right now.",
           variant: "destructive",
         });
+        highlightErrorNotified.current = true;
       }
     } finally {
       setHighlightsLoading(false);
