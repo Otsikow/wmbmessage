@@ -83,7 +83,7 @@ export default function RecentBibleVerses() {
                       {verse.book} {verse.chapter}:{verse.verse}
                     </h3>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                  <p className="reader-typography text-sm text-muted-foreground leading-relaxed line-clamp-4">
                     {verse.text}
                   </p>
                   <p className="text-xs text-muted-foreground">

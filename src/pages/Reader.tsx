@@ -222,12 +222,14 @@ export default function Reader() {
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
 
-  const readerFontClass =
+  const readerFontClass = cn(
+    "reader-typography",
     settings.readerFontFamily === "serif"
       ? "font-serif"
       : settings.readerFontFamily === "monospace"
       ? "font-mono"
-      : "font-sans";
+      : "font-sans"
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">

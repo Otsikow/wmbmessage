@@ -381,7 +381,7 @@ export default function CrossReferenceViewer({
                             </div>
                           </CardHeader>
                           <CardContent className="pb-3">
-                            <p className="text-sm leading-relaxed break-words">
+                            <p className="reader-typography text-sm leading-relaxed break-words">
                               {highlightSearchTerm(result.text, searchInput)}
                             </p>
                           </CardContent>
@@ -671,7 +671,7 @@ function CrossReferenceSearchResultCard({
       </CardHeader>
       <CardContent className="pb-3">
         {crossRef.notes ? (
-          <p className="text-sm leading-relaxed text-muted-foreground break-words">
+          <p className="reader-typography text-sm leading-relaxed text-muted-foreground break-words">
             {highlightSearchTerm(crossRef.notes, searchTerm)}
           </p>
         ) : (
@@ -744,10 +744,12 @@ function ManualReferenceDisplay({ reference, onRemove, onNavigate }: ManualRefer
                 <span className="font-semibold text-primary min-w-[1.5rem] flex-shrink-0">
                   {verse.number}
                 </span>
-                <p className={cn(
-                  "leading-relaxed break-words flex-1",
-                  verse.isJesusWords && "text-jesus-words font-medium"
-                )}>
+                <p
+                  className={cn(
+                    "reader-typography leading-relaxed break-words flex-1",
+                    verse.isJesusWords && "text-jesus-words font-medium"
+                  )}
+                >
                   {verse.text}
                 </p>
               </div>
@@ -832,10 +834,12 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
                 <span className="font-semibold text-primary min-w-[1.5rem] flex-shrink-0">
                   {verse.number}
                 </span>
-                <p className={cn(
-                  "leading-relaxed break-words flex-1",
-                  verse.isJesusWords && "text-jesus-words font-medium"
-                )}>
+                <p
+                  className={cn(
+                    "reader-typography leading-relaxed break-words flex-1",
+                    verse.isJesusWords && "text-jesus-words font-medium"
+                  )}
+                >
                   {verse.text}
                 </p>
               </div>
