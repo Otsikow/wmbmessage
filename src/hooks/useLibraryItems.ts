@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -106,12 +106,44 @@ export function useLibraryItems() {
   const [highlights, setHighlights] = useState<LibraryHighlight[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(true);
   const [highlightsLoading, setHighlightsLoading] = useState(true);
+  const bookmarkFallbackNotified = useRef(false);
+  const highlightFallbackNotified = useRef(false);
 
   const canUseSupabase = useMemo(() => SUPABASE_CONFIGURED && Boolean(user), [user]);
 
+  const loadLocalBookmarks = useCallback(
+    () => collectLocalItems<StoredBookmark>("bookmarks"),
+    []
+  );
+  const loadLocalHighlights = useCallback(
+    () => collectLocalItems<StoredHighlight>("highlights"),
+    []
+  );
+
+  const notifyFallback = useCallback(
+    (type: "bookmark" | "highlight") => {
+      if (type === "bookmark") {
+        if (bookmarkFallbackNotified.current) return;
+        bookmarkFallbackNotified.current = true;
+      } else {
+        if (highlightFallbackNotified.current) return;
+        highlightFallbackNotified.current = true;
+      }
+
+      toast({
+        title: "Offline data restored",
+        description:
+          type === "bookmark"
+            ? "Showing your saved bookmarks from this device while we reconnect."
+            : "Showing your saved highlights from this device while we reconnect.",
+      });
+    },
+    [toast]
+  );
+
   const fetchBookmarks = useCallback(async () => {
     if (!canUseSupabase) {
-      setBookmarks(collectLocalItems<StoredBookmark>("bookmarks"));
+      setBookmarks(loadLocalBookmarks());
       setBookmarksLoading(false);
       return;
     }
@@ -127,22 +159,29 @@ export function useLibraryItems() {
 
       if (error) throw error;
 
-      setBookmarks((data || []) as LibraryBookmark[]);
+      const remoteBookmarks = (data || []) as LibraryBookmark[];
+      setBookmarks(remoteBookmarks);
     } catch (error) {
       console.error("Failed to load bookmarks", error);
-      toast({
-        title: "Error",
-        description: "We couldn't load your bookmarks right now.",
-        variant: "destructive",
-      });
+      const localBookmarks = loadLocalBookmarks();
+      if (localBookmarks.length > 0) {
+        setBookmarks(localBookmarks);
+        notifyFallback("bookmark");
+      } else {
+        toast({
+          title: "Error",
+          description: "We couldn't load your bookmarks right now.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setBookmarksLoading(false);
     }
-  }, [canUseSupabase, toast, user]);
+  }, [canUseSupabase, loadLocalBookmarks, notifyFallback, toast, user]);
 
   const fetchHighlights = useCallback(async () => {
     if (!canUseSupabase) {
-      setHighlights(collectLocalItems<StoredHighlight>("highlights"));
+      setHighlights(loadLocalHighlights());
       setHighlightsLoading(false);
       return;
     }
@@ -158,18 +197,25 @@ export function useLibraryItems() {
 
       if (error) throw error;
 
-      setHighlights((data || []) as LibraryHighlight[]);
+      const remoteHighlights = (data || []) as LibraryHighlight[];
+      setHighlights(remoteHighlights);
     } catch (error) {
       console.error("Failed to load highlights", error);
-      toast({
-        title: "Error",
-        description: "We couldn't load your highlights right now.",
-        variant: "destructive",
-      });
+      const localHighlights = loadLocalHighlights();
+      if (localHighlights.length > 0) {
+        setHighlights(localHighlights);
+        notifyFallback("highlight");
+      } else {
+        toast({
+          title: "Error",
+          description: "We couldn't load your highlights right now.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setHighlightsLoading(false);
     }
-  }, [canUseSupabase, toast, user]);
+  }, [canUseSupabase, loadLocalHighlights, notifyFallback, toast, user]);
 
   useEffect(() => {
     fetchBookmarks();
@@ -189,7 +235,12 @@ export function useLibraryItems() {
 
       if (!stored) return;
 
-      const next = stored.filter((entry) => entry.verse !== item.verse);
+      const next = stored.filter(
+        (entry) =>
+          entry.book !== item.book ||
+          entry.chapter !== item.chapter ||
+          entry.verse !== item.verse
+      );
       if (next.length === 0) {
         window.localStorage.removeItem(key);
       } else {
@@ -203,7 +254,14 @@ export function useLibraryItems() {
     async (bookmark: LibraryBookmark): Promise<boolean> => {
       if (!canUseSupabase) {
         removeLocalItem("bookmarks", bookmark);
-        setBookmarks((prev) => prev.filter((item) => item.verse !== bookmark.verse));
+        setBookmarks((prev) =>
+          prev.filter(
+            (item) =>
+              item.book !== bookmark.book ||
+              item.chapter !== bookmark.chapter ||
+              item.verse !== bookmark.verse
+          )
+        );
         toast({ title: "Bookmark removed", description: "Removed from your library." });
         return true;
       }
@@ -237,7 +295,14 @@ export function useLibraryItems() {
     async (highlight: LibraryHighlight): Promise<boolean> => {
       if (!canUseSupabase) {
         removeLocalItem("highlights", highlight);
-        setHighlights((prev) => prev.filter((item) => item.verse !== highlight.verse));
+        setHighlights((prev) =>
+          prev.filter(
+            (item) =>
+              item.book !== highlight.book ||
+              item.chapter !== highlight.chapter ||
+              item.verse !== highlight.verse
+          )
+        );
         toast({ title: "Highlight removed", description: "Removed from your library." });
         return true;
       }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import BackButton from "@/components/BackButton";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_COLORS = {
   yellow: "bg-yellow-200 dark:bg-yellow-900",
@@ -287,21 +288,28 @@ export default function Library() {
 
   /* ------------------------- RENDER ------------------------- */
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
-        <div className="container flex items-center gap-3 py-3 px-4">
-          <BackButton fallbackPath="/more" />
-          <div>
-            <h1 className="text-2xl font-bold">My Library</h1>
-            <p className="text-sm text-muted-foreground">
-              Your personal Bible study collection
-            </p>
+      <div className="sticky top-0 z-30 border-b border-border bg-card shadow-sm">
+        <div className="container flex flex-wrap items-center gap-3 px-4 py-4">
+          <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+            <BackButton fallbackPath="/more" />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold">My Library</h1>
+              <p className="text-sm text-muted-foreground">
+                Your personal Bible study collection
+              </p>
+            </div>
           </div>
-          <div className="ml-auto">
+          <div className="w-full sm:w-auto sm:ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" disabled={isExporting || isLoadingData}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center sm:w-auto"
+                  disabled={isExporting || isLoadingData}
+                >
                   {isExporting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,8 +347,8 @@ export default function Library() {
       </div>
 
       {/* Search */}
-      <div className="container max-w-6xl mx-auto px-4 py-6">
-        <div className="max-w-xl mb-6 relative">
+      <div className="container mx-auto max-w-6xl px-4 py-6">
+        <div className="relative mb-6 max-w-xl">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -353,19 +361,36 @@ export default function Library() {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="bookmarks">
-              <BookmarkIcon className="h-4 w-4 mr-1" /> Bookmarks
+          <TabsList className="mb-6 flex w-full flex-wrap gap-2 overflow-x-auto md:flex-nowrap">
+            <TabsTrigger
+              value="all"
+              className="flex-1 min-w-[120px] md:flex-none md:min-w-0"
+            >
+              All
             </TabsTrigger>
-            <TabsTrigger value="highlights">
-              <Highlighter className="h-4 w-4 mr-1" /> Highlights
+            <TabsTrigger
+              value="bookmarks"
+              className="flex-1 min-w-[140px] gap-2 md:flex-none md:min-w-0"
+            >
+              <BookmarkIcon className="h-4 w-4" /> Bookmarks
             </TabsTrigger>
-            <TabsTrigger value="notes">
-              <FileText className="h-4 w-4 mr-1" /> Notes
+            <TabsTrigger
+              value="highlights"
+              className="flex-1 min-w-[140px] gap-2 md:flex-none md:min-w-0"
+            >
+              <Highlighter className="h-4 w-4" /> Highlights
             </TabsTrigger>
-            <TabsTrigger value="recent">
-              <Clock className="h-4 w-4 mr-1" /> Recent
+            <TabsTrigger
+              value="notes"
+              className="flex-1 min-w-[140px] gap-2 md:flex-none md:min-w-0"
+            >
+              <FileText className="h-4 w-4" /> Notes
+            </TabsTrigger>
+            <TabsTrigger
+              value="recent"
+              className="flex-1 min-w-[140px] gap-2 md:flex-none md:min-w-0"
+            >
+              <Clock className="h-4 w-4" /> Recent
             </TabsTrigger>
           </TabsList>
 
@@ -445,7 +470,7 @@ export default function Library() {
           />
 
           {/* Recent Activity */}
-          <TabsContent value="recent">
+          <TabsContent value="recent" className="space-y-4">
             {activitiesLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -528,87 +553,40 @@ function LibrarySection<T extends LibraryDisplayItem>({
 }: LibrarySectionProps<T>) {
   if (loading) {
     return (
-      <Card className="p-8">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+      <Card className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </Card>
     );
   }
 
   if (items.length === 0) {
     return (
-      <Card className="p-8">
-        <div className="text-center text-muted-foreground">
-          <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No {title.toLowerCase()} found.</p>
-        </div>
+      <Card className="p-8 text-center text-muted-foreground">
+        <Icon className="mx-auto mb-2 h-8 w-8 opacity-50" />
+        <p className="text-sm">No {title.toLowerCase()} found.</p>
       </Card>
     );
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+    <section aria-label={title} className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
         <Icon className="h-5 w-5" />
-        {title}
-      </h2>
-      <div className="grid gap-3">
-        {items.map((item) => {
-          const { reference, description, note, tags } = getLibraryItemDetails(item);
-          const highlight = 'color' in item ? item : null;
-          const colorClass = highlight && colorMap && typeof highlight.color === 'string' 
-            ? colorMap[highlight.color] 
-            : undefined;
-
-          return (
-            <Card
-              key={item.id}
-              className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${colorClass || ''}`}
-              onClick={() => onNavigate(item)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm mb-1">{reference}</p>
-                  {description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                      {description}
-                    </p>
-                  )}
-                  {note && (
-                    <p className="text-xs text-muted-foreground italic mb-2">
-                      Note: {note}
-                    </p>
-                  )}
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 h-8 w-8"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(item);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </Card>
-          );
-        })}
+        <h2 className="text-lg font-semibold">{title}</h2>
       </div>
-    </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <LibraryItemCard
+            key={item.id}
+            item={item}
+            onNavigate={onNavigate}
+            onDelete={onDelete}
+            deleteLabel={title}
+            colorClass={getHighlightAccentClass(item, colorMap)}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -623,72 +601,29 @@ function LibraryTab<T extends LibraryDisplayItem>({
   colorMap,
 }: LibraryTabProps<T>) {
   return (
-    <TabsContent value={label.toLowerCase()}>
+    <TabsContent value={label.toLowerCase()} className="space-y-4">
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : items.length === 0 ? (
         <Card className="p-12 text-center">
-          <Icon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No {label}</h3>
+          <Icon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">No {label}</h3>
           <p className="text-muted-foreground">{emptyMessage}</p>
         </Card>
       ) : (
-        <div className="grid gap-3">
-          {items.map((item) => {
-            const { reference, description, note, tags } = getLibraryItemDetails(item);
-            const highlight = 'color' in item ? item : null;
-            const colorClass = highlight && colorMap && typeof highlight.color === 'string'
-              ? colorMap[highlight.color]
-              : undefined;
-
-            return (
-              <Card
-                key={item.id}
-                className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${colorClass || ''}`}
-                onClick={() => onNavigate(item)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm mb-1">{reference}</p>
-                    {description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                        {description}
-                      </p>
-                    )}
-                    {note && (
-                      <p className="text-xs text-muted-foreground italic mb-2">
-                        Note: {note}
-                      </p>
-                    )}
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {tags.map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(item);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {items.map((item) => (
+            <LibraryItemCard
+              key={item.id}
+              item={item}
+              onNavigate={onNavigate}
+              onDelete={onDelete}
+              deleteLabel={label}
+              colorClass={getHighlightAccentClass(item, colorMap)}
+            />
+          ))}
         </div>
       )}
     </TabsContent>
@@ -696,6 +631,79 @@ function LibraryTab<T extends LibraryDisplayItem>({
 }
 
 /* ------------------------- Helper Functions ------------------------- */
+
+interface LibraryItemCardProps<T extends LibraryDisplayItem> {
+  item: T;
+  onNavigate: (item: T) => void;
+  onDelete?: (item: T) => void;
+  colorClass?: string;
+  deleteLabel?: string;
+}
+
+function LibraryItemCard<T extends LibraryDisplayItem>({
+  item,
+  onNavigate,
+  onDelete,
+  colorClass,
+  deleteLabel,
+}: LibraryItemCardProps<T>) {
+  const { reference, description, note, tags } = getLibraryItemDetails(item);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onNavigate(item);
+    }
+  };
+
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      className={cn(
+        "flex h-full cursor-pointer flex-col gap-3 p-4 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        colorClass
+      )}
+      onClick={() => onNavigate(item)}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-sm font-medium">{reference}</p>
+          {description && (
+            <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">{description}</p>
+          )}
+          {note && (
+            <p className="mb-2 text-xs italic text-muted-foreground">Note: {note}</p>
+          )}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {tags.map((tag, idx) => (
+                <Badge key={idx} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            aria-label={`Delete ${deleteLabel ?? "item"}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(item);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 function filterLibraryItems<T extends LibraryDisplayItem>(items: T[], query: string): T[] {
   const q = query.trim().toLowerCase();
@@ -730,6 +738,17 @@ function getLibraryItemDetails(item: LibraryDisplayItem) {
     ? itemTags.filter((t) => typeof t === "string" && t.trim().length > 0)
     : [];
   return { reference, description, note, tags };
+}
+
+function getHighlightAccentClass(
+  item: LibraryDisplayItem,
+  colorMap?: Record<string, string>
+) {
+  if (!colorMap) return undefined;
+  if ("color" in item && typeof item.color === "string") {
+    return colorMap[item.color];
+  }
+  return undefined;
 }
 
 function wrapTextForPdf(text: string, max = 90): string[] {
