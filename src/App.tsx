@@ -10,6 +10,7 @@ import { CalendarProvider } from "@/contexts/CalendarContext";
 import { EngagementProvider } from "@/contexts/EngagementContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 
 // Pages
 import Index from "./pages/Index";
@@ -58,6 +59,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <OfflineIndicator />
+              <GlobalLoadingOverlay />
               <BrowserRouter>
                 <Routes>
                   {/* Home Page */}
