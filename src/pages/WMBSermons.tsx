@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   SermonSummary,
   useSermonSummaries,
 } from "@/hooks/useSermonSummaries";
+import { useEngagement } from "@/contexts/EngagementContext";
 
 export default function WMBSermons() {
   const navigate = useNavigate();
@@ -33,6 +34,13 @@ export default function WMBSermons() {
   const [selectedSermonForNote, setSelectedSermonForNote] = useState<
     SermonSummary | undefined
   >(undefined);
+  const { recordActivity } = useEngagement();
+
+  useEffect(() => {
+    recordActivity("library-explore", {
+      description: "Explored sermon library",
+    });
+  }, [recordActivity]);
 
   const filteredSermons = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -76,6 +84,9 @@ export default function WMBSermons() {
       ...noteData,
       sermon_title:
         noteData.sermon_title ?? selectedSermonForNote?.title ?? null,
+    });
+    recordActivity("note-created", {
+      description: noteData.sermon_title ?? selectedSermonForNote?.title ?? "Sermon note",
     });
     setIsNoteEditorOpen(false);
     setSelectedSermonForNote(undefined);

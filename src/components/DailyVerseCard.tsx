@@ -2,14 +2,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, RefreshCw, Book, MessageSquare } from "lucide-react";
 import { useDailyContent } from "@/hooks/useDailyContent";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEngagement } from "@/contexts/EngagementContext";
 
 const DailyVerseCard = () => {
   const { dailyContent, loading, error, refreshContent } = useDailyContent();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+  const { recordActivity } = useEngagement();
+
+  useEffect(() => {
+    if (!dailyContent || loading || error) return;
+    recordActivity("daily-devotional", {
+      description: `${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}`,
+    });
+  }, [dailyContent, error, loading, recordActivity]);
 
   const handleCopy = async () => {
     if (!dailyContent) return;
