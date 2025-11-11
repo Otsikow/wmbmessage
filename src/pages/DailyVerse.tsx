@@ -13,7 +13,7 @@ export default function DailyVerse() {
       <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
         <div className="container flex items-center gap-3 py-3 px-4">
           <BackButton />
-          <h1 className="text-2xl font-bold">Daily Verse</h1>
+          <h1 className="text-2xl font-bold">Daily Quote</h1>
         </div>
       </div>
 
@@ -21,11 +21,11 @@ export default function DailyVerse() {
         <DailyQuote />
         
         <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-semibold">About Daily Verses</h2>
+          <h2 className="text-xl font-semibold">About Daily Quotes</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Each day brings a new verse of encouragement and wisdom from Scripture. 
-            These verses are carefully selected to inspire, comfort, and guide you 
-            throughout your daily walk of faith.
+            Each day pairs a Bible verse with a quote from William Branham, bringing together
+            scripture and the prophetic message. Use the calendar to revisit any previous
+            day and continue your devotional journey without missing a moment of inspiration.
           </p>
           <div className="flex gap-3">
             <Button onClick={() => navigate("/bible")}>
