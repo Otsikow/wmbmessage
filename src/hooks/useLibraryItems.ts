@@ -199,6 +199,25 @@ export function useLibraryItems() {
     []
   );
 
+  const updateLocalHighlight = useCallback(
+    (highlight: LibraryHighlight, updates: Partial<StoredHighlight>) => {
+      if (typeof window === "undefined") return;
+      const key = getLocalStorageKey("highlights", highlight.book, highlight.chapter);
+      const stored = safeParseJSON<StoredHighlight[]>(window.localStorage.getItem(key));
+
+      if (!stored) return;
+
+      const next = stored.map((entry) =>
+        entry.verse === highlight.verse
+          ? { ...entry, ...updates }
+          : entry
+      );
+
+      window.localStorage.setItem(key, JSON.stringify(next));
+    },
+    []
+  );
+
   const removeBookmark = useCallback(
     async (bookmark: LibraryBookmark): Promise<boolean> => {
       if (!canUseSupabase) {
@@ -267,6 +286,61 @@ export function useLibraryItems() {
     [canUseSupabase, removeLocalItem, toast, user]
   );
 
+  const updateHighlight = useCallback(
+    async (
+      highlight: LibraryHighlight,
+      updates: { note?: string | null }
+    ): Promise<boolean> => {
+      const nextNote = updates.note ?? null;
+
+      if (!canUseSupabase) {
+        const timestamp = new Date().toISOString();
+        setHighlights((prev) =>
+          prev.map((item) =>
+            item.book === highlight.book &&
+            item.chapter === highlight.chapter &&
+            item.verse === highlight.verse
+              ? { ...item, note: nextNote, updated_at: timestamp }
+              : item
+          )
+        );
+        updateLocalHighlight(highlight, { note: nextNote, updated_at: timestamp });
+        toast({ title: "Highlight updated", description: "Your highlight note was saved." });
+        return true;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_highlights")
+          .update({ note: nextNote })
+          .eq("id", highlight.id)
+          .eq("user_id", user!.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setHighlights((prev) =>
+            prev.map((item) => (item.id === highlight.id ? (data as LibraryHighlight) : item))
+          );
+        }
+
+        toast({ title: "Highlight updated", description: "Your highlight note was saved." });
+        return true;
+      } catch (error) {
+        console.error("Failed to update highlight", error);
+        toast({
+          title: "Error",
+          description: "We couldn't update that highlight.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    },
+    [canUseSupabase, toast, updateLocalHighlight, user]
+  );
+
   const refetch = useCallback(() => {
     fetchBookmarks();
     fetchHighlights();
@@ -279,6 +353,7 @@ export function useLibraryItems() {
     highlightsLoading,
     removeBookmark,
     removeHighlight,
+    updateHighlight,
     refetch,
   };
 }
