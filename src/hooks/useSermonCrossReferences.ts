@@ -15,7 +15,7 @@ interface SupabaseSermonCrossReferenceRow {
   bible_verse: number;
   reference_note: string | null;
   sermon_id: string;
-  paragraph_id: string;
+  paragraph_number: number;
   sermons:
     | null
     | {
@@ -84,15 +84,11 @@ export function useSermonCrossReferences(
           bible_verse,
           reference_note,
           sermon_id,
-          paragraph_id,
+          paragraph_number,
           sermons!sermon_cross_references_sermon_id_fkey (
             title,
             date,
             location
-          ),
-          sermon_paragraphs!sermon_cross_references_paragraph_id_fkey (
-            paragraph_number,
-            content
           )
         `)
         .eq('bible_book', book)

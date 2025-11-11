@@ -85,13 +85,44 @@ export function useSermons() {
 
   const searchSermons = async (query: string): Promise<SearchResult[]> => {
     try {
-      const { data, error } = await supabase.rpc("search_sermon_content", {
-        search_query: query,
-        result_limit: 50,
-      });
+      const searchTerm = query.toLowerCase().trim();
+      
+      const { data: sermonData, error } = await supabase
+        .from('sermons')
+        .select(`
+          id,
+          title,
+          date,
+          location,
+          sermon_paragraphs (
+            paragraph_number,
+            content
+          )
+        `);
 
       if (error) throw error;
-      return data || [];
+
+      if (!sermonData) return [];
+
+      const results: SearchResult[] = [];
+      sermonData.forEach((sermon: any) => {
+        const paragraphs = sermon.sermon_paragraphs || [];
+        paragraphs.forEach((para: any) => {
+          if (para.content?.toLowerCase().includes(searchTerm)) {
+            results.push({
+              sermon_id: sermon.id,
+              sermon_title: sermon.title,
+              sermon_date: sermon.date,
+              sermon_location: sermon.location,
+              paragraph_number: para.paragraph_number,
+              content: para.content,
+              relevance: 1,
+            });
+          }
+        });
+      });
+
+      return results.slice(0, 50);
     } catch (error) {
       console.error("Error searching sermons:", error);
       toast({

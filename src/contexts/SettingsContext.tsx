@@ -58,7 +58,7 @@ interface SupabaseSettingsRow {
 
 type SupabaseSettingsUpsert = {
   user_id: string;
-  font_size: number;
+  font_size: string;
   font_family: string;
   reader_font_family: string;
   color_scheme: string;
@@ -154,7 +154,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
           const supabasePayload: SupabaseSettingsUpsert = {
             user_id: user.id,
-            font_size: clampFontSize(savedSettings.fontSize),
+            font_size: String(clampFontSize(savedSettings.fontSize)),
             font_family: savedSettings.fontFamily,
             reader_font_family: savedSettings.readerFontFamily,
             color_scheme: savedSettings.colorScheme,
@@ -164,7 +164,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
           const { error: upsertError } = await supabase
             .from("user_settings")
-            .upsert(supabasePayload);
+            .upsert([supabasePayload]);
 
           if (upsertError) {
             console.error("Error creating default user settings:", upsertError);
@@ -240,7 +240,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       try {
         const supabasePayload: SupabaseSettingsUpsert = {
           user_id: user.id,
-          font_size: newSettings.fontSize,
+          font_size: String(newSettings.fontSize),
           font_family: newSettings.fontFamily,
           reader_font_family: newSettings.readerFontFamily,
           color_scheme: newSettings.colorScheme,
@@ -250,7 +250,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
         const { error } = await supabase
           .from("user_settings")
-          .upsert(supabasePayload);
+          .upsert([supabasePayload]);
 
         if (error) {
           console.error("Error saving settings:", error);

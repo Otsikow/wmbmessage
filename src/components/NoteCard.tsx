@@ -18,11 +18,11 @@ import { useState } from "react";
 export interface UserNote {
   id: string;
   user_id: string;
-  source_type: "bible" | "sermon";
+  source_type: string;
   source_id: string;
+  title: string;
   content: string;
-  tags: string[];
-  sermon_title?: string | null;
+  verse_reference: string | null;
   created_at: string;
   updated_at: string;
 }

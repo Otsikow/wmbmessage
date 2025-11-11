@@ -16,11 +16,11 @@ export interface Note {
 export interface UserNote {
   id: string;
   user_id: string;
-  source_type: "bible" | "sermon";
+  source_type: string;
   source_id: string;
+  title: string;
   content: string;
-  tags: string[];
-  sermon_title?: string | null;
+  verse_reference: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,11 +32,11 @@ export interface CreateNoteInput {
 }
 
 export interface CreateUserNoteInput {
-  source_type: "bible" | "sermon";
+  source_type: string;
   source_id: string;
+  title: string;
   content: string;
-  tags: string[];
-  sermon_title?: string | null;
+  verse_reference?: string | null;
 }
 
 export interface UpdateNoteInput {
@@ -254,9 +254,9 @@ export function useUserNotes() {
             user_id: user.id,
             source_type: input.source_type,
             source_id: input.source_id,
+            title: input.title || 'Untitled Note',
             content: input.content,
-            tags: input.tags,
-            sermon_title: input.sermon_title || null,
+            verse_reference: input.verse_reference || null,
           },
         ])
         .select()

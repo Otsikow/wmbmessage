@@ -153,15 +153,9 @@ export function useLibraryItems() {
     setBookmarksLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("user_bookmarks")
-        .select("id, user_id, book, chapter, verse, note, created_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const remoteBookmarks = (data || []) as LibraryBookmark[];
+      // Note: user_bookmarks table is for sermons, not Bible verses
+      // Return empty array for now
+      const remoteBookmarks: LibraryBookmark[] = [];
       setBookmarks(remoteBookmarks);
       bookmarkFallbackNotified.current = false;
       bookmarkErrorNotified.current = false;

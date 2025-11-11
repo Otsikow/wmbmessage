@@ -18,9 +18,8 @@ export interface Highlight {
 export interface Bookmark {
   id: string;
   user_id: string;
-  book: string;
-  chapter: number;
-  verse: number;
+  sermon_id: string;
+  paragraph_number: number;
   note?: string;
   created_at: string;
 }
@@ -123,19 +122,15 @@ export function useHighlights(book: string, chapter: number) {
           .eq("user_id", user.id)
           .eq("book", book)
           .eq("chapter", chapter),
-        supabase
-          .from("user_bookmarks")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("book", book)
-          .eq("chapter", chapter),
+        // Note: user_bookmarks are for sermons, not Bible verses
+        Promise.resolve({ data: [], error: null }),
       ]);
 
       if (highlightsResult.error) throw highlightsResult.error;
       if (bookmarksResult.error) throw bookmarksResult.error;
 
       setHighlights(highlightsResult.data || []);
-      setBookmarks(bookmarksResult.data || []);
+      setBookmarks([]);
       fallbackNotifiedRef.current = false;
       errorNotifiedRef.current = false;
     } catch (error) {
@@ -304,100 +299,13 @@ export function useHighlights(book: string, chapter: number) {
   };
 
   const toggleBookmark = async (verse: number, note?: string): Promise<boolean> => {
-    if (!canUseSupabase) {
-      setBookmarks((prev) => {
-        const existingBookmark = prev.find((b) => b.verse === verse);
-        let next: Bookmark[];
-
-        if (existingBookmark) {
-          next = prev.filter((b) => b.verse !== verse);
-          toast({
-            title: "Bookmark removed",
-            description: `Removed bookmark from ${book} ${chapter}:${verse}.`,
-          });
-        } else {
-          const now = new Date().toISOString();
-          const newBookmark: Bookmark = {
-            id: generateId(),
-            user_id: user?.id || "local",
-            book,
-            chapter,
-            verse,
-            note,
-            created_at: now,
-          };
-          next = [...prev, newBookmark];
-          toast({
-            title: "Bookmark added",
-            description: `${book} ${chapter}:${verse} has been bookmarked.`,
-          });
-        }
-
-        persistLocalBookmarks(next);
-        return next;
-      });
-
-      return true;
-    }
-
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to bookmark verses.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    const existingBookmark = bookmarks.find((b) => b.verse === verse);
-
-    try {
-      if (existingBookmark) {
-        const { error } = await supabase
-          .from("user_bookmarks")
-          .delete()
-          .eq("id", existingBookmark.id);
-        if (error) throw error;
-
-        setBookmarks((prev) => prev.filter((b) => b.id !== existingBookmark.id));
-
-        toast({
-          title: "Bookmark removed",
-          description: `Removed bookmark from ${book} ${chapter}:${verse}.`,
-        });
-      } else {
-        const { data, error } = await supabase
-          .from("user_bookmarks")
-          .insert({
-            user_id: user.id,
-            book,
-            chapter,
-            verse,
-            note,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        setBookmarks((prev) => [...prev, data]);
-
-        toast({
-          title: "Bookmark added",
-          description: `${book} ${chapter}:${verse} has been bookmarked.`,
-        });
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error toggling bookmark:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update bookmark.",
-        variant: "destructive",
-      });
-      return false;
-    }
+    // Note: Bookmarking is disabled for Bible verses
+    // user_bookmarks table is designed for sermon bookmarks only
+    toast({
+      title: "Feature unavailable",
+      description: "Bible verse bookmarking will be available in a future update.",
+    });
+    return false;
   };
 
   const getVerseHighlight = (verse: number): Highlight | undefined =>

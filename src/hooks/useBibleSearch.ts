@@ -50,13 +50,13 @@ export function useBibleSearch() {
       const normalizedQuery = query.trim();
       const searchTerm = normalizedQuery.toLowerCase();
 
-      // Strategy 1: query Supabase full-text search (preferred source)
+      // Strategy 1: query Supabase database using direct queries
       try {
-        const sanitizedQuery = sanitizeSearchQuery(normalizedQuery);
-        const { data, error: supabaseError } = await supabase.rpc('search_bible_verses', {
-          search_query: sanitizedQuery,
-          result_limit: 75,
-        });
+        const { data, error: supabaseError } = await supabase
+          .from('bible_verses')
+          .select('*')
+          .or(`text.ilike.%${normalizedQuery}%,book.ilike.%${normalizedQuery}%`)
+          .limit(75);
 
         if (supabaseError) {
           console.warn('Supabase Bible search failed:', supabaseError);
@@ -226,11 +226,19 @@ export function useBibleSearch() {
     try {
       const searchTerm = query.toLowerCase().trim();
       
-      // Search using the database function for full-text search
-      const { data, error: searchError } = await supabase.rpc('search_sermon_content', {
-        search_query: searchTerm,
-        result_limit: 50
-      });
+      // Search sermons and their paragraphs
+      const { data: sermonData, error: searchError } = await supabase
+        .from('sermons')
+        .select(`
+          id,
+          title,
+          date,
+          location,
+          sermon_paragraphs (
+            paragraph_number,
+            content
+          )
+        `);
 
       if (searchError) {
         console.error("Sermon search error:", searchError);
@@ -238,45 +246,39 @@ export function useBibleSearch() {
         return [];
       }
 
-      if (!data || data.length === 0) {
+      if (!sermonData) {
         return [];
       }
 
-      // Transform the results to match the expected format
-      const results: WMBSermonResult[] = (data as any[]).map((row: any) => {
-        const rawDate = row.sermon_date ? new Date(row.sermon_date) : null;
-        const formattedDate = rawDate
-          ? rawDate.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })
-          : row.sermon_date ?? 'Unknown date';
-
-        const themeTags: string[] = Array.isArray(row.themes)
-          ? row.themes
-          : Array.isArray(row.theme_tags)
-            ? row.theme_tags
-            : [];
-
-        const bibleReferences: string[] = Array.isArray(row.bible_references)
-          ? row.bible_references
-          : [];
-
-        return {
-          sermon_id: row.sermon_id,
-          title: row.sermon_title,
-          date: formattedDate,
-          location: row.sermon_location,
-          excerpt: row.content,
-          paragraph: row.paragraph_number,
-          year: rawDate?.getFullYear(),
-          themes: themeTags,
-          bibleReferences,
-        } satisfies WMBSermonResult;
+      // Filter and transform results
+      const results: WMBSermonResult[] = [];
+      sermonData.forEach((sermon: any) => {
+        const paragraphs = sermon.sermon_paragraphs || [];
+        paragraphs.forEach((para: any) => {
+          if (para.content?.toLowerCase().includes(searchTerm)) {
+            const rawDate = sermon.date ? new Date(sermon.date) : null;
+            const formattedDate = rawDate
+              ? rawDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })
+              : 'Unknown Date';
+            
+            results.push({
+              sermon_id: sermon.id,
+              title: sermon.title,
+              date: formattedDate,
+              location: sermon.location,
+              excerpt: para.content,
+              paragraph: para.paragraph_number,
+              relevance: 1,
+            });
+          }
+        });
       });
 
-      return results;
+      return results.slice(0, 50);
     } catch (err) {
       console.error("Sermon search error:", err);
       setError("Failed to search sermons");

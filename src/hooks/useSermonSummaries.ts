@@ -13,7 +13,14 @@ interface SupabaseSermonRow extends Sermon {
   sermon_cross_references: { id: string }[] | null;
 }
 
-export interface SermonSummary extends Sermon {
+export interface SermonSummary {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  description?: string | null;
+  created_at: string | null;
+  updated_at: string | null;
   excerpt: string;
   paragraphCount: number;
   crossReferenceCount: number;
@@ -68,6 +75,7 @@ export function useSermonSummaries() {
           title: sermon.title,
           date: sermon.date,
           location: sermon.location,
+          description: sermon.description,
           created_at: sermon.created_at,
           updated_at: sermon.updated_at,
           excerpt,
