@@ -9,6 +9,7 @@ import { CalendarProvider } from "@/contexts/CalendarContext";
 import { EngagementProvider } from "@/contexts/EngagementContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 
 // Pages
@@ -58,6 +59,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <OfflineIndicator />
+              <GlobalLoadingOverlay />
               <BrowserRouter>
                 <RouteErrorBoundary>
                   <Routes>
@@ -72,6 +74,8 @@ const App = () => (
                     <Route path="/wmb-sermons" element={<WMBSermons />} /> {/* Legacy route */}
                     <Route path="/message-reader" element={<MessageReader />} />
                     <Route path="/cross-references" element={<CrossReferences />} />
+
+                    {/* Protected Routes */}
                     <Route
                       path="/notes"
                       element={
@@ -90,8 +94,6 @@ const App = () => (
                       }
                     />
                     <Route path="/settings" element={<Settings />} />
-
-                    {/* Additional Pages */}
                     <Route
                       path="/collections"
                       element={
@@ -134,7 +136,7 @@ const App = () => (
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
 
-                    {/* Catch-All Route */}
+                    {/* Catch-All */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </RouteErrorBoundary>
