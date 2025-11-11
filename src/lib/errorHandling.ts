@@ -3,10 +3,12 @@ export function getFriendlyErrorMessage(
   fallbackMessage: string,
   context?: string
 ): string {
-  if (context) {
-    console.error(`[Supabase] ${context}:`, error);
-  } else {
-    console.error('[Supabase] Operation failed:', error);
+  if (import.meta.env.DEV) {
+    if (context) {
+      console.error(`[Supabase] ${context}:`, error);
+    } else {
+      console.error('[Supabase] Operation failed:', error);
+    }
   }
 
   return fallbackMessage;

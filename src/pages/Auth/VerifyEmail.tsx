@@ -80,7 +80,9 @@ const VerifyEmail = () => {
         description: "We've sent a fresh verification link to your inbox.",
       });
     } catch (error) {
-      console.error("Error resending verification email:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error resending verification email:", error);
+      }
       toast({
         title: "Unable to resend",
         description:

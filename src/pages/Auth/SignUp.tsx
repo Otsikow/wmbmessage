@@ -63,7 +63,9 @@ export default function SignUp() {
         state: { email: sanitized.email },
       });
     } catch (error) {
-      console.error("Email sign-up failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Email sign-up failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
@@ -87,7 +89,9 @@ export default function SignUp() {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Google sign-up failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Google sign-up failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(

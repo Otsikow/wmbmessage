@@ -33,7 +33,9 @@ export default function ForgotPassword() {
         description: "Check your inbox for password reset instructions.",
       });
     } catch (error) {
-      console.error("Password recovery request failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Password recovery request failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(

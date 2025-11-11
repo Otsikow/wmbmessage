@@ -56,7 +56,9 @@ export default function ResetPassword() {
 
       navigate("/auth/sign-in");
     } catch (error) {
-      console.error("Password reset failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Password reset failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(

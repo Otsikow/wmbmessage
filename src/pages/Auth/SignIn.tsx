@@ -70,7 +70,9 @@ export default function SignIn() {
 
       navigate("/");
     } catch (error) {
-      console.error("Email sign-in failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Email sign-in failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
@@ -94,7 +96,9 @@ export default function SignIn() {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Google sign-in failed:", error);
+      if (import.meta.env.DEV) {
+        console.error("Google sign-in failed:", error);
+      }
       toast({
         title: "Error",
         description: getFriendlyErrorMessage(
