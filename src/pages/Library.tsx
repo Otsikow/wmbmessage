@@ -266,7 +266,7 @@ export default function Library() {
     const ok =
       itemToDelete.type === "bookmark"
         ? await removeBookmark(itemToDelete.item)
-        : await removeHighlight(itemToDelete.item);
+        : await removeHighlight(itemToDelete.item as LibraryHighlight);
     if (ok) {
       setDeleteDialogOpen(false);
       setItemToDelete(null);
@@ -515,6 +515,186 @@ export default function Library() {
   );
 }
 
+/* ------------------------- COMPONENTS ------------------------- */
+
+function LibrarySection<T extends LibraryDisplayItem>({
+  title,
+  icon: Icon,
+  items,
+  loading,
+  onDelete,
+  onNavigate,
+  colorMap,
+}: LibrarySectionProps<T>) {
+  if (loading) {
+    return (
+      <Card className="p-8">
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <Card className="p-8">
+        <div className="text-center text-muted-foreground">
+          <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">No {title.toLowerCase()} found.</p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+        <Icon className="h-5 w-5" />
+        {title}
+      </h2>
+      <div className="grid gap-3">
+        {items.map((item) => {
+          const { reference, description, note, tags } = getLibraryItemDetails(item);
+          const highlight = 'color' in item ? item : null;
+          const colorClass = highlight && colorMap && typeof highlight.color === 'string' 
+            ? colorMap[highlight.color] 
+            : undefined;
+
+          return (
+            <Card
+              key={item.id}
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${colorClass || ''}`}
+              onClick={() => onNavigate(item)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm mb-1">{reference}</p>
+                  {description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                      {description}
+                    </p>
+                  )}
+                  {note && (
+                    <p className="text-xs text-muted-foreground italic mb-2">
+                      Note: {note}
+                    </p>
+                  )}
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {tags.map((tag, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 h-8 w-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LibraryTab<T extends LibraryDisplayItem>({
+  label,
+  icon: Icon,
+  items,
+  loading,
+  emptyMessage,
+  onDelete,
+  onNavigate,
+  colorMap,
+}: LibraryTabProps<T>) {
+  return (
+    <TabsContent value={label.toLowerCase()}>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : items.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Icon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No {label}</h3>
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {items.map((item) => {
+            const { reference, description, note, tags } = getLibraryItemDetails(item);
+            const highlight = 'color' in item ? item : null;
+            const colorClass = highlight && colorMap && typeof highlight.color === 'string'
+              ? colorMap[highlight.color]
+              : undefined;
+
+            return (
+              <Card
+                key={item.id}
+                className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${colorClass || ''}`}
+                onClick={() => onNavigate(item)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm mb-1">{reference}</p>
+                    {description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        {description}
+                      </p>
+                    )}
+                    {note && (
+                      <p className="text-xs text-muted-foreground italic mb-2">
+                        Note: {note}
+                      </p>
+                    )}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((tag, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(item);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </TabsContent>
+  );
+}
+
 /* ------------------------- Helper Functions ------------------------- */
 
 function filterLibraryItems<T extends LibraryDisplayItem>(items: T[], query: string): T[] {
@@ -531,19 +711,23 @@ function filterLibraryItems<T extends LibraryDisplayItem>(items: T[], query: str
 }
 
 function formatLibraryItemReference(item: LibraryDisplayItem): string {
-  if (item.book && item.chapter && item.verse) return `${item.book} ${item.chapter}:${item.verse}`;
-  if (item.source_id) return item.source_id;
-  if (item.title) return item.title;
+  if ('book' in item && 'chapter' in item && 'verse' in item && item.book && item.chapter && item.verse) {
+    return `${item.book} ${item.chapter}:${item.verse}`;
+  }
+  if ('source_id' in item && item.source_id) return item.source_id;
+  if ('title' in item && item.title) return item.title;
   return "this item";
 }
 
 function getLibraryItemDetails(item: LibraryDisplayItem) {
   const reference = formatLibraryItemReference(item);
-  const description =
-    item.verse_text?.trim() || item.content?.trim() || undefined;
-  const note = item.note?.trim() || undefined;
-  const tags = Array.isArray(item.tags)
-    ? item.tags.filter((t) => typeof t === "string" && t.trim().length > 0)
+  const verse_text = 'verse_text' in item ? item.verse_text : undefined;
+  const content = 'content' in item ? item.content : undefined;
+  const description = verse_text?.trim() || content?.trim() || undefined;
+  const note = 'note' in item && item.note ? item.note.trim() : undefined;
+  const itemTags = 'tags' in item ? item.tags : undefined;
+  const tags = Array.isArray(itemTags)
+    ? itemTags.filter((t) => typeof t === "string" && t.trim().length > 0)
     : [];
   return { reference, description, note, tags };
 }
