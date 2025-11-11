@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,8 @@ export function useHighlights(book: string, chapter: number) {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(false);
+  const fallbackNotifiedRef = useRef(false);
+  const errorNotifiedRef = useRef(false);
 
   const isSupabaseConfigured = Boolean(
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -134,13 +136,33 @@ export function useHighlights(book: string, chapter: number) {
 
       setHighlights(highlightsResult.data || []);
       setBookmarks(bookmarksResult.data || []);
+      fallbackNotifiedRef.current = false;
+      errorNotifiedRef.current = false;
     } catch (error) {
       console.error("Error fetching highlights/bookmarks:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load highlights and bookmarks.",
-        variant: "destructive",
-      });
+      const localHighlights = loadLocalHighlights();
+      const localBookmarks = loadLocalBookmarks();
+      setHighlights(localHighlights);
+      setBookmarks(localBookmarks);
+
+      const hasLocalData = localHighlights.length > 0 || localBookmarks.length > 0;
+
+      if (hasLocalData) {
+        if (!fallbackNotifiedRef.current) {
+          toast({
+            title: "Offline data restored",
+            description: "Showing saved highlights and bookmarks from this device.",
+          });
+          fallbackNotifiedRef.current = true;
+        }
+      } else if (!errorNotifiedRef.current) {
+        toast({
+          title: "Error",
+          description: "Failed to load highlights and bookmarks.",
+          variant: "destructive",
+        });
+        errorNotifiedRef.current = true;
+      }
     } finally {
       setLoading(false);
     }
