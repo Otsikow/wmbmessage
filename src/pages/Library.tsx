@@ -615,6 +615,381 @@ export default function Library() {
   );
 }
 
-/* ------------------------- SUB COMPONENTS + HELPERS ------------------------- */
-// ... [rest includes LibraryItemCard, LibraryTab, helper functions]
-// (Code continues — confirm if you want me to include the remaining 400+ lines for inline editing logic)
+/* ------------------------- HELPER FUNCTIONS ------------------------- */
+
+function formatLibraryItemReference(item: LibraryDisplayItem): string {
+  if ('book' in item && 'chapter' in item && 'verse' in item) {
+    return `${item.book} ${item.chapter}:${item.verse}`;
+  }
+  if ('title' in item && item.title) {
+    return item.title;
+  }
+  if ('sermon_title' in item && item.sermon_title) {
+    return item.sermon_title;
+  }
+  return "Untitled";
+}
+
+function wrapTextForPdf(text: string, maxWidth = 80): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    if (currentLine.length + word.length + 1 <= maxWidth) {
+      currentLine += (currentLine ? ' ' : '') + word;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+function getLibraryItemDetails(item: LibraryDisplayItem): {
+  reference: string;
+  description: string;
+  note: string;
+  tags: string[];
+} {
+  const reference = formatLibraryItemReference(item);
+  let description = '';
+  let note = '';
+  let tags: string[] = [];
+
+  if ('verse_text' in item && item.verse_text) {
+    description = item.verse_text;
+  }
+  if ('content' in item && item.content) {
+    description = item.content;
+  }
+  if ('note' in item && item.note) {
+    note = item.note;
+  }
+  if ('tags' in item && Array.isArray(item.tags)) {
+    tags = item.tags;
+  }
+
+  return { reference, description, note, tags };
+}
+
+function generateSimplePdf(lines: string[]): Blob {
+  // Simple PDF generation - creates a basic PDF structure
+  const header = '%PDF-1.4\n';
+  const body = lines.join('\n');
+  
+  // Create a basic PDF structure
+  const pdfContent = `${header}
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>
+endobj
+5 0 obj
+<< /Length ${body.length} >>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+${body}
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000214 00000 n 
+0000000304 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+${400 + body.length}
+%%EOF`;
+
+  return new Blob([pdfContent], { type: 'application/pdf' });
+}
+
+function filterLibraryItems<T extends LibraryDisplayItem>(
+  items: T[],
+  query: string
+): T[] {
+  if (!query.trim()) return items;
+  const lowerQuery = query.toLowerCase();
+  
+  return items.filter((item) => {
+    // Check reference
+    const reference = formatLibraryItemReference(item);
+    if (reference.toLowerCase().includes(lowerQuery)) return true;
+    
+    // Check content
+    if ('content' in item && item.content?.toLowerCase().includes(lowerQuery)) return true;
+    if ('verse_text' in item && item.verse_text?.toLowerCase().includes(lowerQuery)) return true;
+    
+    // Check note
+    if ('note' in item && item.note?.toLowerCase().includes(lowerQuery)) return true;
+    
+    // Check tags
+    if ('tags' in item && Array.isArray(item.tags)) {
+      if (item.tags.some(tag => tag.toLowerCase().includes(lowerQuery))) return true;
+    }
+    
+    return false;
+  });
+}
+
+function sortLibraryItems<T extends LibraryDisplayItem>(
+  items: T[],
+  sortOption: SortOption
+): T[] {
+  const sorted = [...items];
+  
+  switch (sortOption) {
+    case 'date':
+      sorted.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      break;
+    case 'book':
+      sorted.sort((a, b) => {
+        const refA = formatLibraryItemReference(a);
+        const refB = formatLibraryItemReference(b);
+        return refA.localeCompare(refB);
+      });
+      break;
+    case 'type':
+      // This is handled at the combined level, so just return by date
+      sorted.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      break;
+  }
+  
+  return sorted;
+}
+
+function sortCombinedLibraryItems(
+  items: CombinedLibraryItem[],
+  sortOption: SortOption
+): CombinedLibraryItem[] {
+  const sorted = [...items];
+  
+  switch (sortOption) {
+    case 'date':
+      sorted.sort((a, b) => {
+        const dateA = a.item.created_at ? new Date(a.item.created_at).getTime() : 0;
+        const dateB = b.item.created_at ? new Date(b.item.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      break;
+    case 'book':
+      sorted.sort((a, b) => {
+        const refA = formatLibraryItemReference(a.item);
+        const refB = formatLibraryItemReference(b.item);
+        return refA.localeCompare(refB);
+      });
+      break;
+    case 'type':
+      sorted.sort((a, b) => {
+        const typeOrder = { bookmark: 0, highlight: 1, note: 2 };
+        const orderA = typeOrder[a.type];
+        const orderB = typeOrder[b.type];
+        if (orderA !== orderB) return orderA - orderB;
+        
+        const dateA = a.item.created_at ? new Date(a.item.created_at).getTime() : 0;
+        const dateB = b.item.created_at ? new Date(b.item.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      break;
+  }
+  
+  return sorted;
+}
+
+/* ------------------------- SUB COMPONENTS ------------------------- */
+
+function LibraryItemCard<T extends LibraryDisplayItem>({
+  item,
+  itemType,
+  colorClass,
+  showTypeBadge,
+  onNavigate,
+  onDelete,
+  onUpdateHighlight,
+  onUpdateNote,
+}: {
+  item: T;
+  itemType: LibraryItemType;
+  colorClass?: string;
+  showTypeBadge?: boolean;
+  onNavigate: (item: T) => void;
+  onDelete?: (item: T) => void;
+  onUpdateHighlight?: (item: LibraryHighlight, note: string) => Promise<boolean>;
+  onUpdateNote?: (item: T, content: string) => Promise<boolean>;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const reference = formatLibraryItemReference(item);
+  const { description, note } = getLibraryItemDetails(item);
+  
+  const handleEdit = () => {
+    if (itemType === 'highlight' && 'note' in item) {
+      setEditValue(item.note || '');
+    } else if (itemType === 'note' && 'content' in item) {
+      setEditValue(item.content || '');
+    }
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    let success = false;
+    
+    if (itemType === 'highlight' && onUpdateHighlight) {
+      success = await onUpdateHighlight(item as LibraryHighlight, editValue);
+    } else if (itemType === 'note' && onUpdateNote) {
+      success = await onUpdateNote(item, editValue);
+    }
+    
+    setIsSaving(false);
+    if (success) setIsEditing(false);
+  };
+
+  return (
+    <Card className={cn("p-4 hover:shadow-md transition-shadow", colorClass)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onNavigate(item)}>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="font-semibold text-sm">{reference}</p>
+            {showTypeBadge && (
+              <Badge variant="secondary" className="text-xs">
+                {itemType}
+              </Badge>
+            )}
+          </div>
+          {description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {description}
+            </p>
+          )}
+          {!isEditing && note && (
+            <p className="text-xs text-muted-foreground italic">Note: {note}</p>
+          )}
+          {isEditing && (
+            <div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
+              <Textarea
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                placeholder={itemType === 'highlight' ? 'Add a note...' : 'Edit content...'}
+                className="min-h-[100px]"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          {(onUpdateHighlight || onUpdateNote) && !isEditing && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleEdit}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={() => onDelete(item)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
+  label,
+  icon: Icon,
+  items,
+  loading,
+  onDelete,
+  onNavigate,
+  colorMap,
+  sectionType,
+  onUpdateHighlight,
+  onUpdateNote,
+  emptyMessage,
+}: LibraryTabProps<T>) {
+  return (
+    <TabsContent value={label.toLowerCase()} className="space-y-3">
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : items.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Icon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No {label}</h3>
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {items.map((item) => {
+            const highlight = sectionType === "highlight" ? (item as LibraryHighlight) : null;
+            const colorClass = highlight?.color && colorMap
+              ? colorMap[highlight.color]
+              : undefined;
+
+            return (
+              <LibraryItemCard
+                key={item.id}
+                item={item}
+                itemType={sectionType}
+                colorClass={colorClass}
+                onNavigate={onNavigate}
+                onDelete={onDelete}
+                onUpdateHighlight={onUpdateHighlight as any}
+                onUpdateNote={onUpdateNote}
+              />
+            );
+          })}
+        </div>
+      )}
+    </TabsContent>
+  );
+}
