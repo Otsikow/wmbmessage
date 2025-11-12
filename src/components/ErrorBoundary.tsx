@@ -1,12 +1,17 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 
+type FallbackRender = (fallbackProps: {
+  error?: Error;
+  reset: () => void;
+}) => ReactNode;
+
 interface ErrorBoundaryProps {
   children: ReactNode;
   /**
    * Optional custom fallback UI. When provided it will be rendered instead of
    * the default message when an error is caught.
    */
-  fallback?: ReactNode;
+  fallback?: ReactNode | FallbackRender;
   /**
    * Optional callback invoked when the boundary is reset via the "Try again"
    * button.
@@ -48,6 +53,13 @@ export class ErrorBoundary extends Component<
 
     if (!hasError) {
       return children;
+    }
+
+    if (typeof fallback === "function") {
+      return (fallback as FallbackRender)({
+        error,
+        reset: this.handleReset,
+      });
     }
 
     if (fallback) {
