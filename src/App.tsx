@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
+import SectionErrorBoundary from "@/components/SectionErrorBoundary";
 
 // Pages
 import Index from "./pages/Index";
@@ -48,6 +49,16 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
+const withSectionBoundary = (
+  section: string,
+  element: ReactNode,
+  description?: string,
+) => (
+  <SectionErrorBoundary section={section} description={description}>
+    {element}
+  </SectionErrorBoundary>
+);
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -66,62 +77,125 @@ function App() {
                   <RouteErrorBoundary>
                     <Routes>
                       {/* Home Page */}
-                      <Route path="/" element={<Index />} />
+                      <Route
+                        path="/"
+                        element={withSectionBoundary("Home", <Index />)}
+                      />
 
                       {/* Main Navigation Routes */}
-                      <Route path="/search" element={<SearchPage />} />
-                      <Route path="/bible" element={<Reader />} />
-                      <Route path="/reader" element={<Reader />} /> {/* Legacy route */}
-                      <Route path="/messages" element={<WMBSermons />} />
-                      <Route path="/wmb-sermons" element={<WMBSermons />} /> {/* Legacy route */}
-                      <Route path="/message-reader" element={<MessageReader />} />
-                      <Route path="/cross-references" element={<CrossReferences />} />
+                      <Route
+                        path="/search"
+                        element={withSectionBoundary("Search", <SearchPage />)}
+                      />
+                      <Route
+                        path="/bible"
+                        element={withSectionBoundary("Bible Reader", <Reader />)}
+                      />
+                      <Route
+                        path="/reader"
+                        element={withSectionBoundary("Bible Reader", <Reader />)}
+                      /> {/* Legacy route */}
+                      <Route
+                        path="/messages"
+                        element={withSectionBoundary("Sermons", <WMBSermons />)}
+                      />
+                      <Route
+                        path="/wmb-sermons"
+                        element={withSectionBoundary("Sermons", <WMBSermons />)}
+                      /> {/* Legacy route */}
+                      <Route
+                        path="/message-reader"
+                        element={withSectionBoundary("Message Reader", <MessageReader />)}
+                      />
+                      <Route
+                        path="/cross-references"
+                        element={withSectionBoundary("Cross References", <CrossReferences />)}
+                      />
 
                       {/* Protected Routes */}
                       <Route
                         path="/notes"
                         element={
                           <ProtectedRoute>
-                            <Notes />
+                            {withSectionBoundary("Notes", <Notes />)}
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/daily" element={<DailyVerse />} />
+                      <Route
+                        path="/daily"
+                        element={withSectionBoundary("Daily Verse", <DailyVerse />)}
+                      />
                       <Route
                         path="/library"
                         element={
                           <ProtectedRoute>
-                            <Library />
+                            {withSectionBoundary("Library", <Library />)}
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/settings" element={<Settings />} />
+                      <Route
+                        path="/settings"
+                        element={withSectionBoundary("Settings", <Settings />)}
+                      />
                       <Route
                         path="/collections"
                         element={
                           <ProtectedRoute>
-                            <Collections />
+                            {withSectionBoundary("Collections", <Collections />)}
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/more" element={<More />} />
-                      <Route path="/calendar" element={<Calendar />} />
-                      <Route path="/downloads" element={<Downloads />} />
-                      <Route path="/share" element={<Share />} />
-                      <Route path="/help" element={<Help />} />
-                      <Route path="/about" element={<About />} />
+                      <Route
+                        path="/more"
+                        element={withSectionBoundary("More", <More />)}
+                      />
+                      <Route
+                        path="/calendar"
+                        element={withSectionBoundary("Calendar", <Calendar />)}
+                      />
+                      <Route
+                        path="/downloads"
+                        element={withSectionBoundary("Downloads", <Downloads />)}
+                      />
+                      <Route
+                        path="/share"
+                        element={withSectionBoundary("Share", <Share />)}
+                      />
+                      <Route
+                        path="/help"
+                        element={withSectionBoundary("Help", <Help />)}
+                      />
+                      <Route
+                        path="/about"
+                        element={withSectionBoundary("About", <About />)}
+                      />
 
                       {/* Auth Routes */}
-                      <Route path="/auth/sign-in" element={<SignIn />} />
-                      <Route path="/auth/sign-up" element={<SignUp />} />
-                      <Route path="/auth/verify-email" element={<VerifyEmail />} />
-                      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/auth/reset-password" element={<ResetPassword />} />
+                      <Route
+                        path="/auth/sign-in"
+                        element={withSectionBoundary("Sign in", <SignIn />)}
+                      />
+                      <Route
+                        path="/auth/sign-up"
+                        element={withSectionBoundary("Sign up", <SignUp />)}
+                      />
+                      <Route
+                        path="/auth/verify-email"
+                        element={withSectionBoundary("Verify email", <VerifyEmail />)}
+                      />
+                      <Route
+                        path="/auth/forgot-password"
+                        element={withSectionBoundary("Forgot password", <ForgotPassword />)}
+                      />
+                      <Route
+                        path="/auth/reset-password"
+                        element={withSectionBoundary("Reset password", <ResetPassword />)}
+                      />
                       <Route
                         path="/profile"
                         element={
                           <ProtectedRoute>
-                            <Profile />
+                            {withSectionBoundary("Profile", <Profile />)}
                           </ProtectedRoute>
                         }
                       />
@@ -129,17 +203,26 @@ function App() {
                         path="/admin"
                         element={
                           <ProtectedRoute>
-                            <Admin />
+                            {withSectionBoundary("Admin", <Admin />)}
                           </ProtectedRoute>
                         }
                       />
 
                       {/* Legal Pages */}
-                      <Route path="/privacy" element={<Privacy />} />
-                      <Route path="/terms" element={<Terms />} />
+                      <Route
+                        path="/privacy"
+                        element={withSectionBoundary("Privacy", <Privacy />)}
+                      />
+                      <Route
+                        path="/terms"
+                        element={withSectionBoundary("Terms", <Terms />)}
+                      />
 
                       {/* Catch-All */}
-                      <Route path="*" element={<NotFound />} />
+                      <Route
+                        path="*"
+                        element={withSectionBoundary("Not found", <NotFound />)}
+                      />
                     </Routes>
                   </RouteErrorBoundary>
                 </BrowserRouter>
