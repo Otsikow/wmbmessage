@@ -1,4 +1,6 @@
-# Welcome to your Lovable project
+# Global Gateway Group · Sermon Scrolls
+
+This application is crafted with care by **Global Gateway Group**, blending Lovable's rapid ideation workflow with our team's product craftsmanship.
 
 ## Project info
 
@@ -59,6 +61,25 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+
+## Test & Quality Assurance
+
+Global Gateway Group keeps Sermon Scrolls stable with a concise but effective test plan. Run each command from the project root:
+
+| Quality Gate | Command | What it verifies |
+| --- | --- | --- |
+| [![Node Test Icon](https://img.shields.io/badge/Node.js-Tests-339933?logo=node.js&logoColor=white)](tests/crossReferenceSearch.test.ts) | `npm run test` | Executes the Node test suite (currently focused on `crossReferenceSearch`) using the custom TypeScript loader located in `tests/tsLoader.mjs`. |
+| [![ESLint Icon](https://img.shields.io/badge/ESLint-Linting-4B32C3?logo=eslint&logoColor=white)](https://eslint.org/docs/latest/use/getting-started) | `npm run lint` | Runs ESLint across the repo to ensure style, accessibility, and best practices are respected. |
+| [![TypeScript Icon](https://img.shields.io/badge/TypeScript-Types-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/docs/handbook/compiler-options.html) | `npx tsc --noEmit` | Performs a project-wide type check so regressions are caught before runtime. |
+
+### Recommended workflow
+
+1. **Install dependencies:** `npm install`
+2. **Run tests on every change:** start with `npm run test` for fast feedback.
+3. **Validate linting before committing:** `npm run lint` keeps diffs clean for reviewers.
+4. **Double-check type safety prior to deployment:** `npx tsc --noEmit` ensures the generated bundles stay type-safe.
+
+If any command fails, address the reported file(s) and rerun the suite until all badges would be "green".
 
 ## How can I deploy this project?
 
