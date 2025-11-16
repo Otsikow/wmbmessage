@@ -256,7 +256,7 @@ export default function Reader() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
       {/* Top Navigation */}
-      <div className="sticky top-0 z-30 border-b border-border/70 bg-card/95 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+      <div className="border-b border-border/70 bg-card/95 shadow-sm">
         <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
