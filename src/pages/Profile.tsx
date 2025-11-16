@@ -457,7 +457,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showBackButton />
       <main className="container max-w-5xl mx-auto px-4 py-8">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -106,7 +106,7 @@ export default function Admin() {
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header showBackButton />
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -120,7 +120,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showBackButton />
       <main className="container mx-auto max-w-6xl px-4 py-8">
         <div className="space-y-6">
           <div>
