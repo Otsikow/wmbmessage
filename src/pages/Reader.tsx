@@ -298,14 +298,16 @@ export default function Reader() {
                     </TooltipTrigger>
                     <TooltipContent sideOffset={8}>Cross references &amp; search</TooltipContent>
                   </Tooltip>
-                  <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
-                    <DialogHeader>
-                      <DialogTitle>Cross References &amp; Search</DialogTitle>
-                      <DialogDescription>
+                  <DialogContent
+                    className="flex h-[90vh] max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/95 p-0 shadow-2xl"
+                  >
+                    <DialogHeader className="border-b bg-gradient-to-r from-primary/5 via-primary/5 to-transparent px-6 pt-6 pb-4">
+                      <DialogTitle className="text-xl font-semibold">Cross References &amp; Search</DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground">
                         Search for keywords or look up verse references
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 overflow-hidden">
+                    <div className="flex-1 overflow-hidden px-6 py-4">
                       <CrossReferenceViewer
                         onNavigate={handleNavigateFromCrossRef}
                         currentBook={currentBook}
