@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sermon } from "@/hooks/useSermons";
+import { loadSampleSermons, SampleSermonRecord, ensureSampleSermonDate } from "@/utils/sampleSermons";
 
 interface ParagraphRow {
   paragraph_number: number | null;
@@ -34,6 +35,12 @@ export function useSermonSummaries() {
   const fetchSummaries = useCallback(async () => {
     setLoading(true);
     try {
+      if (!isSupabaseConfigured) {
+        const sampleSummaries = await loadSampleSermonSummaries();
+        setSermons(sampleSummaries);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("sermons")
         .select(`
@@ -51,6 +58,12 @@ export function useSermonSummaries() {
       if (error) throw error;
 
       const typedData = (data || []) as SupabaseSermonRow[];
+
+      if (typedData.length === 0) {
+        const sampleSummaries = await loadSampleSermonSummaries();
+        setSermons(sampleSummaries);
+        return;
+      }
 
       const summaries = typedData.map((sermon) => {
         const paragraphs = (sermon.sermon_paragraphs || []) as ParagraphRow[];
@@ -89,12 +102,15 @@ export function useSermonSummaries() {
       setSermons(summaries);
     } catch (error) {
       console.error("Error fetching sermon summaries:", error);
-      toast({
-        title: "Error",
-        description: "Unable to load sermons right now.",
-        variant: "destructive",
-      });
-      setSermons([]);
+      if (isSupabaseConfigured) {
+        toast({
+          title: "Error",
+          description: "Unable to load sermons right now.",
+          variant: "destructive",
+        });
+      }
+      const sampleSummaries = await loadSampleSermonSummaries();
+      setSermons(sampleSummaries);
     } finally {
       setLoading(false);
     }
@@ -105,4 +121,43 @@ export function useSermonSummaries() {
   }, [fetchSummaries]);
 
   return { sermons, loading, refetch: fetchSummaries };
+}
+
+let cachedSampleSummaries: SermonSummary[] | null = null;
+
+async function loadSampleSermonSummaries(): Promise<SermonSummary[]> {
+  if (cachedSampleSummaries) {
+    return cachedSampleSummaries;
+  }
+
+  const sampleSermons = await loadSampleSermons();
+  cachedSampleSummaries = sampleSermons.map((sermon, index) =>
+    convertSampleToSummary(sermon, index)
+  );
+  return cachedSampleSummaries;
+}
+
+function convertSampleToSummary(
+  sermon: SampleSermonRecord,
+  index: number
+): SermonSummary {
+  const firstParagraph = sermon.paragraphs.find((paragraph) => paragraph.trim());
+  const excerptSource = firstParagraph?.trim() ?? "";
+  const excerpt =
+    excerptSource.length > 240
+      ? `${excerptSource.slice(0, 237).trimEnd()}...`
+      : excerptSource;
+
+  return {
+    id: `sample-sermon-${index}`,
+    title: sermon.title,
+    date: ensureSampleSermonDate(sermon.date, index),
+    location: sermon.location || "Unknown Location",
+    description: null,
+    created_at: null,
+    updated_at: null,
+    excerpt,
+    paragraphCount: sermon.paragraphs.length,
+    crossReferenceCount: 0,
+  };
 }

@@ -1,5 +1,10 @@
 import { useState, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import {
+  loadSampleSermons,
+  SampleSermonRecord,
+  formatSermonDate,
+} from "@/utils/sampleSermons";
 
 export interface BibleSearchResult {
   book: string;
@@ -434,42 +439,6 @@ async function searchSampleBibleVerses(query: string): Promise<BibleSearchResult
     }));
 }
 
-interface SampleSermonRecord {
-  title: string;
-  date?: string;
-  location?: string;
-  paragraphs: string[];
-}
-
-let cachedSampleSermons: SampleSermonRecord[] | null = null;
-
-async function loadSampleSermons(): Promise<SampleSermonRecord[]> {
-  if (cachedSampleSermons) {
-    return cachedSampleSermons;
-  }
-
-  try {
-    const response = await fetch('/sample-data/sermons-sample.json');
-    if (!response.ok) {
-      throw new Error('Failed to load sample sermons');
-    }
-
-    const data = await response.json();
-    if (!Array.isArray(data)) {
-      throw new Error('Sample sermons malformed');
-    }
-
-    cachedSampleSermons = data.filter((sermon): sermon is SampleSermonRecord => {
-      return Boolean(sermon && Array.isArray(sermon.paragraphs));
-    });
-  } catch (err) {
-    console.warn('Unable to load sample sermons:', err);
-    cachedSampleSermons = [];
-  }
-
-  return cachedSampleSermons;
-}
-
 async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[]> {
   const lowerQuery = searchTerm.toLowerCase();
   const sampleSermons = await loadSampleSermons();
@@ -491,20 +460,6 @@ async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[
   });
 
   return results;
-}
-
-function formatSermonDate(date: string | null | undefined): string {
-  if (!date) return 'Unknown Date';
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Unknown Date';
-  }
-
-  return parsed.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 }
 
 function normalizeSupabaseBibleVerseRow(value: unknown): SupabaseBibleVerseRow | null {
