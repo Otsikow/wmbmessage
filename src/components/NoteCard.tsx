@@ -23,6 +23,8 @@ export interface UserNote {
   title: string;
   content: string;
   verse_reference: string | null;
+  sermon_title?: string | null;
+  tags?: string[];
   created_at: string;
   updated_at: string;
 }
