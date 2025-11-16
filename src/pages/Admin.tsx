@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import BibleManager from '@/components/BibleManager';
 import SermonManager from '@/components/SermonManager';
 import CrossRefManager from '@/components/CrossRefManager';
+import ReadingPlanAdmin from '@/components/ReadingPlanAdmin';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Profile {
@@ -142,7 +143,7 @@ export default function Admin() {
 
           <Tabs defaultValue="overview" className="space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-5 md:gap-0">
+              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-6 md:gap-0">
                 <TabsTrigger value="overview" className="w-full whitespace-nowrap">
                   Overview
                 </TabsTrigger>
@@ -157,6 +158,10 @@ export default function Admin() {
                 <TabsTrigger value="crossrefs" className="w-full whitespace-nowrap">
                 <Link2 className="h-4 w-4 mr-2" />
                 Cross Refs
+                </TabsTrigger>
+                <TabsTrigger value="plans" className="w-full whitespace-nowrap">
+                <Book className="h-4 w-4 mr-2" />
+                Reading Plans
                 </TabsTrigger>
                 <TabsTrigger value="users" className="w-full whitespace-nowrap">
                 <Users className="h-4 w-4 mr-2" />
@@ -271,6 +276,10 @@ export default function Admin() {
 
             <TabsContent value="crossrefs">
               <CrossRefManager />
+            </TabsContent>
+
+            <TabsContent value="plans">
+              <ReadingPlanAdmin />
             </TabsContent>
 
             <TabsContent value="users">
