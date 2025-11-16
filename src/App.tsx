@@ -94,16 +94,16 @@ function App() {
                         contextName="Reading plans"
                         description="Reading plan progress is unavailable right now."
                       >
-                        <ReadingPlanProvider>
+                      <ReadingPlanProvider>
+                        <BrowserRouter>
                           <TooltipProvider>
                             <Toaster />
                             <Sonner />
                             <OfflineIndicator />
                             <GlobalLoadingOverlay />
-                            <BrowserRouter>
-                              <RouteTransitionIndicator />
-                              <RouteErrorBoundary>
-                                <Routes>
+                            <RouteTransitionIndicator />
+                            <RouteErrorBoundary>
+                              <Routes>
                                   {/* Home Page */}
                                   <Route
                                     path="/"
@@ -271,8 +271,8 @@ function App() {
                                   />
                                 </Routes>
                               </RouteErrorBoundary>
-                            </BrowserRouter>
-                          </TooltipProvider>
+                            </TooltipProvider>
+                          </BrowserRouter>
                         </ReadingPlanProvider>
                       </ContextProviderBoundary>
                     </EngagementProvider>
