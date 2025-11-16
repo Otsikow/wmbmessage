@@ -128,7 +128,7 @@ const ReadingSession = () => {
           <AiReflectionCard
             summary={day.summary}
             reflectionQuestion={day.reflectionQuestion}
-            scriptures={day.scriptures}
+            scriptures={scriptureList}
           />
           <Card>
             <CardHeader>

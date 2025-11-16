@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Search, BookOpen, Library as LibraryIcon } from "lucide-react";
+import { Home, Book, Search, BookOpen, Library as LibraryIcon, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { path: "/bible", icon: Book, label: "Bible" },
   { path: "/search", icon: Search, label: "Search" },
   { path: "/messages", icon: BookOpen, label: "Messages" },
+  { path: "/plans", icon: Target, label: "Plans" },
   { path: "/library", icon: LibraryIcon, label: "Library" },
 ];
 

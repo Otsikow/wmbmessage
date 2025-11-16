@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Flame, PlayCircle, Sparkles, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ const ConfettiOverlay = ({ active }: { active: boolean }) => (
 );
 
 export const ReadingPlanWidget = () => {
-  const navigate = useNavigate();
   const { todayAssignment, activeProgress, catchUpQueue, celebration } = useReadingPlans();
 
   if (!todayAssignment || !activeProgress) {
@@ -45,8 +44,8 @@ export const ReadingPlanWidget = () => {
               XP + Achievements
             </Badge>
           </div>
-          <Button className="w-full" onClick={() => navigate("/plans")}>
-            Browse Reading Plans
+          <Button asChild className="w-full">
+            <Link to="/plans">Browse Reading Plans</Link>
           </Button>
         </CardContent>
       </Card>
