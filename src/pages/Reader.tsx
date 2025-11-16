@@ -279,8 +279,6 @@ export default function Reader() {
   // Floating control button styling
   const controlButtonClass =
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-}
-//// SECTION 3 — HEADER (OPTION C COLLAPSE)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
@@ -667,7 +665,6 @@ export default function Reader() {
           </div>
         </Card>
       </div>
-//// SECTION 6 — SERMON CROSS-REFERENCE MODAL
 
       {/* ────────────────────────────────
           SERMON CROSS-REFERENCE MODAL
@@ -679,7 +676,6 @@ export default function Reader() {
         chapter={currentChapter}
         verse={selectedVerse}
       />
-//// SECTION 7 — NOTE EDITOR
 
       {/* ────────────────────────────────
           NOTE EDITOR MODAL
@@ -694,6 +690,3 @@ export default function Reader() {
     </div>
   );
 }
-//// SECTION 8 — END OF FILE
-// Reader component fully loaded and exported successfully.
-// No further code required below this line.
