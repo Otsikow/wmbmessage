@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Loader2, Link2, BookMarked, Search } from "lucide-react";
@@ -151,6 +151,10 @@ export default function Reader() {
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
+  const [isReaderHeaderCollapsed, setIsReaderHeaderCollapsed] = useState(false);
+  const lastScrollPosition = useRef(0);
+  const headerCollapsedRef = useRef(false);
+  const skipNextScrollEvent = useRef(false);
 
   const {
     addHighlight,
@@ -185,6 +189,45 @@ export default function Reader() {
       })
     );
   }, [currentBook, currentChapter, selectedVerse]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const handleScroll = () => {
+      const currentScroll = window.scrollY;
+      if (skipNextScrollEvent.current) {
+        skipNextScrollEvent.current = false;
+        lastScrollPosition.current = currentScroll;
+        return;
+      }
+      const hasScrolledDown = currentScroll > lastScrollPosition.current;
+      const hasScrolledUp = currentScroll < lastScrollPosition.current - 10;
+
+      if (currentScroll <= 60) {
+        if (headerCollapsedRef.current) {
+          setIsReaderHeaderCollapsed(false);
+          headerCollapsedRef.current = false;
+        }
+      } else if (hasScrolledDown && currentScroll > 140 && !headerCollapsedRef.current) {
+        setIsReaderHeaderCollapsed(true);
+        headerCollapsedRef.current = true;
+        skipNextScrollEvent.current = true;
+      } else if (hasScrolledUp && headerCollapsedRef.current) {
+        setIsReaderHeaderCollapsed(false);
+        headerCollapsedRef.current = false;
+      }
+
+      lastScrollPosition.current = currentScroll;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     recordActivity("bible-reading", {
@@ -256,163 +299,173 @@ export default function Reader() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
       {/* Top Navigation */}
-      <div className="border-b border-border/70 bg-card/95 shadow-sm">
-        <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
-          <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                <BackButton aria-label="Go back to home" className={controlButtonClass} />
-                <div className="hidden min-w-0 sm:flex flex-col">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground/70">
-                    Bible Reader
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Navigate scripture, notes, and sermon references
-                  </span>
+      <div
+        data-reader-header
+        data-state={isReaderHeaderCollapsed ? "collapsed" : "expanded"}
+        className={cn(
+          "sticky top-0 z-30 w-full overflow-hidden bg-gradient-to-b from-background via-background to-muted/30 backdrop-blur supports-[backdrop-filter]:bg-background/70",
+          "transition-[max-height,opacity] duration-300 ease-in-out",
+          isReaderHeaderCollapsed ? "max-h-0 opacity-0" : "max-h-[420px] opacity-100",
+        )}
+      >
+        <div className="border-b border-border/70 bg-card/95 shadow-sm">
+          <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                  <BackButton aria-label="Go back to home" className={controlButtonClass} />
+                  <div className="hidden min-w-0 sm:flex flex-col">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground/70">
+                      Bible Reader
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Navigate scripture, notes, and sermon references
+                    </span>
+                  </div>
+                  <div className="flex flex-col min-w-0 sm:hidden">
+                    <span className="text-sm font-medium text-foreground">
+                      {currentBook} {currentChapter}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Tap to change book or chapter
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0 sm:hidden">
-                  <span className="text-sm font-medium text-foreground">
-                    {currentBook} {currentChapter}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Tap to change book or chapter
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2 sm:justify-end">
-                {/* Cross Reference Button */}
-                <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
+                <div className="flex items-center gap-1 sm:gap-2 sm:justify-end">
+                  {/* Cross Reference Button */}
+                  <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={controlButtonClass}
+                            aria-label="View cross references"
+                          >
+                            <Link2 className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                            <span className="sr-only">Open cross references</span>
+                          </Button>
+                        </DialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={8}>Cross references &amp; search</TooltipContent>
+                    </Tooltip>
+                    <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
+                      <DialogHeader>
+                        <DialogTitle>Cross References &amp; Search</DialogTitle>
+                        <DialogDescription>
+                          Search for keywords or look up verse references
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-hidden">
+                        <CrossReferenceViewer
+                          onNavigate={handleNavigateFromCrossRef}
+                          currentBook={currentBook}
+                          currentChapter={currentChapter}
+                          currentVerse={selectedVerse}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Sermon Cross Reference Button */}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={controlButtonClass}
-                          aria-label="View cross references"
-                        >
-                          <Link2 className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                          <span className="sr-only">Open cross references</span>
-                        </Button>
-                      </DialogTrigger>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={controlButtonClass}
+                        title="Sermon Cross References"
+                        aria-label="View sermon references"
+                        onClick={() => setShowSermonCrossRef(true)}
+                      >
+                        <BookMarked className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                        <span className="sr-only">View sermon cross references</span>
+                      </Button>
                     </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>Cross references &amp; search</TooltipContent>
+                    <TooltipContent sideOffset={8}>Sermon references</TooltipContent>
                   </Tooltip>
-                  <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
-                    <DialogHeader>
-                      <DialogTitle>Cross References &amp; Search</DialogTitle>
-                      <DialogDescription>
-                        Search for keywords or look up verse references
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-hidden">
-                      <CrossReferenceViewer
-                        onNavigate={handleNavigateFromCrossRef}
-                        currentBook={currentBook}
-                        currentChapter={currentChapter}
-                        currentVerse={selectedVerse}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
 
-                {/* Sermon Cross Reference Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={controlButtonClass}
-                      title="Sermon Cross References"
-                      aria-label="View sermon references"
-                      onClick={() => setShowSermonCrossRef(true)}
-                    >
-                      <BookMarked className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                      <span className="sr-only">View sermon cross references</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8}>Sermon references</TooltipContent>
-                </Tooltip>
-
-                {/* Search Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigate("/search")}
-                      className={controlButtonClass}
-                      title="Search"
-                      aria-label="Search Bible"
-                    >
-                      <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                      <span className="sr-only">Open search</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8}>Search the Bible</TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
-                    Book
-                  </span>
-                  <Select
-                    value={currentBook}
-                    onValueChange={(value) => {
-                      setCurrentBook(value);
-                      setCurrentChapter(1);
-                      setSelectedVerse(undefined);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 w-full min-w-0 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:text-base">
-                      <SelectValue placeholder="Select book" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[400px]">
-                      <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Old Testament
-                      </div>
-                      {BIBLE_BOOKS.filter((b) => b.testament === "old").map((book) => (
-                        <SelectItem key={book.name} value={book.name}>
-                          {book.name}
-                        </SelectItem>
-                      ))}
-                      <div className="mt-2 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        New Testament
-                      </div>
-                      {BIBLE_BOOKS.filter((b) => b.testament === "new").map((book) => (
-                        <SelectItem key={book.name} value={book.name}>
-                          {book.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Search Button */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate("/search")}
+                        className={controlButtonClass}
+                        title="Search"
+                        aria-label="Search Bible"
+                      >
+                        <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                        <span className="sr-only">Open search</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8}>Search the Bible</TooltipContent>
+                  </Tooltip>
                 </div>
-                <div className="flex flex-col gap-1 sm:w-auto">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
-                    Chapter
-                  </span>
-                  <Select
-                    value={currentChapter.toString()}
-                    onValueChange={(value) => {
-                      setCurrentChapter(parseInt(value, 10));
-                      setSelectedVerse(undefined);
-                    }}
-                  >
-                    <SelectTrigger className="h-11 w-full min-w-[140px] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
-                      <SelectValue placeholder="Chapter" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[400px]">
-                      {Array.from({ length: maxChapter }, (_, i) => i + 1).map((chapter) => (
-                        <SelectItem key={chapter} value={chapter.toString()}>
-                          Chapter {chapter}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+                      Book
+                    </span>
+                    <Select
+                      value={currentBook}
+                      onValueChange={(value) => {
+                        setCurrentBook(value);
+                        setCurrentChapter(1);
+                        setSelectedVerse(undefined);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 w-full min-w-0 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:text-base">
+                        <SelectValue placeholder="Select book" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[400px]">
+                        <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Old Testament
+                        </div>
+                        {BIBLE_BOOKS.filter((b) => b.testament === "old").map((book) => (
+                          <SelectItem key={book.name} value={book.name}>
+                            {book.name}
+                          </SelectItem>
+                        ))}
+                        <div className="mt-2 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          New Testament
+                        </div>
+                        {BIBLE_BOOKS.filter((b) => b.testament === "new").map((book) => (
+                          <SelectItem key={book.name} value={book.name}>
+                            {book.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex flex-col gap-1 sm:w-auto">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+                      Chapter
+                    </span>
+                    <Select
+                      value={currentChapter.toString()}
+                      onValueChange={(value) => {
+                        setCurrentChapter(parseInt(value, 10));
+                        setSelectedVerse(undefined);
+                      }}
+                    >
+                      <SelectTrigger className="h-11 w-full min-w-[140px] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
+                        <SelectValue placeholder="Chapter" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[400px]">
+                        {Array.from({ length: maxChapter }, (_, i) => i + 1).map((chapter) => (
+                          <SelectItem key={chapter} value={chapter.toString()}>
+                            Chapter {chapter}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </div>
