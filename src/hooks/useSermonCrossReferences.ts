@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BibleVerseData, SermonReference } from "@/components/CrossReferenceCard";
+import { getVerseText, isWordsOfJesus } from "@/utils/bibleData";
 
 export interface SermonCrossReference {
   id: string;
@@ -113,88 +114,54 @@ export function useSermonCrossReferences(
 
       const references = await Promise.all(
         typedData.map(async (item) => {
-          try {
-            // Fetch verse text from getBible API
-            const response = await fetch(
-              `https://getbible.net/v2/kjv/${encodeURIComponent(item.bible_book)}/${item.bible_chapter}/${item.bible_verse}.json`
-            );
+          const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
+          const paragraph = Array.isArray(item.sermon_paragraphs)
+            ? item.sermon_paragraphs[0]
+            : item.sermon_paragraphs;
 
-            let verseText = '';
-            let isJesusWords = false;
+          let verseText =
+            (await getVerseText(item.bible_book, item.bible_chapter, item.bible_verse)) || '';
 
-            if (response.ok) {
-              const bibleData = await response.json();
-              if (bibleData?.verses?.[0]) {
-                verseText = bibleData.verses[0].text?.replace(/<[^>]*>/g, '').trim() || '';
-                // Check if it's Jesus' words (this is a simplified check)
-                isJesusWords = bibleData.verses[0].text?.includes('class="woj"') || false;
-              }
-            }
-
-            const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
-            const paragraph = Array.isArray(item.sermon_paragraphs)
-              ? item.sermon_paragraphs[0]
-              : item.sermon_paragraphs;
-
-            return {
-              id: item.id,
-              bibleVerse: {
-                book: item.bible_book,
-                chapter: item.bible_chapter,
-                verse: item.bible_verse,
-                text: verseText,
-                isJesusWords,
-              },
-              sermonReference: {
-                id: item.sermon_id,
-                sermon_title: sermon?.title || 'Unknown Sermon',
-                sermon_date: sermon?.date 
-                  ? new Date(sermon.date).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })
-                  : 'Unknown Date',
-                sermon_location: sermon?.location || 'Unknown Location',
-                paragraph_number: paragraph?.paragraph_number || 0,
-                paragraph_content: paragraph?.content || '',
-                reference_note: item.reference_note,
-              },
-            };
-          } catch (err) {
-            console.error('Error fetching verse text:', err);
-            // Return the reference even if we couldn't fetch the verse text
-            const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
-            const paragraph = Array.isArray(item.sermon_paragraphs)
-              ? item.sermon_paragraphs[0]
-              : item.sermon_paragraphs;
-
-            return {
-              id: item.id,
-              bibleVerse: {
-                book: item.bible_book,
-                chapter: item.bible_chapter,
-                verse: item.bible_verse,
-                text: 'Unable to load verse text',
-                isJesusWords: false,
-              },
-              sermonReference: {
-                id: item.sermon_id,
-                sermon_title: sermon?.title || 'Unknown Sermon',
-                sermon_date: sermon?.date 
-                  ? new Date(sermon.date).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })
-                  : 'Unknown Date',
-                sermon_location: sermon?.location || 'Unknown Location',
-                paragraph_number: paragraph?.paragraph_number || 0,
-                paragraph_content: paragraph?.content || '',
-                reference_note: item.reference_note,
-              },
-            };
+          if (!verseText) {
+            verseText =
+              (await fetchVerseFromApi(
+                item.bible_book,
+                item.bible_chapter,
+                item.bible_verse
+              )) || '';
           }
+
+          const jesusWords = isWordsOfJesus(
+            item.bible_book,
+            item.bible_chapter,
+            item.bible_verse
+          );
+
+          return {
+            id: item.id,
+            bibleVerse: {
+              book: item.bible_book,
+              chapter: item.bible_chapter,
+              verse: item.bible_verse,
+              text: verseText || 'Unable to load verse text',
+              isJesusWords: jesusWords,
+            },
+            sermonReference: {
+              id: item.sermon_id,
+              sermon_title: sermon?.title || 'Unknown Sermon',
+              sermon_date: sermon?.date
+                ? new Date(sermon.date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                : 'Unknown Date',
+              sermon_location: sermon?.location || 'Unknown Location',
+              paragraph_number: paragraph?.paragraph_number || 0,
+              paragraph_content: paragraph?.content || '',
+              reference_note: item.reference_note,
+            },
+          };
         })
       );
 
@@ -242,4 +209,29 @@ export function useSermonCrossReferences(
     goToPrevious,
     goToIndex,
   };
+}
+
+async function fetchVerseFromApi(
+  book: string,
+  chapter: number,
+  verse: number
+): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://getbible.net/v2/kjv/${encodeURIComponent(book)}/${chapter}/${verse}.json`
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const bibleData = await response.json();
+    if (bibleData?.verses?.[0]?.text) {
+      return bibleData.verses[0].text.replace(/<[^>]*>/g, '').trim();
+    }
+  } catch (error) {
+    console.warn('Unable to fetch verse text from API:', error);
+  }
+
+  return null;
 }
