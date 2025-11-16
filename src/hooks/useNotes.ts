@@ -21,6 +21,8 @@ export interface UserNote {
   title: string;
   content: string;
   verse_reference: string | null;
+  sermon_title?: string | null;
+  tags?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +39,8 @@ export interface CreateUserNoteInput {
   title?: string;
   content: string;
   verse_reference?: string | null;
+  sermon_title?: string | null;
+  tags?: string[];
 }
 
 export interface UpdateNoteInput {
@@ -51,6 +55,8 @@ export interface UpdateUserNoteInput {
   title?: string;
   content?: string;
   verse_reference?: string | null;
+  sermon_title?: string | null;
+  tags?: string[];
 }
 
 // Legacy hook for old notes table
@@ -254,9 +260,11 @@ export function useUserNotes() {
             user_id: user.id,
             source_type: input.source_type,
             source_id: input.source_id,
-            title: input.title || 'Untitled Note',
+            title: input.title || "Untitled Note",
             content: input.content,
             verse_reference: input.verse_reference || null,
+            sermon_title: input.sermon_title || null,
+            tags: input.tags || [],
           },
         ])
         .select()
