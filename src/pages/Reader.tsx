@@ -355,8 +355,8 @@ export default function Reader() {
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
                     Book
                   </span>
@@ -391,7 +391,7 @@ export default function Reader() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-col gap-1 sm:justify-self-end">
+                <div className="flex flex-col gap-1 sm:w-auto">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
                     Chapter
                   </span>
@@ -402,7 +402,7 @@ export default function Reader() {
                       setSelectedVerse(undefined);
                     }}
                   >
-                    <SelectTrigger className="h-11 w-full min-w-0 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
+                    <SelectTrigger className="h-11 w-full min-w-[140px] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
                       <SelectValue placeholder="Chapter" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[400px]">
