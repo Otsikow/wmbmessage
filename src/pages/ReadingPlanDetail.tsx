@@ -30,34 +30,6 @@ const ReadingPlanDetail = () => {
   const plan = useMemo(() => plans.find((entry) => entry.id === planId), [planId, plans]);
   const planDays = useMemo(() => (plan ? getPlanDays(plan.id) : []), [getPlanDays, plan]);
   const progress = plan ? progressMap[plan.id] : undefined;
-  const customNotes = progress?.customNotes;
-  const planNotes = useMemo(() => {
-    if (!customNotes) {
-      return [];
-    }
-
-    return Object.entries(customNotes)
-      .filter(([, noteValue]) => (noteValue?.trim()?.length ?? 0) > 0)
-      .map(([dayKey, noteValue]) => {
-        const dayNumber = Number(dayKey);
-        const dayInfo = planDays.find((entry) => entry.dayNumber === dayNumber);
-        return {
-          dayNumber,
-          note: noteValue,
-          title: dayInfo?.title ?? `Day ${dayNumber}`,
-          scriptures: dayInfo
-            ? dayInfo.scriptures
-                .map((range) =>
-                  `${range.book} ${range.chapterStart}${
-                    range.chapterEnd !== range.chapterStart ? `-${range.chapterEnd}` : ""
-                  }`,
-                )
-                .join(", ")
-            : undefined,
-        };
-      })
-      .sort((a, b) => a.dayNumber - b.dayNumber);
-  }, [customNotes, planDays]);
 
   if (!plan) {
     return (
@@ -260,41 +232,10 @@ const ReadingPlanDetail = () => {
                   Use the reader to jot highlights per day—synced to this plan.
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {planNotes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Capture notes from the reading session and they will appear here for quick review.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {planNotes.map((entry) => (
-                      <div
-                        key={entry.dayNumber}
-                        className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-4"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold">
-                              Day {entry.dayNumber} · {entry.title}
-                            </p>
-                            {entry.scriptures && (
-                              <p className="text-xs text-muted-foreground">{entry.scriptures}</p>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="justify-start sm:justify-end"
-                            onClick={() => navigate(`/plans/${plan.id}/day/${entry.dayNumber}`)}
-                          >
-                            Open session
-                          </Button>
-                        </div>
-                        <p className="whitespace-pre-line text-sm text-muted-foreground">{entry.note}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Notes, highlights, and bookmarks added in the reading experience automatically connect here.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
