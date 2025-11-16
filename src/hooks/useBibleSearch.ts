@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 
 export interface BibleSearchResult {
   book: string;
@@ -50,32 +50,34 @@ export function useBibleSearch() {
       const normalizedQuery = query.trim();
       const searchTerm = normalizedQuery.toLowerCase();
 
-      // Strategy 1: query Supabase database using direct queries
-      try {
-        const { data, error: supabaseError } = await supabase
-          .from('bible_verses')
-          .select('*')
-          .or(`text.ilike.%${normalizedQuery}%,book.ilike.%${normalizedQuery}%`)
-          .limit(75);
+      // Strategy 1: query Supabase database using direct queries when configured
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error: supabaseError } = await supabase
+            .from('bible_verses')
+            .select('*')
+            .or(`text.ilike.%${normalizedQuery}%,book.ilike.%${normalizedQuery}%`)
+            .limit(75);
 
-        if (supabaseError) {
-          console.warn('Supabase Bible search failed:', supabaseError);
-        } else if (Array.isArray(data)) {
-          data
-            .map(normalizeSupabaseBibleVerseRow)
-            .filter((row): row is SupabaseBibleVerseRow => row !== null)
-            .forEach((row) => {
-              allResults.push({
-                book: row.book,
-                chapter: row.chapter,
-                verse: row.verse,
-                text: row.text.trim(),
-                testament: getTestament(row.book),
+          if (supabaseError) {
+            console.warn('Supabase Bible search failed:', supabaseError);
+          } else if (Array.isArray(data)) {
+            data
+              .map(normalizeSupabaseBibleVerseRow)
+              .filter((row): row is SupabaseBibleVerseRow => row !== null)
+              .forEach((row) => {
+                allResults.push({
+                  book: row.book,
+                  chapter: row.chapter,
+                  verse: row.verse,
+                  text: row.text.trim(),
+                  testament: getTestament(row.book),
+                });
               });
-            });
+          }
+        } catch (err) {
+          console.warn('Supabase Bible search request failed:', err);
         }
-      } catch (err) {
-        console.warn('Supabase Bible search request failed:', err);
       }
 
       if (allResults.length >= 20) {
@@ -161,9 +163,15 @@ export function useBibleSearch() {
 
       // Strategy 4: Fallback to bible-api.com for verse references
       if (allResults.length === 0) {
-        try {
-          const verseReferencePattern = /^(\d?\s?[A-Za-z]+)\s+(\d+)(?::(\d+))?(?:-(\d+))?$/;
-          const match = normalizedQuery.match(verseReferencePattern);
+        const sampleResults = await searchSampleBibleVerses(normalizedQuery);
+        if (sampleResults.length > 0) {
+          allResults.push(...sampleResults);
+        }
+
+        if (allResults.length === 0) {
+          try {
+            const verseReferencePattern = /^(\d?\s?[A-Za-z]+)\s+(\d+)(?::(\d+))?(?:-(\d+))?$/;
+            const match = normalizedQuery.match(verseReferencePattern);
 
           if (match) {
             const response = await fetch(
@@ -226,56 +234,53 @@ export function useBibleSearch() {
     try {
       const searchTerm = query.toLowerCase().trim();
       
-      // Search sermons and their paragraphs
-      const { data: sermonData, error: searchError } = await supabase
-        .from('sermons')
-        .select(`
-          id,
-          title,
-          date,
-          location,
-          sermon_paragraphs (
-            paragraph_number,
-            content
-          )
-        `);
+      // Search sermons and their paragraphs when Supabase is available
+      let results: WMBSermonResult[] = [];
 
-      if (searchError) {
-        console.error("Sermon search error:", searchError);
-        setError("Failed to search sermons");
-        return [];
-      }
+      if (isSupabaseConfigured) {
+        const { data: sermonData, error: searchError } = await supabase
+          .from('sermons')
+          .select(`
+            id,
+            title,
+            date,
+            location,
+            sermon_paragraphs (
+              paragraph_number,
+              content
+            )
+          `);
 
-      if (!sermonData) {
-        return [];
-      }
+        if (searchError) {
+          console.error("Sermon search error:", searchError);
+          setError("Failed to search sermons");
+        }
 
-      // Filter and transform results
-      const results: WMBSermonResult[] = [];
-      sermonData.forEach((sermon: any) => {
-        const paragraphs = sermon.sermon_paragraphs || [];
-        paragraphs.forEach((para: any) => {
-          if (para.content?.toLowerCase().includes(searchTerm)) {
-            const rawDate = sermon.date ? new Date(sermon.date) : null;
-            const formattedDate = rawDate
-              ? rawDate.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : 'Unknown Date';
-            
-            results.push({
-              sermon_id: sermon.id,
-              title: sermon.title,
-              date: formattedDate,
-              location: sermon.location,
-              excerpt: para.content,
-              paragraph: para.paragraph_number,
+        if (Array.isArray(sermonData)) {
+          sermonData.forEach((sermon: any) => {
+            const paragraphs = sermon.sermon_paragraphs || [];
+            paragraphs.forEach((para: any) => {
+              if (para.content?.toLowerCase().includes(searchTerm)) {
+                const formattedDate = formatSermonDate(sermon.date);
+
+                results.push({
+                  sermon_id: sermon.id,
+                  title: sermon.title,
+                  date: formattedDate,
+                  location: sermon.location,
+                  excerpt: para.content,
+                  paragraph: para.paragraph_number,
+                });
+              }
             });
-          }
-        });
-      });
+          });
+        }
+      }
+
+      if (results.length === 0) {
+        const sampleResults = await searchSampleSermons(searchTerm);
+        results = sampleResults;
+      }
 
       return results.slice(0, 50);
     } catch (err) {
@@ -378,6 +383,126 @@ function deduplicateResults(results: BibleSearchResult[]): BibleSearchResult[] {
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+let cachedSampleBibleVerses: SupabaseBibleVerseRow[] | null = null;
+
+async function loadSampleBibleVerses(): Promise<SupabaseBibleVerseRow[]> {
+  if (cachedSampleBibleVerses) {
+    return cachedSampleBibleVerses;
+  }
+
+  try {
+    const response = await fetch('/sample-data/bible-verses-sample.json');
+    if (!response.ok) {
+      throw new Error('Failed to load sample Bible verses');
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Sample Bible verses malformed');
+    }
+
+    cachedSampleBibleVerses = data
+      .map(normalizeSupabaseBibleVerseRow)
+      .filter((row): row is SupabaseBibleVerseRow => row !== null);
+  } catch (err) {
+    console.warn('Unable to load sample Bible verses:', err);
+    cachedSampleBibleVerses = [];
+  }
+
+  return cachedSampleBibleVerses;
+}
+
+async function searchSampleBibleVerses(query: string): Promise<BibleSearchResult[]> {
+  const lowerQuery = query.toLowerCase();
+  const sampleVerses = await loadSampleBibleVerses();
+
+  return sampleVerses
+    .filter((verse) =>
+      verse.text.toLowerCase().includes(lowerQuery) ||
+      verse.book.toLowerCase().includes(lowerQuery)
+    )
+    .map((verse) => ({
+      book: verse.book,
+      chapter: verse.chapter,
+      verse: verse.verse,
+      text: verse.text.trim(),
+      testament: getTestament(verse.book),
+    }));
+}
+
+interface SampleSermonRecord {
+  title: string;
+  date?: string;
+  location?: string;
+  paragraphs: string[];
+}
+
+let cachedSampleSermons: SampleSermonRecord[] | null = null;
+
+async function loadSampleSermons(): Promise<SampleSermonRecord[]> {
+  if (cachedSampleSermons) {
+    return cachedSampleSermons;
+  }
+
+  try {
+    const response = await fetch('/sample-data/sermons-sample.json');
+    if (!response.ok) {
+      throw new Error('Failed to load sample sermons');
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Sample sermons malformed');
+    }
+
+    cachedSampleSermons = data.filter((sermon): sermon is SampleSermonRecord => {
+      return Boolean(sermon && Array.isArray(sermon.paragraphs));
+    });
+  } catch (err) {
+    console.warn('Unable to load sample sermons:', err);
+    cachedSampleSermons = [];
+  }
+
+  return cachedSampleSermons;
+}
+
+async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[]> {
+  const lowerQuery = searchTerm.toLowerCase();
+  const sampleSermons = await loadSampleSermons();
+  const results: WMBSermonResult[] = [];
+
+  sampleSermons.forEach((sermon, sermonIndex) => {
+    sermon.paragraphs.forEach((paragraph, paragraphIndex) => {
+      if (paragraph.toLowerCase().includes(lowerQuery)) {
+        results.push({
+          sermon_id: `${sermon.title}-${sermonIndex}`,
+          title: sermon.title,
+          date: formatSermonDate(sermon.date),
+          location: sermon.location || 'Unknown Location',
+          excerpt: paragraph,
+          paragraph: paragraphIndex + 1,
+        });
+      }
+    });
+  });
+
+  return results;
+}
+
+function formatSermonDate(date: string | null | undefined): string {
+  if (!date) return 'Unknown Date';
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Unknown Date';
+  }
+
+  return parsed.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 }
 
