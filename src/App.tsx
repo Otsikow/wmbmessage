@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
 import { EngagementProvider } from "@/contexts/EngagementContext";
+import { ReadingPlanProvider } from "@/contexts/ReadingPlanContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
@@ -32,6 +33,9 @@ import Help from "./pages/Help";
 import About from "./pages/About";
 import DailyVerse from "./pages/DailyVerse";
 import CrossReferences from "./pages/CrossReferences";
+import ReadingPlans from "./pages/ReadingPlans";
+import ReadingPlanDetail from "./pages/ReadingPlanDetail";
+import ReadingSession from "./pages/ReadingSession";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -68,13 +72,14 @@ function App() {
         <SettingsProvider>
           <CalendarProvider>
             <EngagementProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <OfflineIndicator />
-                <GlobalLoadingOverlay />
-                <BrowserRouter>
-                  <RouteErrorBoundary>
+              <ReadingPlanProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <OfflineIndicator />
+                  <GlobalLoadingOverlay />
+                  <BrowserRouter>
+                    <RouteErrorBoundary>
                     <Routes>
                       {/* Home Page */}
                       <Route
@@ -218,6 +223,24 @@ function App() {
                         element={withSectionBoundary("Terms", <Terms />)}
                       />
 
+                      <Route
+                        path="/plans"
+                        element={withSectionBoundary("Reading Plans", <ReadingPlans />)}
+                      />
+                      <Route
+                        path="/plans/:planId"
+                        element={withSectionBoundary(
+                          "Plan detail",
+                          <ReadingPlanDetail />,
+                        )}
+                      />
+                      <Route
+                        path="/plans/:planId/day/:dayNumber"
+                        element={withSectionBoundary(
+                          "Reading session",
+                          <ReadingSession />,
+                        )}
+                      />
                       {/* Catch-All */}
                       <Route
                         path="*"
@@ -227,6 +250,7 @@ function App() {
                   </RouteErrorBoundary>
                 </BrowserRouter>
               </TooltipProvider>
+            </ReadingPlanProvider>
             </EngagementProvider>
           </CalendarProvider>
         </SettingsProvider>

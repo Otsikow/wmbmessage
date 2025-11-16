@@ -6,6 +6,7 @@ import FeaturedSermons from "@/components/FeaturedSermons";
 import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
 import SectionErrorBoundary from "@/components/SectionErrorBoundary";
+import { ReadingPlanWidget } from "@/components/reading-plans/ReadingPlanWidget";
 
 const Index = () => {
   return (
@@ -28,6 +29,12 @@ const Index = () => {
 
         {/* Daily Messages Section - Positioned after Hero */}
         <section className="container mx-auto max-w-4xl space-y-6 px-4 py-8">
+          <SectionErrorBoundary
+            section="Reading plan"
+            description="We couldn't load your reading plan widget."
+          >
+            <ReadingPlanWidget />
+          </SectionErrorBoundary>
           {/* Daily Verse and Sermon Quote - Requires database */}
           <SectionErrorBoundary
             section="Daily verse"
