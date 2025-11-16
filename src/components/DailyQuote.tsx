@@ -142,17 +142,17 @@ export default function DailyQuote() {
   const reading = useMemo(() => getReadingForDate(selectedDate), [selectedDate]);
 
   return (
-    <Card className="p-6 md:p-8 shadow-elegant border border-primary/20 bg-card/60 backdrop-blur">
+    <Card className="p-5 sm:p-6 md:p-8 shadow-elegant border border-primary/20 bg-card/60 backdrop-blur">
       <div className="space-y-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex gap-4 items-start">
-              <Quote className="h-9 w-9 text-primary flex-shrink-0 mt-1" />
-              <div>
-                <p className="text-sm font-medium uppercase tracking-wide text-primary/80">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex gap-4 items-start text-left">
+              <Quote className="h-8 w-8 sm:h-9 sm:w-9 text-primary flex-shrink-0 mt-1" />
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm font-medium uppercase tracking-wide text-primary/80">
                   Daily Quote
                 </p>
-                <h3 className="text-2xl font-semibold text-foreground">
+                <h3 className="text-xl sm:text-2xl font-semibold text-foreground">
                   {format(selectedDate, "MMMM d, yyyy")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
@@ -161,32 +161,34 @@ export default function DailyQuote() {
               </div>
             </div>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full border border-border bg-background/80 shadow-sm hover:bg-primary/10"
-                  aria-label="Open calendar"
-                >
-                  <CalendarDays className="h-5 w-5 text-primary" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-4" align="end">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-muted-foreground">
-                    Select a date to view its quote
-                  </h4>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(startOfDay(date))}
-                    defaultMonth={selectedDate}
-                    weekStartsOn={0}
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
+            <div className="flex sm:justify-end">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full border border-border bg-background/80 shadow-sm hover:bg-primary/10"
+                    aria-label="Open calendar"
+                  >
+                    <CalendarDays className="h-5 w-5 text-primary" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="end">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground">
+                      Select a date to view its quote
+                    </h4>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(startOfDay(date))}
+                      defaultMonth={selectedDate}
+                      weekStartsOn={0}
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 

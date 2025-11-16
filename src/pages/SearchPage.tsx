@@ -268,7 +268,7 @@ const SearchPage = () => {
         />
         <div className="absolute inset-0 bg-background/60" />
 
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div
             className={`max-w-3xl mx-auto text-center ${
               heroHasQuery ? "mb-4" : "mb-8"
@@ -282,11 +282,11 @@ const SearchPage = () => {
             </p>
 
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder={searchPlaceholder}
-                className="pl-12 pr-4 py-6 text-lg"
+                className="w-full rounded-2xl border border-border/70 bg-background/90 pl-12 pr-4 py-4 text-base sm:text-lg shadow-sm focus-visible:ring-2 focus-visible:ring-primary/30"
                 value={searchQuery}
                 onChange={(e) => {
                   void handleSearch(e.target.value, searchMode);
@@ -309,11 +309,11 @@ const SearchPage = () => {
                   }
                 }
               }}
-              className="mt-4 justify-center"
+              className="mt-4 flex w-full flex-wrap items-center justify-center gap-2"
             >
               <ToggleGroupItem
                 value="keyword"
-                className="px-4 py-2 text-sm"
+                className="px-4 py-2 text-sm flex-1 min-w-[120px] sm:flex-none"
                 aria-label="Keyword search"
               >
                 <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ const SearchPage = () => {
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="verse"
-                className="px-4 py-2 text-sm"
+                className="px-4 py-2 text-sm flex-1 min-w-[120px] sm:flex-none"
                 aria-label="Verse search"
               >
                 <div className="flex items-center gap-2">
@@ -333,7 +333,7 @@ const SearchPage = () => {
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="theme"
-                className="px-4 py-2 text-sm"
+                className="px-4 py-2 text-sm flex-1 min-w-[120px] sm:flex-none"
                 aria-label="Theme search"
               >
                 <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ const SearchPage = () => {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <div className="mt-6">
+            <div className="mt-6 w-full">
               <p className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <Sparkles className="h-4 w-4" /> Popular themes
               </p>
@@ -362,7 +362,7 @@ const SearchPage = () => {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 flex justify-center">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="gap-2">
@@ -412,7 +412,7 @@ const SearchPage = () => {
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8">
+              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-1 gap-2 sm:grid-cols-3 mb-8">
                 <TabsTrigger value="bible" className="gap-2">
                   <Book className="h-4 w-4" />
                   Bible ({filteredBibleResults.length})
@@ -428,19 +428,19 @@ const SearchPage = () => {
               </TabsList>
 
               <TabsContent value="bible" className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                <div className="flex flex-col gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Filter className="h-4 w-4" />
                     Refine verses
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
                     <Select
                       value={bibleFilter}
                       onValueChange={(value) =>
                         setBibleFilter(value as "all" | "ot" | "nt")
                       }
                     >
-                      <SelectTrigger className="w-[160px]">
+                      <SelectTrigger className="w-full sm:w-[160px]">
                         <SelectValue placeholder="Select testament" />
                       </SelectTrigger>
                       <SelectContent>
@@ -455,7 +455,7 @@ const SearchPage = () => {
                         value={selectedBibleBook}
                         onValueChange={setSelectedBibleBook}
                       >
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="w-full sm:w-[200px]">
                           <SelectValue placeholder="All books" />
                         </SelectTrigger>
                         <SelectContent>
@@ -473,6 +473,7 @@ const SearchPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setBibleFilter("all");
                           setSelectedBibleBook("all");
@@ -522,15 +523,15 @@ const SearchPage = () => {
               </TabsContent>
 
               <TabsContent value="sermons" className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                <div className="flex flex-col gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Filter className="h-4 w-4" />
                     Refine messages
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
                     {sermonYearOptions.length > 0 && (
                       <Select value={sermonYear} onValueChange={setSermonYear}>
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-full sm:w-[140px]">
                           <SelectValue placeholder="All years" />
                         </SelectTrigger>
                         <SelectContent>
@@ -549,7 +550,7 @@ const SearchPage = () => {
                         value={sermonLocation}
                         onValueChange={setSermonLocation}
                       >
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="w-full sm:w-[200px]">
                           <SelectValue placeholder="All locations" />
                         </SelectTrigger>
                         <SelectContent>
@@ -565,7 +566,7 @@ const SearchPage = () => {
 
                     {sermonThemeOptions.length > 0 && (
                       <Select value={sermonTheme} onValueChange={setSermonTheme}>
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="w-full sm:w-[200px]">
                           <SelectValue placeholder="All themes" />
                         </SelectTrigger>
                         <SelectContent>
@@ -585,6 +586,7 @@ const SearchPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setSermonYear("all");
                           setSermonLocation("all");
