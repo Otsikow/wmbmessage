@@ -14,6 +14,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import SectionErrorBoundary from "@/components/SectionErrorBoundary";
+import { RouteTransitionIndicator } from "@/components/RouteTransitionIndicator";
 
 // Pages
 import Index from "./pages/Index";
@@ -79,6 +80,7 @@ function App() {
                   <OfflineIndicator />
                   <GlobalLoadingOverlay />
                   <BrowserRouter>
+                    <RouteTransitionIndicator />
                     <RouteErrorBoundary>
                     <Routes>
                       {/* Home Page */}
