@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { STATIC_CROSS_REFERENCES } from "@/data/staticCrossReferences";
 
+
 export interface CrossReference {
   id: string;
   from_book: string;
@@ -30,6 +31,74 @@ interface UseCrossReferencesReturn {
   deleteUserCrossReference: (id: string) => Promise<void>;
 }
 
+type CrossReferenceSourceRecord = Omit<CrossReference, "id"> & {
+  id?: string;
+};
+
+const normalizeBookName = (value: string) =>
+  value.replace(/\s+/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+let cachedSampleCrossReferences: CrossReference[] | null = null;
+let sampleCrossReferencePromise: Promise<CrossReference[]> | null = null;
+
+const createFallbackId = (ref: CrossReferenceSourceRecord, index: number) =>
+  ref.id ||
+  `sample-${normalizeBookName(ref.from_book)}-${ref.from_chapter}-${ref.from_verse}-${normalizeBookName(ref.to_book)}-${ref.to_chapter}-${ref.to_verse}-${index}`;
+
+async function loadSampleCrossReferences(): Promise<CrossReference[]> {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  if (cachedSampleCrossReferences) {
+    return cachedSampleCrossReferences;
+  }
+
+  if (sampleCrossReferencePromise) {
+    return sampleCrossReferencePromise;
+  }
+
+  sampleCrossReferencePromise = fetch("/sample-data/cross-references-sample.json")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to load cross-reference sample data");
+      }
+      return response.json() as Promise<CrossReferenceSourceRecord[]>;
+    })
+    .then((data) =>
+      data.map((ref, index) => ({
+        ...ref,
+        to_verse_end: ref.to_verse_end ?? undefined,
+        id: createFallbackId(ref, index),
+      }))
+    )
+    .catch((error) => {
+      console.warn("Cross-reference sample data unavailable:", error);
+      return [] as CrossReference[];
+    })
+    .finally(() => {
+      sampleCrossReferencePromise = null;
+    });
+
+  cachedSampleCrossReferences = await sampleCrossReferencePromise;
+  return cachedSampleCrossReferences;
+}
+
+const filterReferencesForLocation = (
+  refs: CrossReference[],
+  book: string,
+  chapter: number,
+  verse?: number
+) => {
+  const normalizedBook = normalizeBookName(book);
+  return refs.filter((ref) => {
+    if (normalizeBookName(ref.from_book) !== normalizedBook) return false;
+    if (ref.from_chapter !== chapter) return false;
+    if (verse === undefined) return true;
+    return ref.from_verse === verse;
+  });
+};
+
 export function useCrossReferences(
   book: string,
   chapter: number,
@@ -42,19 +111,7 @@ export function useCrossReferences(
 
   const filterStaticCrossReferences = useCallback(() => {
     if (!book || !chapter) return [] as CrossReference[];
-
-    const normalize = (value: string) =>
-      value.replace(/\s+/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
-
-    const normalizedBook = normalize(book);
-
-    return STATIC_CROSS_REFERENCES.filter((ref) => {
-      const sameBook = normalize(ref.from_book) === normalizedBook;
-      if (!sameBook) return false;
-      if (ref.from_chapter !== chapter) return false;
-      if (verse === undefined) return true;
-      return ref.from_verse === verse;
-    });
+    return filterReferencesForLocation(STATIC_CROSS_REFERENCES, book, chapter, verse);
   }, [book, chapter, verse]);
 
   const mergeCrossReferences = useCallback((
@@ -132,44 +189,68 @@ export function useCrossReferences(
     setError(null);
 
     try {
-      // Fetch public cross-references
-      let publicQuery = supabase
-        .from('cross_references')
-        .select('*')
-        .eq('from_book', book)
-        .eq('from_chapter', chapter);
+      let dynamicReferences: CrossReference[] = [];
 
-      if (verse !== undefined) {
-        publicQuery = publicQuery.eq('from_verse', verse);
-      }
-
-      const { data: publicData, error: publicError } = await publicQuery;
-
-      if (publicError) throw publicError;
-
-      const merged = mergeCrossReferences(staticMatches, publicData || []);
-      setCrossReferences(merged);
-
-      // Fetch user's custom cross-references if authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        let userQuery = (supabase as any)
-          .from('user_cross_references')
+      try {
+        let publicQuery = supabase
+          .from('cross_references')
           .select('*')
-          .eq('user_id', user.id)
           .eq('from_book', book)
           .eq('from_chapter', chapter);
 
         if (verse !== undefined) {
-          userQuery = userQuery.eq('from_verse', verse);
+          publicQuery = publicQuery.eq('from_verse', verse);
         }
 
-        const { data: userData, error: userError } = await userQuery;
+        const { data: publicData, error: publicError } = await publicQuery;
 
-        if (userError) throw userError;
+        if (publicError) {
+          console.warn('Public cross-reference fetch failed:', publicError);
+        } else if (publicData) {
+          dynamicReferences = publicData;
+        }
+      } catch (publicErr) {
+        console.warn('Public cross-reference fetch error:', publicErr);
+      }
 
-        setUserCrossReferences(userData as any || []);
+      let fallbackMatches: CrossReference[] = [];
+      try {
+        const sampleData = await loadSampleCrossReferences();
+        fallbackMatches = filterReferencesForLocation(sampleData, book, chapter, verse);
+      } catch (sampleErr) {
+        console.warn('Sample cross-reference load error:', sampleErr);
+      }
+
+      const merged = mergeCrossReferences(staticMatches, [...dynamicReferences, ...fallbackMatches]);
+      setCrossReferences(merged);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        try {
+          let userQuery = (supabase as any)
+            .from('user_cross_references')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('from_book', book)
+            .eq('from_chapter', chapter);
+
+          if (verse !== undefined) {
+            userQuery = userQuery.eq('from_verse', verse);
+          }
+
+          const { data: userData, error: userError } = await userQuery;
+
+          if (userError) {
+            console.warn('User cross-reference fetch failed:', userError);
+          } else {
+            setUserCrossReferences((userData as any) || []);
+          }
+        } catch (userErr) {
+          console.warn('User cross-reference fetch error:', userErr);
+        }
+      } else {
+        setUserCrossReferences([]);
       }
     } catch (err) {
       console.error('Error fetching cross-references:', err);
