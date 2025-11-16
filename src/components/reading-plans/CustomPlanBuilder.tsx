@@ -74,7 +74,7 @@ export const CustomPlanBuilder = ({ onCreate }: CustomPlanBuilderProps) => {
   };
 
   return (
-    <Card asChild className="border-dashed border-primary/60">
+    <Card className="border-dashed border-primary/60">
       <form onSubmit={handleSubmit}>
         <CardHeader>
           <CardTitle>Create a Custom Plan</CardTitle>
