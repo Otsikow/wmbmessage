@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/BackButton";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 export default function Collections() {
   const collections = [
@@ -17,6 +18,7 @@ export default function Collections() {
             <div className="flex items-center gap-3 sm:gap-4 flex-1 w-full">
               <BackButton />
               <div className="flex-1">
+                <PageBreadcrumbs className="mb-1 text-muted-foreground" />
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Collections</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   Organize your favorite verses

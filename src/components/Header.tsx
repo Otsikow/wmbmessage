@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo-final.png";
 import BackButton from "@/components/BackButton";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 interface HeaderProps {
   showBackButton?: boolean;
@@ -38,48 +39,97 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2 md:gap-3">
-          {showBackButton ? (
-            <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" />
-          ) : null}
-          <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3">
-            <img src={logoImage} alt="MessageGuide Logo" className="h-10 md:h-12 w-auto" />
-            <span className="text-lg md:text-xl font-bold text-primary">
-              MessageGuide
-            </span>
-          </Link>
-        </div>
+      <div className="container flex flex-col gap-2 px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            {showBackButton ? (
+              <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" />
+            ) : null}
+            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3">
+              <img src={logoImage} alt="MessageGuide Logo" className="h-10 md:h-12 w-auto" />
+              <span className="text-lg md:text-xl font-bold text-primary">
+                MessageGuide
+              </span>
+            </Link>
+          </div>
 
-        <div className="flex items-center gap-2 min-w-0">
-          <ThemeToggle />
-          
-          <nav className="hidden lg:flex items-center space-x-6">
-            <Link to="/bible" className="text-sm font-medium transition-colors hover:text-primary">
-              Bible
-            </Link>
-            <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
-              Messages
-            </Link>
-            <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
-              Search
-            </Link>
-            <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
-              References
-            </Link>
-            <Link to="/library" className="text-sm font-medium transition-colors hover:text-primary">
-              Library
-            </Link>
-            <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary">
-              Settings
-            </Link>
-            
+          <div className="flex items-center gap-2 min-w-0">
+            <ThemeToggle />
+
+            <nav className="hidden lg:flex items-center space-x-6">
+              <Link to="/bible" className="text-sm font-medium transition-colors hover:text-primary">
+                Bible
+              </Link>
+              <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
+                Messages
+              </Link>
+              <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
+                Search
+              </Link>
+              <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
+                References
+              </Link>
+              <Link to="/library" className="text-sm font-medium transition-colors hover:text-primary">
+                Library
+              </Link>
+              <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary">
+                Settings
+              </Link>
+
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="" alt={`${user.email} avatar`} />
+                        <AvatarFallback>
+                          {user.email?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.email}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth/sign-in">
+                  <Button variant="default" size="sm" className="ml-2">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </nav>
+
             {user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
+                <DropdownMenuTrigger asChild className="lg:hidden">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt={`${user.email} avatar`} />
+                      <AvatarImage src="" alt="User" />
                       <AvatarFallback>
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -90,9 +140,6 @@ export default function Header({
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.email}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -114,58 +161,16 @@ export default function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/auth/sign-in">
-                <Button variant="default" size="sm" className="ml-2">
+              <Link to="/auth/sign-in" className="lg:hidden">
+                <Button variant="ghost" size="sm">
                   Sign In
                 </Button>
               </Link>
             )}
-          </nav>
-
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild className="lg:hidden">
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt="User" />
-                    <AvatarFallback>
-                      {user.email?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate('/admin')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link to="/auth/sign-in" className="lg:hidden">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-          )}
+          </div>
         </div>
+
+        <PageBreadcrumbs />
       </div>
     </header>
   );
