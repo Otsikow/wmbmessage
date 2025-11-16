@@ -1,11 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
-import { parseVerseReference, type ParsedReference } from "@/lib/verseParser";
-import {
-  getChapterVerses,
-  loadKJVBibleVerses,
-  type BibleVerseRecord,
-} from "@/utils/bibleData";
 import {
   loadSampleSermons,
   SampleSermonRecord,
@@ -60,7 +54,6 @@ export function useBibleSearch() {
       const allResults: BibleSearchResult[] = [];
       const normalizedQuery = query.trim();
       const searchTerm = normalizedQuery.toLowerCase();
-      const variations = generateSearchVariations(searchTerm);
 
       // Strategy 1: query Supabase database using direct queries when configured
       if (isSupabaseConfigured) {
@@ -96,17 +89,7 @@ export function useBibleSearch() {
         return deduplicateResults(allResults).slice(0, 100);
       }
 
-      // Strategy 2: Search cached KJV dataset bundled with the app
-      const localResults = await searchLocalBibleVerses(query, variations);
-      if (localResults.length > 0) {
-        allResults.push(...localResults);
-      }
-
-      if (allResults.length >= 75) {
-        return deduplicateResults(allResults).slice(0, 100);
-      }
-
-      // Strategy 3: Try getBible.net API (broad coverage)
+      // Strategy 2: Try getBible.net API (broad coverage)
       try {
         const searchResponse = await fetch(
           `https://getbible.net/v2/kjv/search/${encodeURIComponent(searchTerm)}.json`,
@@ -138,7 +121,9 @@ export function useBibleSearch() {
         return deduplicateResults(allResults).slice(0, 100);
       }
 
-      // Strategy 4: Try word variations and synonyms to improve results
+      // Strategy 3: Try word variations and synonyms to improve results
+      const variations = generateSearchVariations(searchTerm);
+
       for (const variant of variations) {
         if (allResults.length >= 100) break;
 
@@ -181,7 +166,7 @@ export function useBibleSearch() {
         }
       }
 
-      // Strategy 5: Fallback to bible-api.com for verse references
+      // Strategy 4: Fallback to bible-api.com for verse references
       if (allResults.length === 0) {
         const sampleResults = await searchSampleBibleVerses(normalizedQuery);
         if (sampleResults.length > 0) {
@@ -332,92 +317,6 @@ function getTestament(bookName: string): "OT" | "NT" {
   ];
   
   return ntBooks.includes(bookName) ? "NT" : "OT";
-}
-
-async function searchLocalBibleVerses(
-  query: string,
-  variations: string[],
-  limit = 200
-): Promise<BibleSearchResult[]> {
-  const cleanedQuery = sanitizeSearchQuery(query).toLowerCase();
-  if (!cleanedQuery) return [];
-
-  try {
-    const dataset = await loadKJVBibleVerses();
-    if (!dataset.length) return [];
-
-    const words = cleanedQuery.split(/\s+/).filter(Boolean);
-    const tokenSet = new Set<string>();
-    variations.forEach((variant) => {
-      const cleaned = sanitizeSearchQuery(variant).toLowerCase();
-      if (cleaned) tokenSet.add(cleaned);
-    });
-    words.forEach((word) => tokenSet.add(word));
-
-    const results: BibleSearchResult[] = [];
-    const seenKeys = new Set<string>();
-
-    const parsedReference = parseVerseReference(query);
-    if (parsedReference) {
-      const referenceVerses = await getVersesForReference(parsedReference);
-      for (const record of referenceVerses) {
-        const key = buildResultKey(record);
-        if (seenKeys.has(key)) continue;
-        results.push(convertRecordToResult(record));
-        seenKeys.add(key);
-        if (results.length >= limit) {
-          return results;
-        }
-      }
-    }
-
-    for (const verse of dataset) {
-      if (results.length >= limit) break;
-
-      const key = buildResultKey(verse);
-      if (seenKeys.has(key)) continue;
-
-      const verseLower = verse.text.toLowerCase();
-      const matchesWords =
-        words.length === 0
-          ? tokenSet.size === 0 || Array.from(tokenSet).some((token) => verseLower.includes(token))
-          : words.every((word) => verseLower.includes(word));
-
-      if (!matchesWords) continue;
-
-      results.push(convertRecordToResult(verse));
-      seenKeys.add(key);
-    }
-
-    return results;
-  } catch (error) {
-    console.warn('Local Bible search failed:', error);
-    return [];
-  }
-}
-
-function convertRecordToResult(record: BibleVerseRecord): BibleSearchResult {
-  return {
-    book: record.book,
-    chapter: record.chapter,
-    verse: record.verse,
-    text: record.text,
-    testament: getTestament(record.book),
-  };
-}
-
-async function getVersesForReference(ref: ParsedReference): Promise<BibleVerseRecord[]> {
-  const verses = await getChapterVerses(ref.book, ref.chapter);
-  if (!ref.startVerse) {
-    return verses;
-  }
-
-  const endVerse = ref.endVerse ?? ref.startVerse;
-  return verses.filter((verse) => verse.verse >= ref.startVerse! && verse.verse <= endVerse);
-}
-
-function buildResultKey(record: BibleVerseRecord): string {
-  return `${record.book}-${record.chapter}-${record.verse}`;
 }
 
 function generateSearchVariations(term: string): string[] {

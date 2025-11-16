@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { getChapterVerses, isWordsOfJesus } from "@/utils/bibleData";
 
 export interface BibleVerse {
   number: number;
@@ -94,46 +93,32 @@ export function useBibleData(book: string, chapter: number) {
     const fetchBibleText = async () => {
       setLoading(true);
       setError(null);
-
+      
       try {
-        const localChapter = await getChapterVerses(book, chapter);
-        if (localChapter.length > 0) {
-          setVerses(
-            localChapter.map((verse) => ({
-              number: verse.verse,
-              text: verse.text,
-              isJesusWords: isWordsOfJesus(book, chapter, verse.verse),
-            }))
-          );
-          setLoading(false);
-          return;
-        }
-      } catch (localError) {
-        console.warn("Local Bible dataset unavailable:", localError);
-      }
-
-      try {
+        // Using Bible API for KJV
         const bookFormatted = book.replace(/\s+/g, "");
         const response = await fetch(
           `https://bible-api.com/${bookFormatted}${chapter}?translation=kjv`
         );
-
+        
         if (!response.ok) {
           throw new Error("Failed to fetch Bible text");
         }
-
+        
         const data = await response.json();
-
+        
+        // Parse verses from API response
         const parsedVerses: BibleVerse[] = data.verses.map((verse: { verse: number; text: string }) => ({
           number: verse.verse,
           text: verse.text,
-          isJesusWords: isWordsOfJesus(book, chapter, verse.verse),
+          isJesusWords: checkIfJesusWords(book, chapter, verse.verse),
         }));
-
+        
         setVerses(parsedVerses);
       } catch (err) {
         console.error("Error fetching Bible text:", err);
         setError("Failed to load Bible text. Please try again.");
+        // Fallback to sample verses
         setVerses(getSampleVerses(book, chapter));
       } finally {
         setLoading(false);
@@ -144,6 +129,34 @@ export function useBibleData(book: string, chapter: number) {
   }, [book, chapter]);
 
   return { verses, loading, error };
+}
+
+// Helper function to determine if verses are Jesus's words
+function checkIfJesusWords(book: string, chapter: number, verse: number): boolean {
+  // Major passages where Jesus speaks (this is a simplified list)
+  const jesusWordsRanges: Record<string, Record<number, number[]>> = {
+    Matthew: {
+      5: [3, 48], 6: [1, 34], 7: [1, 29], 11: [28, 30], 13: [3, 52],
+      16: [13, 28], 22: [37, 40], 24: [4, 51], 25: [1, 46], 26: [26, 29],
+    },
+    Mark: {
+      1: [15, 17], 4: [9, 41], 8: [34, 38], 10: [14, 45], 13: [5, 37],
+    },
+    Luke: {
+      4: [4, 12], 6: [20, 49], 10: [23, 37], 11: [9, 13], 12: [4, 59],
+      15: [4, 32], 22: [15, 20], 24: [38, 49],
+    },
+    John: {
+      3: [3, 21], 4: [7, 26], 5: [19, 47], 6: [26, 71], 8: [12, 58],
+      10: [1, 38], 14: [1, 31], 15: [1, 27], 16: [1, 33], 17: [1, 26],
+    },
+  };
+
+  const bookRanges = jesusWordsRanges[book];
+  if (!bookRanges || !bookRanges[chapter]) return false;
+
+  const range = bookRanges[chapter];
+  return verse >= range[0] && verse <= range[1];
 }
 
 // Fallback sample verses
