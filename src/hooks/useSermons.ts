@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { loadSampleSermons, SampleSermonRecord, ensureSampleSermonDate } from "@/utils/sampleSermons";
 
 export type Sermon = Tables<"sermons">;
 export type SermonParagraph = Tables<"sermon_paragraphs">;
@@ -28,20 +29,38 @@ export function useSermons() {
   const fetchSermons = async () => {
     try {
       setLoading(true);
+
+      if (!isSupabaseConfigured) {
+        const sampleData = await loadSampleSermonData();
+        setSermons(sampleData.map(({ paragraphs, ...rest }) => rest));
+        return;
+      }
+
       const { data, error } = await supabase
         .from("sermons")
         .select("*")
         .order("date", { ascending: false });
 
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        const sampleData = await loadSampleSermonData();
+        setSermons(sampleData.map(({ paragraphs, ...rest }) => rest));
+        return;
+      }
+
       setSermons(data || []);
     } catch (error) {
       console.error("Error fetching sermons:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load sermons",
-        variant: "destructive",
-      });
+      if (isSupabaseConfigured) {
+        toast({
+          title: "Error",
+          description: "Failed to load sermons",
+          variant: "destructive",
+        });
+      }
+      const sampleData = await loadSampleSermonData();
+      setSermons(sampleData.map(({ paragraphs, ...rest }) => rest));
     } finally {
       setLoading(false);
     }
@@ -54,6 +73,11 @@ export function useSermons() {
   const fetchSermonWithParagraphs = async (
     sermonId: string
   ): Promise<SermonWithParagraphs | null> => {
+    if (!isSupabaseConfigured) {
+      const sampleData = await loadSampleSermonData();
+      return sampleData.find((sermon) => sermon.id === sermonId) || null;
+    }
+
     try {
       const { data: sermon, error: sermonError } = await supabase
         .from("sermons")
@@ -84,9 +108,17 @@ export function useSermons() {
   };
 
   const searchSermons = async (query: string): Promise<SearchResult[]> => {
+    if (!query.trim()) {
+      return [];
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+
     try {
-      const searchTerm = query.toLowerCase().trim();
-      
+      if (!isSupabaseConfigured) {
+        return searchSampleSermonData(searchTerm);
+      }
+
       const { data: sermonData, error } = await supabase
         .from('sermons')
         .select(`
@@ -122,6 +154,10 @@ export function useSermons() {
         });
       });
 
+      if (results.length === 0) {
+        return searchSampleSermonData(searchTerm);
+      }
+
       return results.slice(0, 50);
     } catch (error) {
       console.error("Error searching sermons:", error);
@@ -130,7 +166,7 @@ export function useSermons() {
         description: "Failed to search sermons",
         variant: "destructive",
       });
-      return [];
+      return searchSampleSermonData(searchTerm);
     }
   };
 
@@ -141,4 +177,67 @@ export function useSermons() {
     fetchSermonWithParagraphs,
     searchSermons,
   };
+}
+
+let cachedSampleSermonData: SermonWithParagraphs[] | null = null;
+
+async function loadSampleSermonData(): Promise<SermonWithParagraphs[]> {
+  if (cachedSampleSermonData) {
+    return cachedSampleSermonData;
+  }
+
+  const sampleSermons = await loadSampleSermons();
+  cachedSampleSermonData = sampleSermons.map((sermon, index) =>
+    convertSampleRecordToSermon(sermon, index)
+  );
+  return cachedSampleSermonData;
+}
+
+function convertSampleRecordToSermon(
+  sermon: SampleSermonRecord,
+  index: number
+): SermonWithParagraphs {
+  const sermonId = `sample-sermon-${index}`;
+  const paragraphs: SermonParagraph[] = sermon.paragraphs.map((content, paragraphIndex) => ({
+    id: `${sermonId}-paragraph-${paragraphIndex + 1}`,
+    sermon_id: sermonId,
+    paragraph_number: paragraphIndex + 1,
+    content,
+    created_at: null,
+  }));
+
+  return {
+    id: sermonId,
+    title: sermon.title,
+    date: ensureSampleSermonDate(sermon.date, index),
+    location: sermon.location || "Unknown Location",
+    description: null,
+    created_at: null,
+    updated_at: null,
+    paragraphs,
+  };
+}
+
+async function searchSampleSermonData(query: string): Promise<SearchResult[]> {
+  const sampleData = await loadSampleSermonData();
+  const normalizedQuery = query.toLowerCase();
+
+  const results: SearchResult[] = [];
+  sampleData.forEach((sermon) => {
+    sermon.paragraphs?.forEach((paragraph) => {
+      if (paragraph.content.toLowerCase().includes(normalizedQuery)) {
+        results.push({
+          sermon_id: sermon.id,
+          sermon_title: sermon.title,
+          sermon_date: sermon.date,
+          sermon_location: sermon.location,
+          paragraph_number: paragraph.paragraph_number,
+          content: paragraph.content,
+          relevance: 1,
+        });
+      }
+    });
+  });
+
+  return results.slice(0, 50);
 }
