@@ -8,26 +8,410 @@
     "is_jesus_words": true
   },
   {
+    "book": "Deuteronomy",
+    "chapter": 6,
+    "verse": 5,
+    "text": "And thou shalt love the LORD thy God with all thine heart, and with all thy soul, and with all thy might.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Leviticus",
+    "chapter": 19,
+    "verse": 18,
+    "text": "Thou shalt not avenge, nor bear any grudge against the children of thy people, but thou shalt love thy neighbour as thyself: I am the LORD.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Deuteronomy",
+    "chapter": 7,
+    "verse": 9,
+    "text": "Know therefore that the LORD thy God, he is God, the faithful God, which keepeth covenant and mercy with them that love him and keep his commandments to a thousand generations;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
     "book": "Psalms",
-    "chapter": 23,
+    "chapter": 36,
+    "verse": 7,
+    "text": "How excellent is thy lovingkindness, O God! therefore the children of men put their trust under the shadow of thy wings.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Psalms",
+    "chapter": 63,
+    "verse": 3,
+    "text": "Because thy lovingkindness is better than life, my lips shall praise thee.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Psalms",
+    "chapter": 103,
+    "verse": 8,
+    "text": "The LORD is merciful and gracious, slow to anger, and plenteous in mercy.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Psalms",
+    "chapter": 116,
     "verse": 1,
-    "text": "The LORD is my shepherd; I shall not want.",
+    "text": "I love the LORD, because he hath heard my voice and my supplications.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Psalms",
+    "chapter": 145,
+    "verse": 8,
+    "text": "The LORD is gracious, and full of compassion; slow to anger, and of great mercy.",
     "translation": "KJV",
     "is_jesus_words": false
   },
   {
     "book": "Proverbs",
-    "chapter": 3,
+    "chapter": 10,
+    "verse": 12,
+    "text": "Hatred stirreth up strifes: but love covereth all sins.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Proverbs",
+    "chapter": 17,
+    "verse": 17,
+    "text": "A friend loveth at all times, and a brother is born for adversity.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Song of Solomon",
+    "chapter": 2,
+    "verse": 4,
+    "text": "He brought me to the banqueting house, and his banner over me was love.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Song of Solomon",
+    "chapter": 8,
+    "verse": 7,
+    "text": "Many waters cannot quench love, neither can the floods drown it: if a man would give all the substance of his house for love, it would utterly be contemned.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Isaiah",
+    "chapter": 54,
+    "verse": 10,
+    "text": "For the mountains shall depart, and the hills be removed; but my kindness shall not depart from thee, neither shall the covenant of my peace be removed, saith the LORD that hath mercy on thee.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Jeremiah",
+    "chapter": 31,
+    "verse": 3,
+    "text": "The LORD hath appeared of old unto me, saying, Yea, I have loved thee with an everlasting love: therefore with lovingkindness have I drawn thee.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Hosea",
+    "chapter": 11,
+    "verse": 4,
+    "text": "I drew them with cords of a man, with bands of love: and I was to them as they that take off the yoke on their jaws, and I laid meat unto them.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Matthew",
+    "chapter": 5,
+    "verse": 44,
+    "text": "But I say unto you, Love your enemies, bless them that curse you, do good to them that hate you, and pray for them which despitefully use you, and persecute you;",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Matthew",
+    "chapter": 22,
+    "verse": 37,
+    "text": "Jesus said unto him, Thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Matthew",
+    "chapter": 22,
+    "verse": 39,
+    "text": "And the second is like unto it, Thou shalt love thy neighbour as thyself.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Mark",
+    "chapter": 12,
+    "verse": 30,
+    "text": "And thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind, and with all thy strength: this is the first commandment.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Mark",
+    "chapter": 12,
+    "verse": 31,
+    "text": "And the second is like, namely this, Thou shalt love thy neighbour as thyself. There is none other commandment greater than these.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Luke",
+    "chapter": 6,
+    "verse": 35,
+    "text": "But love ye your enemies, and do good, and lend, hoping for nothing again; and your reward shall be great, and ye shall be the children of the Highest: for he is kind unto the unthankful and to the evil.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 13,
+    "verse": 34,
+    "text": "A new commandment I give unto you, That ye love one another; as I have loved you, that ye also love one another.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 13,
+    "verse": 35,
+    "text": "By this shall all men know that ye are my disciples, if ye have love one to another.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 14,
+    "verse": 15,
+    "text": "If ye love me, keep my commandments.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 15,
+    "verse": 9,
+    "text": "As the Father hath loved me, so have I loved you: continue ye in my love.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 15,
+    "verse": 12,
+    "text": "This is my commandment, That ye love one another, as I have loved you.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 15,
+    "verse": 13,
+    "text": "Greater love hath no man than this, that a man lay down his life for his friends.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "John",
+    "chapter": 15,
+    "verse": 17,
+    "text": "These things I command you, that ye love one another.",
+    "translation": "KJV",
+    "is_jesus_words": true
+  },
+  {
+    "book": "Romans",
+    "chapter": 5,
     "verse": 5,
-    "text": "Trust in the LORD with all thine heart; and lean not unto thine own understanding.",
+    "text": "And hope maketh not ashamed; because the love of God is shed abroad in our hearts by the Holy Ghost which is given unto us.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 5,
+    "verse": 8,
+    "text": "But God commendeth his love toward us, in that, while we were yet sinners, Christ died for us.",
     "translation": "KJV",
     "is_jesus_words": false
   },
   {
     "book": "Romans",
     "chapter": 8,
-    "verse": 28,
-    "text": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+    "verse": 35,
+    "text": "Who shall separate us from the love of Christ? shall tribulation, or distress, or persecution, or famine, or nakedness, or peril, or sword?",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 8,
+    "verse": 37,
+    "text": "Nay, in all these things we are more than conquerors through him that loved us.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 8,
+    "verse": 39,
+    "text": "Nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 12,
+    "verse": 9,
+    "text": "Let love be without dissimulation. Abhor that which is evil; cleave to that which is good.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Romans",
+    "chapter": 12,
+    "verse": 10,
+    "text": "Be kindly affectioned one to another with brotherly love; in honour preferring one another;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 13,
+    "verse": 4,
+    "text": "Charity suffereth long, and is kind; charity envieth not; charity vaunteth not itself, is not puffed up,",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 13,
+    "verse": 5,
+    "text": "Doth not behave itself unseemly, seeketh not her own, is not easily provoked, thinketh no evil;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 13,
+    "verse": 6,
+    "text": "Rejoiceth not in iniquity, but rejoiceth in the truth;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 13,
+    "verse": 7,
+    "text": "Beareth all things, believeth all things, hopeth all things, endureth all things.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 13,
+    "verse": 8,
+    "text": "Charity never faileth: but whether there be prophecies, they shall fail; whether there be tongues, they shall cease; whether there be knowledge, it shall vanish away.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Corinthians",
+    "chapter": 16,
+    "verse": 14,
+    "text": "Let all your things be done with charity.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Galatians",
+    "chapter": 5,
+    "verse": 6,
+    "text": "For in Jesus Christ neither circumcision availeth any thing, nor uncircumcision; but faith which worketh by love.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Galatians",
+    "chapter": 5,
+    "verse": 13,
+    "text": "For, brethren, ye have been called unto liberty; only use not liberty for an occasion to the flesh, but by love serve one another.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Galatians",
+    "chapter": 5,
+    "verse": 22,
+    "text": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith,",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 3,
+    "verse": 17,
+    "text": "That Christ may dwell in your hearts by faith; that ye, being rooted and grounded in love,",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 3,
+    "verse": 19,
+    "text": "And to know the love of Christ, which passeth knowledge, that ye might be filled with all the fulness of God.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 4,
+    "verse": 2,
+    "text": "With all lowliness and meekness, with longsuffering, forbearing one another in love;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 4,
+    "verse": 15,
+    "text": "But speaking the truth in love, may grow up into him in all things, which is the head, even Christ:",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 5,
+    "verse": 2,
+    "text": "And walk in love, as Christ also hath loved us, and hath given himself for us an offering and a sacrifice to God for a sweetsmelling savour.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Ephesians",
+    "chapter": 5,
+    "verse": 25,
+    "text": "Husbands, love your wives, even as Christ also loved the church, and gave himself for it;",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Philippians",
+    "chapter": 1,
+    "verse": 9,
+    "text": "And this I pray, that your love may abound yet more and more in knowledge and in all judgment;",
     "translation": "KJV",
     "is_jesus_words": false
   },
@@ -36,6 +420,190 @@
     "chapter": 4,
     "verse": 13,
     "text": "I can do all things through Christ which strengtheneth me.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Colossians",
+    "chapter": 3,
+    "verse": 14,
+    "text": "And above all these things put on charity, which is the bond of perfectness.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Thessalonians",
+    "chapter": 3,
+    "verse": 12,
+    "text": "And the Lord make you to increase and abound in love one toward another, and toward all men, even as we do toward you:",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Thessalonians",
+    "chapter": 5,
+    "verse": 8,
+    "text": "But let us, who are of the day, be sober, putting on the breastplate of faith and love; and for an helmet, the hope of salvation.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "2 Thessalonians",
+    "chapter": 3,
+    "verse": 5,
+    "text": "And the Lord direct your hearts into the love of God, and into the patient waiting for Christ.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Timothy",
+    "chapter": 1,
+    "verse": 5,
+    "text": "Now the end of the commandment is charity out of a pure heart, and of a good conscience, and of faith unfeigned:",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "2 Timothy",
+    "chapter": 1,
+    "verse": 7,
+    "text": "For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Hebrews",
+    "chapter": 10,
+    "verse": 24,
+    "text": "And let us consider one another to provoke unto love and to good works:",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Peter",
+    "chapter": 1,
+    "verse": 22,
+    "text": "Seeing ye have purified your souls in obeying the truth through the Spirit unto unfeigned love of the brethren, see that ye love one another with a pure heart fervently:",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 Peter",
+    "chapter": 4,
+    "verse": 8,
+    "text": "And above all things have fervent charity among yourselves: for charity shall cover the multitude of sins.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 3,
+    "verse": 1,
+    "text": "Behold, what manner of love the Father hath bestowed upon us, that we should be called the sons of God: therefore the world knoweth us not, because it knew him not.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 3,
+    "verse": 16,
+    "text": "Hereby perceive we the love of God, because he laid down his life for us: and we ought to lay down our lives for the brethren.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 7,
+    "text": "Beloved, let us love one another: for love is of God; and every one that loveth is born of God, and knoweth God.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 8,
+    "text": "He that loveth not knoweth not God; for God is love.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 10,
+    "text": "Herein is love, not that we loved God, but that he loved us, and sent his Son to be the propitiation for our sins.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 11,
+    "text": "Beloved, if God so loved us, we ought also to love one another.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 12,
+    "text": "No man hath seen God at any time. If we love one another, God dwelleth in us, and his love is perfected in us.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 18,
+    "text": "There is no fear in love; but perfect love casteth out fear: because fear hath torment. He that feareth is not made perfect in love.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 19,
+    "text": "We love him, because he first loved us.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 4,
+    "verse": 20,
+    "text": "If a man say, I love God, and hateth his brother, he is a liar: for he that loveth not his brother whom he hath seen, how can he love God whom he hath not seen?",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "1 John",
+    "chapter": 5,
+    "verse": 2,
+    "text": "By this we know that we love the children of God, when we love God, and keep his commandments.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Jude",
+    "chapter": 1,
+    "verse": 21,
+    "text": "Keep yourselves in the love of God, looking for the mercy of our Lord Jesus Christ unto eternal life.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Revelation",
+    "chapter": 2,
+    "verse": 4,
+    "text": "Nevertheless I have somewhat against thee, because thou hast left thy first love.",
+    "translation": "KJV",
+    "is_jesus_words": false
+  },
+  {
+    "book": "Revelation",
+    "chapter": 3,
+    "verse": 19,
+    "text": "As many as I love, I rebuke and chasten: be zealous therefore, and repent.",
     "translation": "KJV",
     "is_jesus_words": false
   }
