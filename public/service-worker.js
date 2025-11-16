@@ -3,8 +3,12 @@
  * Handles offline caching and background sync
  */
 
-const CACHE_NAME = 'messageguide-v1';
-const RUNTIME_CACHE = 'messageguide-runtime-v1';
+const STATIC_CACHE = 'messageguide-static-v2';
+const RUNTIME_CACHE = 'messageguide-runtime-v2';
+const DATA_CACHE = 'messageguide-data-v1';
+const OFFLINE_FALLBACK = '/index.html';
+
+const SUPABASE_PATH_MATCHERS = ['/rest/v1/', '/auth/v1/', '/storage/v1/', '/functions/v1/'];
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
@@ -12,125 +16,133 @@ const PRECACHE_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
+  '/placeholder.svg',
 ];
 
-// Install event - cache essential assets
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Install');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[ServiceWorker] Pre-caching app shell');
-        return cache.addAll(PRECACHE_ASSETS);
-      })
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_ASSETS))
       .then(() => self.skipWaiting())
   );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activate');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            console.log('[ServiceWorker] Removing old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames.map((cacheName) => {
+            if (![STATIC_CACHE, RUNTIME_CACHE, DATA_CACHE].includes(cacheName)) {
+              console.log('[ServiceWorker] Removing old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+            return null;
+          })
+        )
+      )
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
-  }
-
-  // Skip POST, PUT, DELETE requests (Supabase mutations)
   if (request.method !== 'GET') {
     return;
   }
 
-  // Network-first strategy for API calls
-  if (url.pathname.includes('/rest/v1/') || url.pathname.includes('/auth/v1/')) {
+  const url = new URL(request.url);
+  const isSameOrigin = url.origin === location.origin;
+  const isSupabaseRequest = SUPABASE_PATH_MATCHERS.some((matcher) =>
+    url.pathname.includes(matcher)
+  );
+
+  // Only handle same-origin or Supabase data requests
+  if (!isSameOrigin && !isSupabaseRequest) {
+    return;
+  }
+
+  if (isSupabaseRequest) {
+    event.respondWith(networkFirst(request, DATA_CACHE));
+    return;
+  }
+
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful API responses
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, responseClone));
           return response;
         })
-        .catch(() => {
-          // Fallback to cache if network fails
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              console.log('[ServiceWorker] Serving from cache:', request.url);
-              return cachedResponse;
-            }
-            // Return offline response
-            return new Response(
-              JSON.stringify({ error: 'Offline - No cached data available' }),
-              {
-                status: 503,
-                statusText: 'Service Unavailable',
-                headers: { 'Content-Type': 'application/json' },
-              }
-            );
-          });
-        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_FALLBACK)))
     );
     return;
   }
 
-  // Cache-first strategy for static assets
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request)
-        .then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type === 'error') {
-            return response;
-          }
-
-          // Cache the fetched resource
-          const responseClone = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
-
-          return response;
-        })
-        .catch(() => {
-          // Return offline page for navigation requests
-          if (request.destination === 'document') {
-            return caches.match('/index.html');
-          }
-        });
-    })
-  );
+  event.respondWith(cacheFirst(request));
 });
 
-// Background sync for pending changes
+function cacheFirst(request) {
+  return caches.match(request).then((cachedResponse) => {
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    return fetch(request)
+      .then((response) => {
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+
+        const responseClone = response.clone();
+        caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, responseClone));
+        return response;
+      })
+      .catch(() => {
+        if (request.destination === 'document') {
+          return caches.match(OFFLINE_FALLBACK);
+        }
+      });
+  });
+}
+
+function networkFirst(request, cacheName) {
+  return caches.open(cacheName).then((cache) =>
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          cache.put(request, response.clone());
+        }
+        return response;
+      })
+      .catch(() =>
+        cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          return new Response(
+            JSON.stringify({ error: 'Offline - No cached data available' }),
+            {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
+        })
+      )
+  );
+}
+
 self.addEventListener('sync', (event) => {
   console.log('[ServiceWorker] Background sync:', event.tag);
-  
+
   if (event.tag === 'sync-offline-changes') {
     event.waitUntil(syncOfflineChanges());
   }
@@ -138,17 +150,15 @@ self.addEventListener('sync', (event) => {
 
 async function syncOfflineChanges() {
   console.log('[ServiceWorker] Syncing offline changes...');
-  
-  // Open IndexedDB and get sync queue
+
   const db = await openDatabase();
   const syncQueue = await getSyncQueue(db);
-  
+
   if (syncQueue.length === 0) {
     console.log('[ServiceWorker] No changes to sync');
     return;
   }
 
-  // Process sync queue
   for (const item of syncQueue) {
     try {
       await processSyncItem(item);
@@ -156,7 +166,6 @@ async function syncOfflineChanges() {
       console.log('[ServiceWorker] Synced item:', item.id);
     } catch (error) {
       console.error('[ServiceWorker] Failed to sync item:', item.id, error);
-      // Keep item in queue for retry
     }
   }
 }
@@ -190,10 +199,8 @@ function removeFromSyncQueue(db, id) {
 }
 
 async function processSyncItem(item) {
-  // This will be handled by the main app
-  // Send message to clients to process the sync
   const clients = await self.clients.matchAll();
-  clients.forEach(client => {
+  clients.forEach((client) => {
     client.postMessage({
       type: 'SYNC_ITEM',
       payload: item,
@@ -201,7 +208,6 @@ async function processSyncItem(item) {
   });
 }
 
-// Listen for messages from the app
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
