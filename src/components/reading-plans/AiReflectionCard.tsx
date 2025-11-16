@@ -1,12 +1,36 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Brain, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import type { ScriptureRange } from "@/types/readingPlans";
+import { cn } from "@/lib/utils";
+
+const formatScriptureLabel = (range: ScriptureRange) => {
+  const chapterPart =
+    range.chapterStart === range.chapterEnd
+      ? `${range.chapterStart}`
+      : `${range.chapterStart}-${range.chapterEnd}`;
+
+  let versePart = "";
+  if (
+    range.chapterStart === range.chapterEnd &&
+    typeof range.verseStart === "number"
+  ) {
+    if (typeof range.verseEnd === "number" && range.verseEnd !== range.verseStart) {
+      versePart = `:${range.verseStart}-${range.verseEnd}`;
+    } else {
+      versePart = `:${range.verseStart}`;
+    }
+  }
+
+  return `${range.book} ${chapterPart}${versePart}`;
+};
 
 interface AiReflectionCardProps {
   summary: string;
   reflectionQuestion: string;
-  scriptures: string;
+  scriptures: ScriptureRange[];
 }
 
 export const AiReflectionCard = ({
@@ -15,6 +39,29 @@ export const AiReflectionCard = ({
   scriptures,
 }: AiReflectionCardProps) => {
   const [showExplanation, setShowExplanation] = useState(false);
+  const navigate = useNavigate();
+
+  const scriptureLabels = useMemo(
+    () =>
+      scriptures.map((range) => ({
+        key: `${range.book}-${range.chapterStart}-${range.chapterEnd}-${range.verseStart ?? ""}-${range.verseEnd ?? ""}`,
+        label: formatScriptureLabel(range),
+      })),
+    [scriptures],
+  );
+
+  const handleScriptureClick = (range: ScriptureRange) => {
+    const params = new URLSearchParams({
+      book: range.book,
+      chapter: String(range.chapterStart),
+    });
+
+    if (typeof range.verseStart === "number") {
+      params.set("verse", String(range.verseStart));
+    }
+
+    navigate(`/bible?${params.toString()}`);
+  };
 
   return (
     <Card>
@@ -37,7 +84,27 @@ export const AiReflectionCard = ({
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-primary">Scriptures</p>
-          <p className="text-foreground">{scriptures}</p>
+          {scriptureLabels.length > 0 ? (
+            <div className="flex flex-wrap gap-1 text-foreground">
+              {scriptureLabels.map(({ key, label }, index) => (
+                <div key={key} className="inline-flex items-center text-sm">
+                  <button
+                    type="button"
+                    onClick={() => handleScriptureClick(scriptures[index])}
+                    className={cn(
+                      "font-medium text-primary transition-colors",
+                      "hover:text-primary/80 hover:underline",
+                    )}
+                  >
+                    {label}
+                  </button>
+                  {index < scriptureLabels.length - 1 && <span className="ml-1 text-muted-foreground">,</span>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No scriptures assigned.</p>
+          )}
         </div>
         <Button
           variant="secondary"
