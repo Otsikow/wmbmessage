@@ -215,7 +215,7 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+      <Header showBackButton />
 
       {/* Hero Section with Search */}
       <section className="relative py-20 overflow-hidden">
