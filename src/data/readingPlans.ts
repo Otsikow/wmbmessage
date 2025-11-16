@@ -830,7 +830,7 @@ export const BASE_READING_PLANS: BiblePlan[] = [
     title: config.title,
     description: config.description,
     durationDays: config.days.length,
-    planType: "topical",
+    planType: "topical" as const,
     difficulty: config.difficulty,
     tags: config.tags,
     themeColor: config.themeColor,

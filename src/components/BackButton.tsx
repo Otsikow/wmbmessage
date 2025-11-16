@@ -20,14 +20,12 @@ export function BackButton({
   const navigate = useNavigate();
 
   const handleBack = () => {
-    const canGoBack = typeof window !== "undefined" && window.history.length > 1;
-
-    if (canGoBack) {
+    // Try to go back if there's history, otherwise use fallback
+    if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
-      return;
+    } else {
+      navigate(fallbackPath);
     }
-
-    navigate(fallbackPath);
   };
 
   return (
