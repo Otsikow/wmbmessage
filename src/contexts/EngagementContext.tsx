@@ -313,17 +313,7 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
 export const useEngagement = () => {
   const context = useContext(EngagementContext);
   if (!context) {
-    console.warn(
-      "useEngagement was called outside of an EngagementProvider. This is normal in previews and tests."
-    );
-
-    return {
-      stats: DEFAULT_STATS,
-      recordActivity: () => {},
-      hasActivityToday: false,
-      encouragement: "Get started on your spiritual journey today.",
-      nextMilestone: null,
-    };
+    throw new Error("useEngagement must be used within an EngagementProvider");
   }
   return context;
 };
