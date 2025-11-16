@@ -263,33 +263,24 @@ export default function CrossReferenceViewer({
   }, [initialSearchQuery, performSearch]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex flex-col h-full space-y-4">
       {/* Search Input */}
-      <div className="flex-shrink-0 space-y-3 rounded-2xl border border-border/70 bg-card/90 p-4 shadow-sm">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
-            Search Scriptures &amp; References
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Enter a keyword or verse reference to explore the library.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="space-y-2 flex-shrink-0">
+        <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
               placeholder='Try: "love", "faith", "John 3:16", "Genesis 1:1-3"'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="h-12 rounded-xl border-2 border-primary/30 bg-background/95 pr-12 text-base shadow-inner transition focus-visible:border-primary focus-visible:ring-primary/30"
+              className="pr-8"
             />
             {searchInput && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-1 top-1 h-10 w-10 rounded-full text-muted-foreground"
+                className="absolute right-0 top-0 h-full"
                 onClick={handleClearSearch}
-                aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -303,44 +294,35 @@ export default function CrossReferenceViewer({
               isSearching ||
               !searchInput.trim()
             }
-            className="h-12 rounded-xl px-6 text-base"
           >
             {searchLoading || crossReferenceSearchLoading || isSearching ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
-              <Search className="mr-2 h-4 w-4" />
+              <Search className="h-4 w-4 mr-2" />
             )}
             Search
           </Button>
         </div>
-
-        {(searchError || crossReferenceSearchError) && (
-          <div className="space-y-2">
-            {searchError && (
-              <Alert variant="destructive" className="py-3">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm">{searchError}</AlertDescription>
-              </Alert>
-            )}
-            {crossReferenceSearchError && (
-              <Alert variant="destructive" className="py-3">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  {crossReferenceSearchError}
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
+        
+        {searchError && (
+          <Alert variant="destructive" className="py-3">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">{searchError}</AlertDescription>
+          </Alert>
+        )}
+        {crossReferenceSearchError && (
+          <Alert variant="destructive" className="py-3">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              {crossReferenceSearchError}
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
       {/* Tabs for organizing content */}
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm"
-      >
-        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/40 p-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             Search Results
@@ -362,8 +344,8 @@ export default function CrossReferenceViewer({
         </TabsList>
 
         {/* Search Results Tab */}
-        <TabsContent value="search" className="mt-4 flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full rounded-xl border border-dashed border-border/60 bg-background/80 p-4">
+        <TabsContent value="search" className="mt-4 flex-1 overflow-hidden">
+          <ScrollArea className="h-full rounded-md border p-4">
             {searchLoading || crossReferenceSearchLoading || isSearching ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -522,8 +504,8 @@ export default function CrossReferenceViewer({
         </TabsContent>
 
         {/* Cross References Tab */}
-        <TabsContent value="cross-refs" className="mt-4 flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full rounded-xl border border-dashed border-border/60 bg-background/80 p-4">
+        <TabsContent value="cross-refs" className="mt-4 flex-1 overflow-hidden">
+          <ScrollArea className="h-full rounded-md border p-4">
             {crossRefsLoading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

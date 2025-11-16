@@ -323,11 +323,9 @@ const SearchPage = () => {
                     Cross References
                   </Button>
                 </DialogTrigger>
-                <DialogContent
-                  className="flex h-[90vh] max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/95 p-0 shadow-2xl"
-                >
-                  <DialogHeader className="border-b bg-gradient-to-r from-primary/5 via-primary/5 to-transparent px-6 pt-6 pb-4">
-                    <DialogTitle className="text-xl font-semibold">
+                <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0">
+                  <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                    <DialogTitle className="text-xl">
                       Cross References &amp; Search
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
