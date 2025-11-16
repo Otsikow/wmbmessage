@@ -173,39 +173,40 @@ export function useBibleSearch() {
             const verseReferencePattern = /^(\d?\s?[A-Za-z]+)\s+(\d+)(?::(\d+))?(?:-(\d+))?$/;
             const match = normalizedQuery.match(verseReferencePattern);
 
-          if (match) {
-            const response = await fetch(
-              `https://bible-api.com/${encodeURIComponent(normalizedQuery)}?translation=kjv`,
-              { signal: AbortSignal.timeout(5000) }
-            );
+            if (match) {
+              const response = await fetch(
+                `https://bible-api.com/${encodeURIComponent(normalizedQuery)}?translation=kjv`,
+                { signal: AbortSignal.timeout(5000) }
+              );
 
-            if (response.ok) {
-              const data = await response.json();
+              if (response.ok) {
+                const data = await response.json();
 
-              if (data.verses && Array.isArray(data.verses)) {
-                data.verses.forEach((verse: { chapter: number; verse: number; text: string }) => {
-                  allResults.push({
-                    book: data.reference.split(/\d/)[0].trim(),
-                    chapter: verse.chapter,
-                    verse: verse.verse,
-                    text: verse.text.trim(),
-                    testament: getTestament(data.reference.split(/\d/)[0].trim()),
+                if (data.verses && Array.isArray(data.verses)) {
+                  data.verses.forEach((verse: { chapter: number; verse: number; text: string }) => {
+                    allResults.push({
+                      book: data.reference.split(/\d/)[0].trim(),
+                      chapter: verse.chapter,
+                      verse: verse.verse,
+                      text: verse.text.trim(),
+                      testament: getTestament(data.reference.split(/\d/)[0].trim()),
+                    });
                   });
-                });
-              } else if (data.text) {
-                const bookName = data.reference.split(/\d/)[0].trim();
-                allResults.push({
-                  book: bookName,
-                  chapter: data.verses?.[0]?.chapter || 1,
-                  verse: data.verses?.[0]?.verse || 1,
-                  text: data.text.trim(),
-                  testament: getTestament(bookName),
-                });
+                } else if (data.text) {
+                  const bookName = data.reference.split(/\d/)[0].trim();
+                  allResults.push({
+                    book: bookName,
+                    chapter: data.verses?.[0]?.chapter || 1,
+                    verse: data.verses?.[0]?.verse || 1,
+                    text: data.text.trim(),
+                    testament: getTestament(bookName),
+                  });
+                }
               }
             }
+          } catch (err) {
+            console.warn('bible-api.com fallback failed:', err);
           }
-        } catch (err) {
-          console.warn('bible-api.com fallback failed:', err);
         }
       }
 
