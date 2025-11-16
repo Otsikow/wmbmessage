@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,7 @@ export default function WMBSermons() {
     });
   }, [sermons, searchQuery]);
 
-  const handleAddSermonNote = (sermon: SermonSummary, event: MouseEvent) => {
+  const handleAddSermonNote = (sermon: SermonSummary, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedSermonForNote(sermon);
     setIsNoteEditorOpen(true);
@@ -92,7 +92,7 @@ export default function WMBSermons() {
 
   const handleViewCrossReferences = (
     sermon: SermonSummary,
-    event: MouseEvent,
+    event: React.MouseEvent
   ) => {
     event.stopPropagation();
     navigate(`/cross-references?query=${encodeURIComponent(sermon.title)}`);

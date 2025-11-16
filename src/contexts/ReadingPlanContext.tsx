@@ -5,7 +5,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
 import {
   differenceInCalendarDays,
@@ -205,7 +204,7 @@ const buildBadge = (
   shareText: `${badgeTitle} unlocked in Sermon Scrolls!`,
 });
 
-export const ReadingPlanProvider = ({ children }: { children: ReactNode }) => {
+export const ReadingPlanProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<ReadingPlanState>(() => loadState());
   const [celebration, setCelebration] = useState<{
     streak: number;

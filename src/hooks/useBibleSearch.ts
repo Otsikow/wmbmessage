@@ -548,6 +548,14 @@ async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[
   sampleSermons.forEach((sermon, sermonIndex) => {
     sermon.paragraphs.forEach((paragraph, paragraphIndex) => {
       if (paragraph.toLowerCase().includes(lowerQuery)) {
+        const themes =
+          sermon.themes && sermon.themes.length > 0 ? [...sermon.themes] : undefined;
+        const bibleReferences =
+          sermon.references && sermon.references.length > 0
+            ? [...sermon.references]
+            : undefined;
+        const year = sermon.date ? new Date(sermon.date).getFullYear() : undefined;
+
         results.push({
           sermon_id: `${sermon.title}-${sermonIndex}`,
           title: sermon.title,
@@ -555,6 +563,9 @@ async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[
           location: sermon.location || 'Unknown Location',
           excerpt: paragraph,
           paragraph: paragraphIndex + 1,
+          year,
+          themes,
+          bibleReferences,
         });
       }
     });

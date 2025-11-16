@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  type KeyboardEvent,
-  type ReactNode,
-} from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -196,7 +189,7 @@ export default function CrossReferenceViewer({
     setManualReferences(manualReferences.filter((_, i) => i !== index));
   };
 
-  const handleKeyPress = (e: KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
     }
@@ -859,7 +852,7 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
 }
 
 // Helper function to highlight search terms in text
-function highlightSearchTerm(text: string, searchTerm: string): ReactNode {
+function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode {
   if (!searchTerm.trim()) return text;
 
   const terms = searchTerm.toLowerCase().split(/\s+/);

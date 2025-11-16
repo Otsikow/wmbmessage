@@ -3,6 +3,8 @@ export interface SampleSermonRecord {
   date?: string;
   location?: string;
   paragraphs: string[];
+  themes?: string[];
+  references?: string[];
 }
 
 let cachedSampleSermons: SampleSermonRecord[] | null = null;
@@ -48,14 +50,32 @@ function normalizeSampleSermonRecord(value: unknown): SampleSermonRecord | null 
   const date = typeof record.date === "string" ? record.date : undefined;
   const location = typeof record.location === "string" ? record.location : undefined;
   const paragraphs = Array.isArray(record.paragraphs)
-    ? record.paragraphs.filter((paragraph): paragraph is string => typeof paragraph === "string" && paragraph.trim().length > 0)
+    ? record.paragraphs.filter(
+        (paragraph): paragraph is string =>
+          typeof paragraph === "string" && paragraph.trim().length > 0,
+      )
     : [];
+
+  const themes = Array.isArray(record.themes)
+    ? record.themes.filter(
+        (theme): theme is string => typeof theme === "string" && theme.trim().length > 0,
+      )
+    : undefined;
+
+  const references = Array.isArray(record.references)
+    ? record.references.filter(
+        (reference): reference is string =>
+          typeof reference === "string" && reference.trim().length > 0,
+      )
+    : undefined;
 
   return {
     title,
     date,
     location,
     paragraphs,
+    themes,
+    references,
   };
 }
 

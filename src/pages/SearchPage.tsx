@@ -2,6 +2,8 @@ import {
   useState,
   useMemo,
   useCallback,
+  useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import { Search, BookOpen, Book, Sparkles, Filter } from "lucide-react";
@@ -60,6 +62,9 @@ const SearchPage = () => {
   const [themeResults, setThemeResults] = useState<ThemeSearchResult[]>(
     defaultThemeResults,
   );
+  const [pendingScrollQuery, setPendingScrollQuery] = useState<string | null>(
+    null,
+  );
   const [bibleFilter, setBibleFilter] = useState<"all" | "ot" | "nt">("all");
   const [selectedBibleBook, setSelectedBibleBook] = useState("all");
   const [sermonYear, setSermonYear] = useState("all");
@@ -67,6 +72,7 @@ const SearchPage = () => {
   const [sermonTheme, setSermonTheme] = useState("all");
   const { searchBible, searchWMBSermons, loading } = useBibleSearch();
   const navigate = useNavigate();
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   const quickThemes = useMemo(() => themeLibrary.slice(0, 6), []);
 
@@ -122,8 +128,11 @@ const SearchPage = () => {
         setThemeResults(defaultThemeResults);
         setBibleResults([]);
         setSermonResults([]);
+        setPendingScrollQuery(null);
         return;
       }
+
+      setPendingScrollQuery(trimmed);
 
       const themeMatches = searchThemes(query);
       setThemeResults(themeMatches.length > 0 ? themeMatches : []);
@@ -138,6 +147,37 @@ const SearchPage = () => {
     },
     [searchBible, searchWMBSermons, searchMode],
   );
+
+  useEffect(() => {
+    if (!pendingScrollQuery) {
+      return;
+    }
+
+    if (!searchQuery.trim()) {
+      setPendingScrollQuery(null);
+      return;
+    }
+
+    const hasResults =
+      bibleResults.length > 0 ||
+      sermonResults.length > 0 ||
+      themeResults.length > 0;
+
+    if (!hasResults) {
+      return;
+    }
+
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setPendingScrollQuery(null);
+  }, [
+    pendingScrollQuery,
+    bibleResults.length,
+    sermonResults.length,
+    themeResults.length,
+    searchQuery,
+  ]);
 
   const handleThemeExplore = useCallback(
     (themeName: string) => {
@@ -205,6 +245,7 @@ const SearchPage = () => {
   }, [sermonResults, sermonYear, sermonLocation, sermonTheme]);
 
   const hasThemeQuery = searchQuery.trim().length > 0;
+  const heroHasQuery = hasThemeQuery;
   const displayedThemeResults = hasThemeQuery
     ? themeResults
     : defaultThemeResults;
@@ -218,7 +259,9 @@ const SearchPage = () => {
       <Header showBackButton />
 
       {/* Hero Section with Search */}
-      <section className="relative py-20 overflow-hidden">
+      <section
+        className={`relative overflow-hidden ${heroHasQuery ? "py-10" : "py-20"}`}
+      >
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
           style={{ backgroundImage: `url(${heroImage})` }}
@@ -226,7 +269,11 @@ const SearchPage = () => {
         <div className="absolute inset-0 bg-background/60" />
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center mb-8">
+          <div
+            className={`max-w-3xl mx-auto text-center ${
+              heroHasQuery ? "mb-4" : "mb-8"
+            }`}
+          >
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
               Search the Scriptures
             </h1>
@@ -353,7 +400,7 @@ const SearchPage = () => {
       </section>
 
       {/* Search Results */}
-      <section className="flex-1 py-12">
+      <section ref={resultsRef} id="search-results" className="flex-1 py-12">
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="text-center py-12">
