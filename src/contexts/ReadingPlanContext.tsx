@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -26,6 +27,42 @@ import {
   UserPlanProgress,
 } from "@/types/readingPlans";
 import { useEngagement } from "@/contexts/EngagementContext";
+import { useToast } from "@/hooks/use-toast";
+
+const REMINDER_WINDOW_MS = 5 * 60 * 1000;
+const DEFAULT_TIMEZONE =
+  typeof Intl === "undefined" ? "UTC" : Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const getReminderTime = (
+  preferences: ReminderPreferences,
+): { hours: number; minutes: number } | null => {
+  const timeString =
+    preferences.preferredWindow === "morning"
+      ? preferences.morningTime
+      : preferences.preferredWindow === "evening"
+        ? preferences.eveningTime
+        : preferences.customTime;
+
+  if (!timeString) {
+    return null;
+  }
+
+  const [hours, minutes] = timeString.split(":").map((value) => Number.parseInt(value, 10));
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return null;
+  }
+
+  return { hours, minutes };
+};
+
+const getDateInTimeZone = (date: Date, timeZone: string) => {
+  try {
+    return new Date(date.toLocaleString("en-US", { timeZone }));
+  } catch (error) {
+    console.warn("Invalid timezone for reminder preferences", error);
+    return date;
+  }
+};
 
 interface ReadingPlanState {
   activePlanId?: string;
@@ -89,7 +126,7 @@ const defaultReminder = (): ReminderPreferences => ({
   morningTime: "07:00",
   eveningTime: "20:00",
   customTime: "12:00",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  timezone: DEFAULT_TIMEZONE,
   pushEnabled: true,
   lastReminderSent: null,
 });
@@ -211,6 +248,8 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
     timestamp: string;
   } | null>(null);
   const { recordActivity } = useEngagement();
+  const { toast } = useToast();
+  const notificationPermissionRequestedRef = useRef(false);
 
   const plans = useMemo(
     () => [...BASE_READING_PLANS, ...state.customPlans],
@@ -315,6 +354,92 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
     },
     [updateProgress],
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const remindableProgress = Object.values(state.progress).filter(
+      (progress) => progress.reminderPreferences.enabled && progress.reminderPreferences.pushEnabled,
+    );
+
+    if (remindableProgress.length === 0) {
+      return undefined;
+    }
+
+    if (
+      !notificationPermissionRequestedRef.current &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
+      notificationPermissionRequestedRef.current = true;
+      Notification.requestPermission().catch(() => {
+        notificationPermissionRequestedRef.current = false;
+      });
+    }
+
+    const checkReminders = () => {
+      const now = new Date();
+
+      remindableProgress.forEach((progress) => {
+        const preferences = progress.reminderPreferences;
+        const reminderTime = getReminderTime(preferences);
+        if (!reminderTime) {
+          return;
+        }
+
+        const timezone = preferences.timezone || DEFAULT_TIMEZONE;
+        const zonedNow = getDateInTimeZone(now, timezone);
+        const reminderMoment = new Date(zonedNow);
+        reminderMoment.setHours(reminderTime.hours, reminderTime.minutes, 0, 0);
+
+        const tooEarly = zonedNow.getTime() < reminderMoment.getTime();
+        const missedWindow = zonedNow.getTime() - reminderMoment.getTime() > REMINDER_WINDOW_MS;
+        if (tooEarly || missedWindow) {
+          return;
+        }
+
+        const lastReminder = preferences.lastReminderSent
+          ? getDateInTimeZone(new Date(preferences.lastReminderSent), timezone)
+          : null;
+        const alreadySentToday =
+          lastReminder && differenceInCalendarDays(zonedNow, lastReminder) === 0;
+
+        if (alreadySentToday) {
+          return;
+        }
+
+        const plan = findPlan(plans, progress.planId);
+        const planTitle = plan?.title ?? "your reading plan";
+        const description = `It's time to continue "${planTitle}".`;
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            new Notification("Daily reading reminder", {
+              body: description,
+            });
+          } catch (error) {
+            console.warn("Failed to deliver push notification", error);
+            toast({ title: "Daily reading reminder", description });
+          }
+        } else {
+          toast({ title: "Daily reading reminder", description });
+        }
+
+        updateReminderPreferences(progress.planId, {
+          lastReminderSent: new Date().toISOString(),
+        });
+      });
+    };
+
+    const interval = window.setInterval(checkReminders, 60_000);
+    checkReminders();
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [plans, state.progress, toast, updateReminderPreferences]);
 
   const addNoteForDay = useCallback(
     (planId: string, dayNumber: number, note: string) => {
