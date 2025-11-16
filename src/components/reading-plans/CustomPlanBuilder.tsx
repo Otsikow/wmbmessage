@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import {
   Card,
@@ -51,7 +51,7 @@ export const CustomPlanBuilder = ({ onCreate }: CustomPlanBuilderProps) => {
     setDays((previous) => [...previous, emptyDay(previous.length + 1)]);
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const payload: CustomPlanInput = {
       title,

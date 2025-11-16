@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function SignIn() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleEmailSignIn = async (e: FormEvent) => {
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const { sanitized, errors } = validateSignInInput({ email, password });
