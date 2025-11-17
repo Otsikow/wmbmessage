@@ -86,10 +86,14 @@ export function PageBreadcrumbs({ className }: { className?: string }) {
     segments.forEach((segment, index) => {
       pathAccumulator += `/${segment}`;
       const label = formatSegment(segment, segments[index - 1]);
+      const isVirtualDaySegment = segment === "day" && Boolean(segments[index + 1]);
 
       crumbs.push({
         label,
-        href: index === segments.length - 1 ? undefined : pathAccumulator,
+        href:
+          index === segments.length - 1 || isVirtualDaySegment
+            ? undefined
+            : pathAccumulator,
       });
     });
 
