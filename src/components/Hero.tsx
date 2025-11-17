@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Search, MessageSquare, FileText, Download } from "lucide-react";
+import { BookOpen, Search, MessageSquare, FileText, Download, Sparkles, Target } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import RecentBibleVerses from "@/components/RecentBibleVerses";
 import heroImage from "@/assets/bible-hero-bg.jpg";
@@ -27,7 +27,16 @@ export default function Hero() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto justify-center">
+            <Link to="/plans">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-white shadow-glow"
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Bible Reading Plans
+              </Button>
+            </Link>
             <Link to="/reader">
               <Button size="lg" className="w-full sm:w-auto shadow-elegant hover:shadow-glow transition-all">
                 <BookOpen className="mr-2 h-5 w-5" />
@@ -56,7 +65,16 @@ export default function Hero() {
             <RecentBibleVerses />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-12 w-full max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mt-12 w-full max-w-7xl">
+            <Link to="/plans" className="block h-full">
+              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-glow hover:border-primary transition-all cursor-pointer h-full bg-gradient-to-b from-primary/5 to-background">
+                <Target className="h-10 w-10 text-primary mb-4" />
+                <h3 className="text-lg font-semibold mb-3">Bible Reading Plans</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Follow guided plans with streak tracking, notes, and bookmarks that stay in sync when you sign in.
+                </p>
+              </Card>
+            </Link>
             <Link to="/reader" className="block h-full">
               <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
                 <BookOpen className="h-10 w-10 text-primary mb-4" />
