@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import AiReflectionCard from "@/components/reading-plans/AiReflectionCard";
 import { useReadingPlans } from "@/contexts/ReadingPlanContext";
 import { Bookmark, Highlighter, BookOpenText } from "lucide-react";
+import { formatScriptureRange, getReaderLinkForRange } from "@/lib/scripture";
 
 const ReadingSession = () => {
   const { planId, dayNumber } = useParams<{ planId: string; dayNumber: string }>();
@@ -52,11 +53,8 @@ const ReadingSession = () => {
     );
   }
 
-  const scriptureList = day.scriptures
-    .map(
-      (range) => `${range.book} ${range.chapterStart}${range.chapterEnd !== range.chapterStart ? `-${range.chapterEnd}` : ""}`,
-    )
-    .join(", ");
+  const scriptureList = day.scriptures.map((range) => formatScriptureRange(range)).join(", ");
+  const primaryScriptureLink = day.scriptures[0] ? getReaderLinkForRange(day.scriptures[0]) : undefined;
 
   const handleComplete = () => {
     markDayComplete(plan.id, day.dayNumber);
@@ -80,7 +78,14 @@ const ReadingSession = () => {
               <p className="text-xs uppercase text-muted-foreground">Reading Session</p>
               <CardTitle className="text-2xl">{plan.title}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Day {day.dayNumber} · {scriptureList}
+                Day {day.dayNumber} · {" "}
+                {primaryScriptureLink ? (
+                  <Link to={primaryScriptureLink} className="font-medium text-primary hover:underline">
+                    {scriptureList}
+                  </Link>
+                ) : (
+                  scriptureList
+                )}
               </p>
             </div>
             <Badge variant="outline">Estimated {day.estimatedMinutes} min</Badge>
@@ -128,7 +133,7 @@ const ReadingSession = () => {
           <AiReflectionCard
             summary={day.summary}
             reflectionQuestion={day.reflectionQuestion}
-            scriptures={scriptureList}
+            scriptures={day.scriptures}
           />
           <Card>
             <CardHeader>

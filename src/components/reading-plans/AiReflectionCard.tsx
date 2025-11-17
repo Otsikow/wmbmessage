@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Brain, Lightbulb } from "lucide-react";
+import { Brain, ExternalLink, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ScriptureRange } from "@/types/readingPlans";
+import { formatScriptureRange, getReaderLinkForRange } from "@/lib/scripture";
 
 interface AiReflectionCardProps {
   summary: string;
   reflectionQuestion: string;
-  scriptures: string;
+  scriptures: ScriptureRange[];
 }
 
 export const AiReflectionCard = ({
@@ -37,7 +40,22 @@ export const AiReflectionCard = ({
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-primary">Scriptures</p>
-          <p className="text-foreground">{scriptures}</p>
+          {scriptures.length ? (
+            <div className="flex flex-wrap gap-x-3 gap-y-2 text-foreground">
+              {scriptures.map((range) => (
+                <Link
+                  key={`${range.book}-${range.chapterStart}-${range.chapterEnd}-${range.verseStart ?? 0}-${range.verseEnd ?? 0}`}
+                  to={getReaderLinkForRange(range)}
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  {formatScriptureRange(range)}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No specific passages assigned.</p>
+          )}
         </div>
         <Button
           variant="secondary"
