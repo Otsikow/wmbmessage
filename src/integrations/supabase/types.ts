@@ -440,6 +440,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reading_states: {
+        Row: {
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          state?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reading_states_user_id_fkey",
+            columns: ["user_id"],
+            isOneToOne: true,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       user_notes: {
         Row: {
           content: string

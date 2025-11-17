@@ -26,6 +26,9 @@ import {
   UserPlanProgress,
 } from "@/types/readingPlans";
 import { useEngagement } from "@/contexts/EngagementContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/config";
 
 interface ReadingPlanState {
   activePlanId?: string;
@@ -81,7 +84,10 @@ interface ReadingPlanContextValue {
   preloadNextDay: (planId: string, dayNumber: number) => void;
 }
 
-const STORAGE_KEY = "reading-plan-state:v1";
+const STORAGE_KEY_BASE = "reading-plan-state:v1";
+
+const buildStorageKey = (userId?: string | null) =>
+  (userId ? `${STORAGE_KEY_BASE}:${userId}` : STORAGE_KEY_BASE);
 
 const defaultReminder = (): ReminderPreferences => ({
   enabled: false,
@@ -114,44 +120,47 @@ const createInitialProgress = (planId: string): UserPlanProgress => ({
 });
 
 const defaultState: ReadingPlanState = {
+  activePlanId: undefined,
   progress: {},
   achievements: [],
   customPlans: [],
   customPlanDays: {},
 };
 
-const loadState = (): ReadingPlanState => {
+const mergeStateWithDefaults = (incoming?: Partial<ReadingPlanState>): ReadingPlanState => ({
+  ...defaultState,
+  ...incoming,
+  progress: incoming?.progress ?? {},
+  achievements: incoming?.achievements ?? [],
+  customPlans: incoming?.customPlans ?? [],
+  customPlanDays: incoming?.customPlanDays ?? {},
+});
+
+const loadState = (storageKey = STORAGE_KEY_BASE): ReadingPlanState => {
   if (typeof window === "undefined") {
     return defaultState;
   }
 
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(storageKey);
     if (!stored) {
       return defaultState;
     }
-    const parsed = JSON.parse(stored) as ReadingPlanState;
-    return {
-      ...defaultState,
-      ...parsed,
-      progress: parsed.progress ?? {},
-      achievements: parsed.achievements ?? [],
-      customPlans: parsed.customPlans ?? [],
-      customPlanDays: parsed.customPlanDays ?? {},
-    };
+    const parsed = JSON.parse(stored) as Partial<ReadingPlanState>;
+    return mergeStateWithDefaults(parsed);
   } catch (error) {
     console.warn("Failed to load reading plan state", error);
     return defaultState;
   }
 };
 
-const saveState = (state: ReadingPlanState) => {
+const saveState = (state: ReadingPlanState, storageKey = STORAGE_KEY_BASE) => {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(storageKey, JSON.stringify(state));
   } catch (error) {
     console.warn("Failed to persist reading plan state", error);
   }
@@ -205,12 +214,64 @@ const buildBadge = (
 });
 
 export const ReadingPlanProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const [state, setState] = useState<ReadingPlanState>(() => loadState());
   const [celebration, setCelebration] = useState<{
     streak: number;
     timestamp: string;
   } | null>(null);
+  const [storageKey, setStorageKey] = useState(() => STORAGE_KEY_BASE);
+  const [isRemoteHydrated, setIsRemoteHydrated] = useState(() => !user);
   const { recordActivity } = useEngagement();
+
+  useEffect(() => {
+    const nextKey = buildStorageKey(user?.id ?? null);
+    setStorageKey(nextKey);
+    setState(loadState(nextKey));
+    setIsRemoteHydrated(!user);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setIsRemoteHydrated(true);
+      return;
+    }
+
+    let cancelled = false;
+    setIsRemoteHydrated(false);
+
+    const hydrateFromSupabase = async () => {
+      const { data, error } = await supabase
+        .from("user_reading_states")
+        .select("state")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        console.warn("Failed to load reading plan state from Supabase", error);
+      }
+
+      if (data?.state) {
+        setState(mergeStateWithDefaults(data.state as Partial<ReadingPlanState>));
+      }
+
+      setIsRemoteHydrated(true);
+    };
+
+    hydrateFromSupabase();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const plans = useMemo(
     () => [...BASE_READING_PLANS, ...state.customPlans],
@@ -246,8 +307,29 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
   }, [activePlan, activeProgress?.currentDay, getPlanDays]);
 
   useEffect(() => {
-    saveState(state);
-  }, [state]);
+    saveState(state, storageKey);
+  }, [state, storageKey]);
+
+  useEffect(() => {
+    if (!user || !isRemoteHydrated || !isSupabaseConfigured) {
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      const serializedState = JSON.parse(JSON.stringify(state));
+      const { error } = await supabase
+        .from("user_reading_states")
+        .upsert({ user_id: user.id, state: serializedState });
+
+      if (error) {
+        console.warn("Failed to save reading plan state to Supabase", error);
+      }
+    }, 800);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [state, user?.id, isRemoteHydrated]);
 
   const startPlan = useCallback((planId: string) => {
     setState((previous) => {

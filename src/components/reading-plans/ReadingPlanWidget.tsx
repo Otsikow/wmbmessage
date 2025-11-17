@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 import { useReadingPlans } from "@/contexts/ReadingPlanContext";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,40 @@ const ConfettiOverlay = ({ active }: { active: boolean }) => (
 );
 
 export const ReadingPlanWidget = () => {
+  const { user } = useAuth();
   const { todayAssignment, activeProgress, catchUpQueue, celebration } = useReadingPlans();
+
+  if (!user) {
+    return (
+      <Card className="relative overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-lg font-semibold">Bible Reading Plans</CardTitle>
+          <Sparkles className="h-5 w-5 text-primary" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Sign in to track your progress, streaks, bookmarks, and notes across every device.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Badge variant="outline" className="bg-primary/5 text-primary">
+              <Flame className="mr-1 h-3.5 w-3.5" /> Secure streaks
+            </Badge>
+            <Badge variant="outline" className="bg-secondary/10 text-secondary-foreground">
+              Synced notes
+            </Badge>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild className="flex-1">
+              <Link to="/auth/sign-in">Sign in to start</Link>
+            </Button>
+            <Button asChild variant="outline" className="flex-1">
+              <Link to="/auth/sign-up">Create free account</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!todayAssignment || !activeProgress) {
     return (

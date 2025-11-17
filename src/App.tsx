@@ -248,21 +248,27 @@ function App() {
 
                                   <Route
                                     path="/plans"
-                                    element={withSectionBoundary("Reading Plans", <ReadingPlans />)}
+                                    element={
+                                      <ProtectedRoute>
+                                        {withSectionBoundary("Reading Plans", <ReadingPlans />)}
+                                      </ProtectedRoute>
+                                    }
                                   />
                                   <Route
                                     path="/plans/:planId"
-                                    element={withSectionBoundary(
-                                      "Plan detail",
-                                      <ReadingPlanDetail />,
-                                    )}
+                                    element={
+                                      <ProtectedRoute>
+                                        {withSectionBoundary("Plan detail", <ReadingPlanDetail />)}
+                                      </ProtectedRoute>
+                                    }
                                   />
                                   <Route
                                     path="/plans/:planId/day/:dayNumber"
-                                    element={withSectionBoundary(
-                                      "Reading session",
-                                      <ReadingSession />,
-                                    )}
+                                    element={
+                                      <ProtectedRoute>
+                                        {withSectionBoundary("Reading session", <ReadingSession />)}
+                                      </ProtectedRoute>
+                                    }
                                   />
                                   {/* Catch-All */}
                                   <Route
