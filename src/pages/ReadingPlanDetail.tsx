@@ -111,13 +111,7 @@ const ReadingPlanDetail = () => {
             <AiReflectionCard
               summary={currentDay.summary}
               reflectionQuestion={currentDay.reflectionQuestion}
-              scriptures={currentDay.scriptures
-                .map((range) =>
-                  `${range.book} ${range.chapterStart}${
-                    range.chapterEnd !== range.chapterStart ? `-${range.chapterEnd}` : ""
-                  }`,
-                )
-                .join(", ")}
+              scriptures={currentDay.scriptures}
             />
             <ReminderPreferencesForm
               preferences={progress?.reminderPreferences ?? {
