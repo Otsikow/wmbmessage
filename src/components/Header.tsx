@@ -66,9 +66,6 @@ export default function Header({
               <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
                 Search
               </Link>
-              <Link to="/plans" className="text-sm font-medium transition-colors hover:text-primary">
-                Plans
-              </Link>
               <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
                 References
               </Link>
