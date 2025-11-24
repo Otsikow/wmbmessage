@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
-import { useHighlights } from "@/hooks/useHighlights";
+import { useHighlights, HIGHLIGHT_COLORS } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
@@ -141,7 +141,10 @@ export default function Reader() {
 
   const [currentBook, setCurrentBook] = useState(initialLocation.book);
   const [currentChapter, setCurrentChapter] = useState(initialLocation.chapter);
-  const [selectedVerse, setSelectedVerse] = useState<number | undefined>(
+  const [selectedVerses, setSelectedVerses] = useState<number[]>(
+    initialLocation.verse ? [initialLocation.verse] : []
+  );
+  const [focusedVerse, setFocusedVerse] = useState<number | undefined>(
     initialLocation.verse
   );
 
@@ -164,11 +167,19 @@ export default function Reader() {
     setCurrentBook(book);
     setCurrentChapter(chapter);
     setShowCrossRef(false);
-    setSelectedVerse(verse);
+    setSelectedVerses(verse ? [verse] : []);
+    setFocusedVerse(verse);
   };
 
   const handleVerseSelect = (verseNumber: number) => {
-    setSelectedVerse(verseNumber);
+    setSelectedVerses((prev) => {
+      const isSelected = prev.includes(verseNumber);
+      if (isSelected) {
+        return prev.filter((v) => v !== verseNumber);
+      }
+      return [...prev, verseNumber].sort((a, b) => a - b);
+    });
+    setFocusedVerse(verseNumber);
   };
 
   useEffect(() => {
@@ -181,10 +192,10 @@ export default function Reader() {
       JSON.stringify({
         book: currentBook,
         chapter: currentChapter,
-        verse: selectedVerse ?? null,
+        verse: selectedVerses[0] ?? null,
       })
     );
-  }, [currentBook, currentChapter, selectedVerse]);
+  }, [currentBook, currentChapter, selectedVerses]);
 
   useEffect(() => {
     recordActivity("bible-reading", {
@@ -193,12 +204,22 @@ export default function Reader() {
   }, [currentBook, currentChapter, recordActivity]);
 
   const handleCrossReferenceClick = (verseNumber: number) => {
-    setSelectedVerse(verseNumber);
+    setSelectedVerses((prev) =>
+      prev.includes(verseNumber)
+        ? prev
+        : [...prev, verseNumber].sort((a, b) => a - b)
+    );
+    setFocusedVerse(verseNumber);
     setShowCrossRef(true);
   };
 
   const handleSermonCrossRefClick = (verseNumber: number) => {
-    setSelectedVerse(verseNumber);
+    setSelectedVerses((prev) =>
+      prev.includes(verseNumber)
+        ? prev
+        : [...prev, verseNumber].sort((a, b) => a - b)
+    );
+    setFocusedVerse(verseNumber);
     setShowSermonCrossRef(true);
   };
 
@@ -206,6 +227,7 @@ export default function Reader() {
     e.stopPropagation();
     const verseRef = `${currentBook} ${currentChapter}:${verseNumber}`;
     setNoteVerseContext(verseRef);
+    setFocusedVerse(verseNumber);
     setIsNoteEditorOpen(true);
   };
 
@@ -238,6 +260,43 @@ export default function Reader() {
   const handleToggleBookmark = async (verseNumber: number) => {
     await toggleBookmark(verseNumber);
   };
+
+  const handleBulkHighlight = async (color: string, note?: string) => {
+    if (!selectedVerses.length) return;
+
+    await Promise.all(selectedVerses.map((verse) => addHighlight(verse, color, note)));
+  };
+
+  const handleBulkRemoveHighlight = async () => {
+    if (!selectedVerses.length) return;
+
+    await Promise.all(selectedVerses.map((verse) => removeHighlight(verse)));
+  };
+
+  const handleBulkNote = () => {
+    if (!selectedVerses.length) return;
+
+    const references = selectedVerses
+      .map((verse) => `${currentBook} ${currentChapter}:${verse}`)
+      .join(", ");
+
+    setNoteVerseContext(`Selected verses: ${references}`);
+    setFocusedVerse(selectedVerses[0]);
+    setIsNoteEditorOpen(true);
+  };
+
+  const handleSelectEntireChapter = () => {
+    if (!verses.length) return;
+
+    setSelectedVerses(verses.map((verse) => verse.number));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedVerses([]);
+    setFocusedVerse(undefined);
+  };
+
+  const primarySelectedVerse = selectedVerses[0];
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
@@ -310,7 +369,7 @@ export default function Reader() {
                         onNavigate={handleNavigateFromCrossRef}
                         currentBook={currentBook}
                         currentChapter={currentChapter}
-                        currentVerse={selectedVerse}
+                        currentVerse={focusedVerse ?? primarySelectedVerse}
                       />
                     </div>
                   </DialogContent>
@@ -365,7 +424,8 @@ export default function Reader() {
                     onValueChange={(value) => {
                       setCurrentBook(value);
                       setCurrentChapter(1);
-                      setSelectedVerse(undefined);
+                      setSelectedVerses([]);
+                      setFocusedVerse(undefined);
                     }}
                   >
                     <SelectTrigger className="h-11 w-full min-w-0 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:text-base">
@@ -399,7 +459,8 @@ export default function Reader() {
                     value={currentChapter.toString()}
                     onValueChange={(value) => {
                       setCurrentChapter(parseInt(value, 10));
-                      setSelectedVerse(undefined);
+                      setSelectedVerses([]);
+                      setFocusedVerse(undefined);
                     }}
                   >
                     <SelectTrigger className="h-11 w-full min-w-[140px] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
@@ -438,33 +499,99 @@ export default function Reader() {
             ) : error ? (
               <div className="text-center py-12 text-destructive">{error}</div>
             ) : (
-              <div className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}>
-                {verses.map((verse) => (
-                  <VerseCard
-                    key={verse.number}
-                    book={currentBook}
-                    chapter={currentChapter}
-                    verse={verse}
-                    highlight={
-                      getVerseHighlight(verse.number)
-                        ? {
-                            color: getVerseHighlight(verse.number)!.color,
-                            note: getVerseHighlight(verse.number)!.note,
-                          }
-                        : undefined
-                    }
-                    isBookmarked={isVerseBookmarked(verse.number)}
-                    isSelected={selectedVerse === verse.number}
-                    onHighlight={handleHighlight}
-                    onRemoveHighlight={handleRemoveHighlight}
-                    onToggleBookmark={handleToggleBookmark}
-                    onViewCrossReferences={handleCrossReferenceClick}
-                    onSelect={handleVerseSelect}
-                    onAddNote={handleAddNote}
-                    onSermonCrossRef={handleSermonCrossRefClick}
-                    fontClass={readerFontClass}
-                  />
-                ))}
+              <div className="space-y-5 sm:space-y-6">
+                {selectedVerses.length > 0 && (
+                  <div className="mx-auto max-w-4xl space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-primary">Selection mode</p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedVerses.length} verse{selectedVerses.length > 1 ? "s" : ""} selected in {currentBook} {currentChapter}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSelectEntireChapter}
+                        >
+                          Select entire chapter
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearSelection}
+                        >
+                          Clear selection
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">Quick highlight</span>
+                        <div className="flex items-center gap-1.5">
+                          {HIGHLIGHT_COLORS.map((color) => (
+                            <button
+                              key={color.value}
+                              type="button"
+                              className={cn(
+                                "h-9 w-9 rounded-lg border-2 transition hover:scale-105",
+                                color.class,
+                                "border-border"
+                              )}
+                              title={`Highlight selected verses ${color.name.toLowerCase()}`}
+                              aria-label={`Highlight selected verses ${color.name.toLowerCase()}`}
+                              onClick={() => handleBulkHighlight(color.value)}
+                            />
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleBulkRemoveHighlight}
+                        >
+                          Remove highlights
+                        </Button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button size="sm" onClick={handleBulkNote}>
+                          Add note for selection
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}>
+                  {verses.map((verse) => (
+                    <VerseCard
+                      key={verse.number}
+                      book={currentBook}
+                      chapter={currentChapter}
+                      verse={verse}
+                      highlight={
+                        getVerseHighlight(verse.number)
+                          ? {
+                              color: getVerseHighlight(verse.number)!.color,
+                              note: getVerseHighlight(verse.number)!.note,
+                            }
+                          : undefined
+                      }
+                      isBookmarked={isVerseBookmarked(verse.number)}
+                      isSelected={selectedVerses.includes(verse.number)}
+                      onHighlight={handleHighlight}
+                      onRemoveHighlight={handleRemoveHighlight}
+                      onToggleBookmark={handleToggleBookmark}
+                      onViewCrossReferences={handleCrossReferenceClick}
+                      onSelect={handleVerseSelect}
+                      onAddNote={handleAddNote}
+                      onSermonCrossRef={handleSermonCrossRefClick}
+                      fontClass={readerFontClass}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -474,7 +601,8 @@ export default function Reader() {
                 variant="outline"
                 onClick={() => {
                   setCurrentChapter(Math.max(1, currentChapter - 1));
-                  setSelectedVerse(undefined);
+                  setSelectedVerses([]);
+                  setFocusedVerse(undefined);
                 }}
                 disabled={currentChapter <= 1}
                 className="w-full sm:w-auto justify-center sm:justify-start"
@@ -488,7 +616,8 @@ export default function Reader() {
                 variant="outline"
                 onClick={() => {
                   setCurrentChapter(Math.min(maxChapter, currentChapter + 1));
-                  setSelectedVerse(undefined);
+                  setSelectedVerses([]);
+                  setFocusedVerse(undefined);
                 }}
                 disabled={currentChapter >= maxChapter}
                 className="w-full sm:w-auto justify-center sm:justify-end"
@@ -509,7 +638,7 @@ export default function Reader() {
         onOpenChange={setShowSermonCrossRef}
         book={currentBook}
         chapter={currentChapter}
-        verse={selectedVerse}
+        verse={focusedVerse ?? primarySelectedVerse}
       />
 
       {/* Note Editor */}
