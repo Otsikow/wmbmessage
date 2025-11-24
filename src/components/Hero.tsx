@@ -56,7 +56,7 @@ export default function Hero() {
             <Link to="/plans" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="w-full text-white border border-white/40 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:bg-white/15 hover:border-primary/60"
+                className="w-full text-foreground border border-border bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:bg-white/15 hover:border-primary/60"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Bible Reading Plans

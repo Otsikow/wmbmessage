@@ -16,7 +16,7 @@ export interface Note {
 export interface UserNote {
   id: string;
   user_id: string;
-  source_type: string;
+  source_type: "bible" | "sermon";
   source_id: string;
   title: string;
   content: string;
@@ -34,7 +34,7 @@ export interface CreateNoteInput {
 }
 
 export interface CreateUserNoteInput {
-  source_type: string;
+  source_type: "bible" | "sermon";
   source_id: string;
   title?: string;
   content: string;

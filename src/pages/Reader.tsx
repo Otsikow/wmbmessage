@@ -54,7 +54,7 @@ const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
 export default function Reader() {
   const navigate = useNavigate();
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const { createUserNote } = useUserNotes();
   const { recordActivity } = useEngagement();
 
