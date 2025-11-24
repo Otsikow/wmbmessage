@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Loader2, Link2, BookMarked, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Link2,
+  BookMarked,
+  Search,
+  Cog,
+  Moon,
+  Sun,
+  Type,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -11,6 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -148,6 +162,7 @@ export default function Reader() {
   const [showCrossRef, setShowCrossRef] = useState(false);
   const [showSermonCrossRef, setShowSermonCrossRef] = useState(false);
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
+  const [showReadingSettings, setShowReadingSettings] = useState(false);
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
@@ -351,6 +366,124 @@ export default function Reader() {
                   </TooltipTrigger>
                   <TooltipContent sideOffset={8}>Search the Bible</TooltipContent>
                 </Tooltip>
+
+                {/* Reading Settings Button */}
+                <Dialog open={showReadingSettings} onOpenChange={setShowReadingSettings}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={controlButtonClass}
+                          aria-label="Reading settings"
+                          title="Reading settings"
+                        >
+                          <Cog className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                          <span className="sr-only">Open reading settings</span>
+                        </Button>
+                      </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8}>Reading settings</TooltipContent>
+                  </Tooltip>
+                  <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                      <DialogTitle>Reading settings</DialogTitle>
+                      <DialogDescription>
+                        Personalize your Bible reading experience.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Type className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1 space-y-1">
+                            <Label className="text-sm font-medium">Font size</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Make verses easier to read with larger text.
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold text-foreground min-w-[3rem] text-right">
+                            {settings.fontSize}px
+                          </span>
+                        </div>
+                        <Slider
+                          value={[settings.fontSize]}
+                          min={14}
+                          max={24}
+                          step={1}
+                          onValueChange={(value) => updateSettings({ fontSize: value[0] })}
+                        />
+                        <div className="flex justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <span>Smaller</span>
+                          <span>Larger</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Type className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1 space-y-1">
+                            <Label className="text-sm font-medium">Font style</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Choose the typeface for scripture text.
+                            </p>
+                          </div>
+                        </div>
+                        <Select
+                          value={settings.readerFontFamily}
+                          onValueChange={(value: "serif" | "sans-serif" | "monospace") =>
+                            updateSettings({ readerFontFamily: value })
+                          }
+                        >
+                          <SelectTrigger className="rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="serif" className="font-serif">
+                              Serif (classic reading)
+                            </SelectItem>
+                            <SelectItem value="sans-serif" className="font-sans">
+                              Sans serif (modern)
+                            </SelectItem>
+                            <SelectItem value="monospace" className="font-mono">
+                              Monospace (study)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          {settings.theme === "dark" ? (
+                            <Moon className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Sun className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <Label className="text-sm font-medium">Dark mode</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Reduce glare and make reading comfortable at night.
+                            </p>
+                          </div>
+                          <Switch
+                            checked={settings.theme === "dark"}
+                            onCheckedChange={(checked) => updateSettings({ theme: checked ? "dark" : "light" })}
+                            aria-label="Toggle dark mode"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Preview</p>
+                        <div className={cn("mt-3 text-sm sm:text-base leading-7", readerFontClass)}>
+                          In the beginning God created the heaven and the earth. (Genesis 1:1)
+                        </div>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
