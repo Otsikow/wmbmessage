@@ -361,8 +361,6 @@ export default function Reader() {
 
   const primarySelectedVerse = selectedVerses[0];
 
-  const hasActiveSelection = selectedVerses.length > 0 || textSelection;
-
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
 
@@ -376,7 +374,6 @@ export default function Reader() {
   );
   const controlButtonClass =
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-  const disableVerseActions = selectedVerses.length === 0;
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -694,75 +691,6 @@ export default function Reader() {
           </div>
         </div>
       </div>
-
-      {hasActiveSelection && (
-        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
-          <div className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-primary">Selection actions</p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedVerses.length
-                    ? `${selectedVerses.length} verse${selectedVerses.length > 1 ? "s" : ""} selected in ${currentBook} ${currentChapter}`
-                    : "Text selection ready for copy or contextual actions."}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleSelectEntireChapter}>
-                  Select chapter
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleClearSelection}>
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-foreground">Highlight</span>
-                <div className="flex items-center gap-1.5">
-                  {HIGHLIGHT_COLORS.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      disabled={disableVerseActions}
-                      className={cn(
-                        "h-9 w-9 rounded-lg border-2 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50",
-                        color.class,
-                        "border-border"
-                      )}
-                      title={
-                        disableVerseActions
-                          ? "Select one or more verses to highlight"
-                          : `Highlight selected verses ${color.name.toLowerCase()}`
-                      }
-                      aria-label={`Highlight selected verses ${color.name.toLowerCase()}`}
-                      onClick={() => handleBulkHighlight(color.value)}
-                    />
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={disableVerseActions}
-                  onClick={handleBulkRemoveHighlight}
-                >
-                  Remove highlights
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" disabled={disableVerseActions} onClick={handleBulkNote}>
-                  Add note
-                </Button>
-                <Button size="sm" variant="secondary" onClick={handleCopySelection}>
-                  Copy selection
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bible Content */}
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
