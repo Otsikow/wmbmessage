@@ -472,8 +472,10 @@ export type Database = {
           created_at: string | null
           id: string
           source_id: string
-          source_type: string
+          source_type: Database["public"]["Enums"]["note_source_type"]
+          tags: string[] | null
           title: string
+          sermon_title: string | null
           updated_at: string | null
           user_id: string
           verse_reference: string | null
@@ -483,8 +485,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           source_id: string
-          source_type: string
+          source_type: Database["public"]["Enums"]["note_source_type"]
+          tags?: string[] | null
           title: string
+          sermon_title?: string | null
           updated_at?: string | null
           user_id: string
           verse_reference?: string | null
@@ -494,8 +498,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           source_id?: string
-          source_type?: string
+          source_type?: Database["public"]["Enums"]["note_source_type"]
+          tags?: string[] | null
           title?: string
+          sermon_title?: string | null
           updated_at?: string | null
           user_id?: string
           verse_reference?: string | null
@@ -576,6 +582,7 @@ export type Database = {
       }
     }
     Enums: {
+      note_source_type: "bible" | "sermon"
       app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
