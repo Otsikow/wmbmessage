@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { supabase } from "@/integrations/supabase/client";
-import { getFriendlyErrorMessage } from "@/lib/errorHandling";
+import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import { validateSignInInput } from "@/lib/validation/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 
@@ -30,6 +31,16 @@ export default function SignIn() {
       toast({
         title: "Validation Error",
         description: errors.join("\n"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Service unavailable",
+        description:
+          "Sign in is temporarily unavailable while we finish setting up authentication. Please try again soon.",
         variant: "destructive",
       });
       return;
@@ -75,11 +86,7 @@ export default function SignIn() {
       }
       toast({
         title: "Error",
-        description: getFriendlyErrorMessage(
-          error,
-          "Unable to sign in. Please check your email and password and try again.",
-          "sign-in"
-        ),
+        description: getSanitizedAuthErrorMessage(error, "sign-in"),
         variant: "destructive",
       });
     } finally {
@@ -88,6 +95,16 @@ export default function SignIn() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Service unavailable",
+        description:
+          "Sign in is temporarily unavailable while we finish setting up authentication. Please try again soon.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -101,11 +118,7 @@ export default function SignIn() {
       }
       toast({
         title: "Error",
-        description: getFriendlyErrorMessage(
-          error,
-          "Unable to sign in with Google. Please try again later.",
-          "google sign-in"
-        ),
+        description: getSanitizedAuthErrorMessage(error, "oauth"),
         variant: "destructive",
       });
     }
