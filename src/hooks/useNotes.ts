@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  isSupabaseConfigured,
+  supabase,
+} from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -211,6 +214,13 @@ export function useUserNotes() {
   const { user } = useAuth();
 
   const fetchUserNotes = async () => {
+    if (!isSupabaseConfigured) {
+      console.warn("Supabase is not configured. Skipping user notes fetch.");
+      setUserNotes([]);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setUserNotes([]);
       setLoading(false);
@@ -243,6 +253,16 @@ export function useUserNotes() {
   }, [user]);
 
   const createUserNote = async (input: CreateUserNoteInput) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Notes unavailable",
+        description:
+          "Supabase is not configured. Add your Supabase keys to create notes.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     if (!user) {
       toast({
         title: "Error",
@@ -290,6 +310,16 @@ export function useUserNotes() {
   };
 
   const updateUserNote = async (id: string, input: UpdateUserNoteInput) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Notes unavailable",
+        description:
+          "Supabase is not configured. Add your Supabase keys to edit notes.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from("user_notes")
@@ -318,6 +348,16 @@ export function useUserNotes() {
   };
 
   const deleteUserNote = async (id: string) => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Notes unavailable",
+        description:
+          "Supabase is not configured. Add your Supabase keys to delete notes.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     try {
       const { error } = await supabase.from("user_notes").delete().eq("id", id);
 
