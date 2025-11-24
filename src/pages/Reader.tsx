@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -167,6 +167,8 @@ export default function Reader() {
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
   const [showReadingSettings, setShowReadingSettings] = useState(false);
   const [noteVerseContext, setNoteVerseContext] = useState<string>("");
+  const [textSelection, setTextSelection] = useState<string>("");
+  const versesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { verses, loading, error } = useBibleData(currentBook, currentChapter);
 
@@ -187,6 +189,10 @@ export default function Reader() {
   };
 
   const handleVerseSelect = (verseNumber: number) => {
+    const selection = window.getSelection?.();
+    selection?.removeAllRanges();
+    setTextSelection("");
+
     setSelectedVerses((prev) => {
       const isSelected = prev.includes(verseNumber);
       if (isSelected) {
@@ -304,14 +310,58 @@ export default function Reader() {
     if (!verses.length) return;
 
     setSelectedVerses(verses.map((verse) => verse.number));
+    setTextSelection("");
   };
 
   const handleClearSelection = () => {
     setSelectedVerses([]);
     setFocusedVerse(undefined);
+    const selection = window.getSelection?.();
+    selection?.removeAllRanges();
+    setTextSelection("");
+  };
+
+  const handleCopySelection = async () => {
+    const selectionText = textSelection.trim();
+
+    const verseContent = selectedVerses
+      .map((verseNumber) => {
+        const verseData = verses.find((v) => v.number === verseNumber);
+
+        if (!verseData) return "";
+
+        return `${currentBook} ${currentChapter}:${verseData.number}\n${verseData.text}`;
+      })
+      .filter(Boolean)
+      .join("\n\n");
+
+    const contentToCopy = selectionText || verseContent;
+
+    if (!contentToCopy) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(contentToCopy);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = contentToCopy;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    } catch (error) {
+      console.error("Failed to copy selection", error);
+    }
   };
 
   const primarySelectedVerse = selectedVerses[0];
+
+  const hasActiveSelection = selectedVerses.length > 0 || textSelection;
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
@@ -326,6 +376,37 @@ export default function Reader() {
   );
   const controlButtonClass =
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+  const disableVerseActions = selectedVerses.length === 0;
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection?.();
+
+      if (!selection || selection.isCollapsed) {
+        setTextSelection("");
+        return;
+      }
+
+      const selectedText = selection.toString().trim();
+      const container = versesContainerRef.current;
+      const anchorNode = selection.anchorNode;
+      const focusNode = selection.focusNode;
+
+      if (!selectedText || !container || !anchorNode || !focusNode) {
+        setTextSelection("");
+        return;
+      }
+
+      const isWithinReader =
+        container.contains(anchorNode) || container.contains(focusNode);
+
+      setTextSelection(isWithinReader ? selectedText : "");
+    };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
@@ -614,6 +695,75 @@ export default function Reader() {
         </div>
       </div>
 
+      {hasActiveSelection && (
+        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-primary">Selection actions</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedVerses.length
+                    ? `${selectedVerses.length} verse${selectedVerses.length > 1 ? "s" : ""} selected in ${currentBook} ${currentChapter}`
+                    : "Text selection ready for copy or contextual actions."}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleSelectEntireChapter}>
+                  Select chapter
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleClearSelection}>
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-foreground">Highlight</span>
+                <div className="flex items-center gap-1.5">
+                  {HIGHLIGHT_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      disabled={disableVerseActions}
+                      className={cn(
+                        "h-9 w-9 rounded-lg border-2 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50",
+                        color.class,
+                        "border-border"
+                      )}
+                      title={
+                        disableVerseActions
+                          ? "Select one or more verses to highlight"
+                          : `Highlight selected verses ${color.name.toLowerCase()}`
+                      }
+                      aria-label={`Highlight selected verses ${color.name.toLowerCase()}`}
+                      onClick={() => handleBulkHighlight(color.value)}
+                    />
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={disableVerseActions}
+                  onClick={handleBulkRemoveHighlight}
+                >
+                  Remove highlights
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" disabled={disableVerseActions} onClick={handleBulkNote}>
+                  Add note
+                </Button>
+                <Button size="sm" variant="secondary" onClick={handleCopySelection}>
+                  Copy selection
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bible Content */}
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
         <Card className="border border-border/60 bg-card/95 shadow-xl">
@@ -633,71 +783,10 @@ export default function Reader() {
               <div className="text-center py-12 text-destructive">{error}</div>
             ) : (
               <div className="space-y-5 sm:space-y-6">
-                {selectedVerses.length > 0 && (
-                  <div className="mx-auto max-w-4xl space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-primary">Selection mode</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedVerses.length} verse{selectedVerses.length > 1 ? "s" : ""} selected in {currentBook} {currentChapter}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSelectEntireChapter}
-                        >
-                          Select entire chapter
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleClearSelection}
-                        >
-                          Clear selection
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">Quick highlight</span>
-                        <div className="flex items-center gap-1.5">
-                          {HIGHLIGHT_COLORS.map((color) => (
-                            <button
-                              key={color.value}
-                              type="button"
-                              className={cn(
-                                "h-9 w-9 rounded-lg border-2 transition hover:scale-105",
-                                color.class,
-                                "border-border"
-                              )}
-                              title={`Highlight selected verses ${color.name.toLowerCase()}`}
-                              aria-label={`Highlight selected verses ${color.name.toLowerCase()}`}
-                              onClick={() => handleBulkHighlight(color.value)}
-                            />
-                          ))}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleBulkRemoveHighlight}
-                        >
-                          Remove highlights
-                        </Button>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" onClick={handleBulkNote}>
-                          Add note for selection
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}>
+                <div
+                  ref={versesContainerRef}
+                  className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}
+                >
                   {verses.map((verse) => (
                     <VerseCard
                       key={verse.number}
