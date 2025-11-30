@@ -245,24 +245,8 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
     setIsRemoteHydrated(false);
 
     const hydrateFromSupabase = async () => {
-      const { data, error } = await supabase
-        .from("user_reading_states")
-        .select("state")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (cancelled) {
-        return;
-      }
-
-      if (error) {
-        console.warn("Failed to load reading plan state from Supabase", error);
-      }
-
-      if (data?.state) {
-        setState(mergeStateWithDefaults(data.state as Partial<ReadingPlanState>));
-      }
-
+      // TODO: user_reading_states table needs to be created
+      // For now, skip remote hydration
       setIsRemoteHydrated(true);
     };
 
@@ -316,14 +300,8 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
     }
 
     const timeout = setTimeout(async () => {
-      const serializedState = JSON.parse(JSON.stringify(state));
-      const { error } = await supabase
-        .from("user_reading_states")
-        .upsert({ user_id: user.id, state: serializedState });
-
-      if (error) {
-        console.warn("Failed to save reading plan state to Supabase", error);
-      }
+      // TODO: user_reading_states table needs to be created
+      // For now, skip remote persistence
     }, 800);
 
     return () => {

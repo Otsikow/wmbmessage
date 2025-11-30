@@ -440,42 +440,14 @@ export type Database = {
         }
         Relationships: []
       }
-      user_reading_states: {
-        Row: {
-          state: Json
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          state?: Json
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          state?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reading_states_user_id_fkey",
-            columns: ["user_id"],
-            isOneToOne: true,
-            referencedRelation: "profiles",
-            referencedColumns: ["id"],
-          },
-        ]
-      }
       user_notes: {
         Row: {
           content: string
           created_at: string | null
           id: string
           source_id: string
-          source_type: Database["public"]["Enums"]["note_source_type"]
-          tags: string[] | null
+          source_type: string
           title: string
-          sermon_title: string | null
           updated_at: string | null
           user_id: string
           verse_reference: string | null
@@ -485,10 +457,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           source_id: string
-          source_type: Database["public"]["Enums"]["note_source_type"]
-          tags?: string[] | null
+          source_type: string
           title: string
-          sermon_title?: string | null
           updated_at?: string | null
           user_id: string
           verse_reference?: string | null
@@ -498,10 +468,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           source_id?: string
-          source_type?: Database["public"]["Enums"]["note_source_type"]
-          tags?: string[] | null
+          source_type?: string
           title?: string
-          sermon_title?: string | null
           updated_at?: string | null
           user_id?: string
           verse_reference?: string | null
@@ -582,7 +550,6 @@ export type Database = {
       }
     }
     Enums: {
-      note_source_type: "bible" | "sermon"
       app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
