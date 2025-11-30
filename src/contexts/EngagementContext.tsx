@@ -1,4 +1,10 @@
-import * as React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import {
   differenceInCalendarDays,
@@ -19,7 +25,7 @@ export type EngagementActivity =
   | "library-explore";
 
 interface ActivityLogEntry {
-  date: string;
+  date: string; // ISO date representation (YYYY-MM-DD)
   activity: EngagementActivity;
   points: number;
   description?: string;
@@ -75,7 +81,9 @@ const DEFAULT_STATS: EngagementStats = {
 
 export type EngagementMilestone = Milestone;
 
-const EngagementContext = React.createContext<EngagementContextValue | undefined>(undefined);
+const EngagementContext = createContext<EngagementContextValue | undefined>(
+  undefined,
+);
 
 const getInitialStats = (): EngagementStats => {
   if (typeof window === "undefined") {
@@ -181,9 +189,9 @@ const getEncouragementMessage = (
 };
 
 export function EngagementProvider({ children }: { children: ReactNode }) {
-  const [stats, setStats] = React.useState<EngagementStats>(() => getInitialStats());
+  const [stats, setStats] = useState<EngagementStats>(() => getInitialStats());
 
-  const hasActivityToday = React.useMemo(() => {
+  const hasActivityToday = useMemo(() => {
     if (!stats.lastActiveDate) {
       return false;
     }
@@ -195,7 +203,7 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
     }
   }, [stats.lastActiveDate]);
 
-  const recordActivity = React.useCallback(
+  const recordActivity = useCallback(
     (activity: EngagementActivity, options?: RecordOptions) => {
       setStats((previous) => {
         const timestamp = options?.timestamp ?? new Date();
@@ -234,7 +242,9 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
 
         const longestStreak = Math.max(previous.longestStreak, currentStreak);
 
-        const trimmedLog = previous.activityLog.concat().slice(-59);
+        const trimmedLog = previous.activityLog
+          .concat()
+          .slice(-59);
 
         const nextLog: ActivityLogEntry[] = [
           {
@@ -276,17 +286,17 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const nextMilestone = React.useMemo(
+  const nextMilestone = useMemo(
     () => calculateNextMilestone(stats),
     [stats],
   );
 
-  const encouragement = React.useMemo(
+  const encouragement = useMemo(
     () => getEncouragementMessage(stats, hasActivityToday),
     [stats, hasActivityToday],
   );
 
-  const value = React.useMemo<EngagementContextValue>(
+  const value = useMemo<EngagementContextValue>(
     () => ({
       stats,
       recordActivity,
@@ -301,7 +311,7 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
 }
 
 export const useEngagement = () => {
-  const context = React.useContext(EngagementContext);
+  const context = useContext(EngagementContext);
   if (!context) {
     throw new Error("useEngagement must be used within an EngagementProvider");
   }

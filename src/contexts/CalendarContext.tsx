@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import type { ReactNode } from "react";
 
 export interface CalendarEvent {
@@ -12,17 +12,20 @@ export interface CalendarEvent {
 interface CalendarContextType {
   events: CalendarEvent[];
   addEvent: (event: Omit<CalendarEvent, "id">) => void;
-  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
+  updateEvent: (id: string, event: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
 }
 
-const CalendarContext = React.createContext<CalendarContextType | undefined>(undefined);
+const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
 const STORAGE_KEY = "calendar-events";
 
 export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [events, setEvents] = React.useState<CalendarEvent[]>(() => {
-    if (typeof window === "undefined") return [];
+  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+    // Skip storage access during SSR/hydration when the window object is unavailable
+    if (typeof window === "undefined") {
+      return [];
+    }
 
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -31,24 +34,21 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 
         if (Array.isArray(parsed)) {
           return parsed.map(
-            (e: { id: string; title: string; date: string; description?: string; color?: string }) => ({
-              id: e.id,
-              title: e.title,
-              description: e.description ?? "",
+            (e: { id: string; title: string; date: string; description?: string }) => ({
+              ...e,
               date: new Date(e.date),
-              color: e.color,
             })
           );
         }
       }
     } catch (error) {
-      console.error("Failed to load calendar events:", error);
+      console.error("Failed to load calendar events from storage", error);
     }
 
+    // Add default sample events
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -68,47 +68,38 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     ];
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    } catch (error) {
-      console.error("Unable to save calendar events:", error);
-    }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   }, [events]);
 
-  const addEvent = React.useCallback((event: Omit<CalendarEvent, "id">) => {
+  const addEvent = (event: Omit<CalendarEvent, "id">) => {
     const newEvent: CalendarEvent = {
       ...event,
       id: Date.now().toString(),
     };
     setEvents((prev) => [...prev, newEvent]);
-  }, []);
+  };
 
-  const updateEvent = React.useCallback((id: string, updates: Partial<CalendarEvent>) => {
+  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
     setEvents((prev) =>
       prev.map((event) => (event.id === id ? { ...event, ...updates } : event))
     );
-  }, []);
+  };
 
-  const deleteEvent = React.useCallback((id: string) => {
+  const deleteEvent = (id: string) => {
     setEvents((prev) => prev.filter((event) => event.id !== id));
-  }, []);
-
-  const value = React.useMemo(
-    () => ({ events, addEvent, updateEvent, deleteEvent }),
-    [events, addEvent, updateEvent, deleteEvent]
-  );
+  };
 
   return (
-    <CalendarContext.Provider value={value}>
+    <CalendarContext.Provider value={{ events, addEvent, updateEvent, deleteEvent }}>
       {children}
     </CalendarContext.Provider>
   );
 }
 
 export function useCalendar() {
-  const context = React.useContext(CalendarContext);
+  const context = useContext(CalendarContext);
   if (!context) {
     throw new Error("useCalendar must be used within CalendarProvider");
   }
