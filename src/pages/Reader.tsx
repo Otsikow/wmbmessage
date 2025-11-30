@@ -12,6 +12,7 @@ import {
   Moon,
   Sun,
   Type,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,10 +35,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { useHighlights, HIGHLIGHT_COLORS } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
@@ -430,209 +434,192 @@ export default function Reader() {
                 </div>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 sm:justify-end">
-                {/* Cross Reference Button */}
-                <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={controlButtonClass}
-                          aria-label="View cross references"
-                        >
-                          <Link2 className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                          <span className="sr-only">Open cross references</span>
-                        </Button>
-                      </DialogTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>Cross references &amp; search</TooltipContent>
-                  </Tooltip>
-                  <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
-                    <DialogHeader>
-                      <DialogTitle>Cross References &amp; Search</DialogTitle>
-                      <DialogDescription>
-                        Search for keywords or look up verse references
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-hidden">
-                      <CrossReferenceViewer
-                        onNavigate={handleNavigateFromCrossRef}
-                        currentBook={currentBook}
-                        currentChapter={currentChapter}
-                        currentVerse={focusedVerse ?? primarySelectedVerse}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                {/* Sermon Cross Reference Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className={controlButtonClass}
-                      title="Sermon Cross References"
-                      aria-label="View sermon references"
-                      onClick={() => setShowSermonCrossRef(true)}
+                      variant="outline"
+                      className="gap-2 rounded-xl border border-border/60 bg-background/90 px-3.5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
-                      <BookMarked className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                      <span className="sr-only">View sermon cross references</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span>Quick actions</span>
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8}>Sermon references</TooltipContent>
-                </Tooltip>
-
-                {/* Search Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigate("/search")}
-                      className={controlButtonClass}
-                      title="Search"
-                      aria-label="Search Bible"
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    <DropdownMenuLabel>Shortcuts</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setShowCrossRef(true)} className="gap-3 py-3">
+                      <Link2 className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Cross references</span>
+                        <span className="text-xs text-muted-foreground">
+                          Explore related passages and search
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setShowSermonCrossRef(true)}
+                      className="gap-3 py-3"
                     >
-                      <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                      <span className="sr-only">Open search</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8}>Search the Bible</TooltipContent>
-                </Tooltip>
-
-                {/* Reading Settings Button */}
-                <Dialog open={showReadingSettings} onOpenChange={setShowReadingSettings}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={controlButtonClass}
-                          aria-label="Reading settings"
-                          title="Reading settings"
-                        >
-                          <Cog className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                          <span className="sr-only">Open reading settings</span>
-                        </Button>
-                      </DialogTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>Reading settings</TooltipContent>
-                  </Tooltip>
-                  <DialogContent className="max-w-xl">
-                    <DialogHeader>
-                      <DialogTitle>Reading settings</DialogTitle>
-                      <DialogDescription>
-                        Personalize your Bible reading experience.
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Type className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-sm font-medium">Font size</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Make verses easier to read with larger text.
-                            </p>
-                          </div>
-                          <span className="text-sm font-semibold text-foreground min-w-[3rem] text-right">
-                            {settings.fontSize}px
-                          </span>
-                        </div>
-                        <Slider
-                          value={[settings.fontSize]}
-                          min={14}
-                          max={24}
-                          step={1}
-                          onValueChange={(value) => updateSettings({ fontSize: value[0] })}
-                        />
-                        <div className="flex justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                          <span>Smaller</span>
-                          <span>Larger</span>
-                        </div>
+                      <BookMarked className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Sermon references</span>
+                        <span className="text-xs text-muted-foreground">See related sermons</span>
                       </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Type className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-sm font-medium">Font style</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Choose the typeface for scripture text.
-                            </p>
-                          </div>
-                        </div>
-                        <Select
-                          value={settings.readerFontFamily}
-                          onValueChange={(value: ScriptureFontId) =>
-                            updateSettings({ readerFontFamily: value })
-                          }
-                        >
-                          <SelectTrigger className="rounded-xl">
-                            <SelectValue placeholder="Choose a scripture font" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {scriptureFontOptions.map((option) => (
-                              <SelectItem key={option.id} value={option.id} className="py-2">
-                                <div className="flex flex-col gap-1 text-left">
-                                  <span className="text-sm font-semibold text-foreground">{option.label}</span>
-                                  <span className="text-xs text-muted-foreground">{option.description}</span>
-                                  <span
-                                    className="text-sm text-foreground/80"
-                                    style={{ fontFamily: option.stack }}
-                                  >
-                                    {option.preview}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => navigate("/search")}
+                      className="gap-3 py-3"
+                    >
+                      <Search className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Search the Bible</span>
+                        <span className="text-xs text-muted-foreground">Jump to the search tool</span>
                       </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          {settings.theme === "dark" ? (
-                            <Moon className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Sun className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-sm font-medium">Dark mode</Label>
-                            <p className="text-xs text-muted-foreground">
-                              Reduce glare and make reading comfortable at night.
-                            </p>
-                          </div>
-                          <Switch
-                            checked={settings.theme === "dark"}
-                            onCheckedChange={(checked) => updateSettings({ theme: checked ? "dark" : "light" })}
-                            aria-label="Toggle dark mode"
-                          />
-                        </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setShowReadingSettings(true)}
+                      className="gap-3 py-3"
+                    >
+                      <Cog className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Reading settings</span>
+                        <span className="text-xs text-muted-foreground">Adjust fonts and theme</span>
                       </div>
-
-                      <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
-                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Preview</p>
-                        <div
-                          className={cn("mt-3 text-sm sm:text-base leading-7", readerFontClass)}
-                          style={{ fontFamily: selectedScriptureFont?.stack }}
-                        >
-                          In the beginning God created the heaven and the earth. (Genesis 1:1)
-                        </div>
-                        {selectedScriptureFont && (
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Using {selectedScriptureFont.label}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+              <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
+                <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Cross References &amp; Search</DialogTitle>
+                    <DialogDescription>
+                      Search for keywords or look up verse references
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-hidden">
+                    <CrossReferenceViewer
+                      onNavigate={handleNavigateFromCrossRef}
+                      currentBook={currentBook}
+                      currentChapter={currentChapter}
+                      currentVerse={focusedVerse ?? primarySelectedVerse}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Dialog open={showReadingSettings} onOpenChange={setShowReadingSettings}>
+                <DialogContent className="max-w-xl">
+                  <DialogHeader>
+                    <DialogTitle>Reading settings</DialogTitle>
+                    <DialogDescription>
+                      Personalize your Bible reading experience.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Type className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-sm font-medium">Font size</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Make verses easier to read with larger text.
+                          </p>
+                        </div>
+                        <span className="text-sm font-semibold text-foreground min-w-[3rem] text-right">
+                          {settings.fontSize}px
+                        </span>
+                      </div>
+                      <Slider
+                        value={[settings.fontSize]}
+                        min={14}
+                        max={24}
+                        step={1}
+                        onValueChange={(value) => updateSettings({ fontSize: value[0] })}
+                      />
+                      <div className="flex justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <span>Smaller</span>
+                        <span>Larger</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Type className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-sm font-medium">Font style</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Choose the typeface for scripture text.
+                          </p>
+                        </div>
+                      </div>
+                      <Select
+                        value={settings.readerFontFamily}
+                        onValueChange={(value: ScriptureFontId) =>
+                          updateSettings({ readerFontFamily: value })
+                        }
+                      >
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder="Choose a scripture font" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {scriptureFontOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id} className="py-2">
+                              <div className="flex flex-col gap-1 text-left">
+                                <span className="text-sm font-semibold text-foreground">{option.label}</span>
+                                <span className="text-xs text-muted-foreground">{option.description}</span>
+                                <span
+                                  className="text-sm text-foreground/80"
+                                  style={{ fontFamily: option.stack }}
+                                >
+                                  {option.preview}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        {settings.theme === "dark" ? (
+                          <Moon className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Sun className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-sm font-medium">Dark mode</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Reduce glare and make reading comfortable at night.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={settings.theme === "dark"}
+                          onCheckedChange={(checked) => updateSettings({ theme: checked ? "dark" : "light" })}
+                          aria-label="Toggle dark mode"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Preview</p>
+                      <div
+                        className={cn("mt-3 text-sm sm:text-base leading-7", readerFontClass)}
+                        style={{ fontFamily: selectedScriptureFont?.stack }}
+                      >
+                        In the beginning God created the heaven and the earth. (Genesis 1:1)
+                      </div>
+                      {selectedScriptureFont && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Using {selectedScriptureFont.label}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
