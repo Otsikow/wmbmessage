@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Bold, Italic, List, Save, X } from "lucide-react";
-import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,7 +87,7 @@ export function NoteEditor({
       return;
     }
 
-    const content = DOMPurify.sanitize(editorRef.current.innerHTML);
+    const content = editorRef.current.innerHTML;
     if (!content.trim()) {
       toast({
         title: "Add note content",
