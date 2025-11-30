@@ -13,6 +13,10 @@ import {
   Sun,
   Type,
   MoreHorizontal,
+  Copy,
+  Share2,
+  NotebookPen,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,7 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
-import { useHighlights, HIGHLIGHT_COLORS } from "@/hooks/useHighlights";
+import { useHighlights } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
@@ -54,6 +58,8 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
 import { useEngagement } from "@/contexts/EngagementContext";
+import HighlightMenu from "@/components/HighlightMenu";
+import { useToast } from "@/hooks/use-toast";
 
 const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
@@ -63,6 +69,7 @@ export default function Reader() {
   const { createUserNote } = useUserNotes();
   const { recordActivity } = useEngagement();
   const scriptureFontOptions = useScriptureFontOptions();
+  const { toast } = useToast();
 
   const searchParams = useMemo(() => {
     if (typeof window === "undefined") {
@@ -328,44 +335,42 @@ export default function Reader() {
   };
 
   const handleCopySelection = async () => {
-    const selectionText = textSelection.trim();
-
-    const verseContent = selectedVerses
-      .map((verseNumber) => {
-        const verseData = verses.find((v) => v.number === verseNumber);
-
-        if (!verseData) return "";
-
-        return `${currentBook} ${currentChapter}:${verseData.number}\n${verseData.text}`;
-      })
-      .filter(Boolean)
-      .join("\n\n");
-
-    const contentToCopy = selectionText || verseContent;
-
-    if (!contentToCopy) return;
+    if (!selectedContent) return;
 
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(contentToCopy);
-        return;
+        await navigator.clipboard.writeText(selectedContent);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = selectedContent;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
       }
 
-      const textarea = document.createElement("textarea");
-      textarea.value = contentToCopy;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "absolute";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+      toast({
+        title: "Copied selection",
+        description: "Your selected verses are ready to paste.",
+      });
     } catch (error) {
       console.error("Failed to copy selection", error);
+      toast({
+        title: "Copy failed",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
     }
   };
 
   const primarySelectedVerse = selectedVerses[0];
+  const primaryHighlight =
+    primarySelectedVerse !== undefined
+      ? getVerseHighlight(primarySelectedVerse)
+      : undefined;
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
@@ -407,8 +412,127 @@ export default function Reader() {
     return () => document.removeEventListener("selectionchange", handleSelectionChange);
   }, []);
 
+  const selectedContent = useMemo(() => {
+    const selectionText = textSelection.trim();
+
+    const verseContent = selectedVerses
+      .map((verseNumber) => {
+        const verseData = verses.find((v) => v.number === verseNumber);
+
+        if (!verseData) return "";
+
+        return `${currentBook} ${currentChapter}:${verseData.number}\n${verseData.text}`;
+      })
+      .filter(Boolean)
+      .join("\n\n");
+
+    return selectionText || verseContent;
+  }, [currentBook, currentChapter, selectedVerses, textSelection, verses]);
+
+  const selectionLabel = useMemo(() => {
+    if (selectedVerses.length) {
+      return `${currentBook} ${currentChapter}:${selectedVerses.join(", ")}`;
+    }
+
+    if (textSelection) {
+      const preview = textSelection.length > 120 ? `${textSelection.slice(0, 120)}…` : textSelection;
+      return `Selected text • ${preview}`;
+    }
+
+    return "Selection ready";
+  }, [currentBook, currentChapter, selectedVerses, textSelection]);
+
+  const handleShareSelection = async () => {
+    if (!selectedContent) return;
+
+    const shareData = {
+      title: `${currentBook} ${currentChapter}`,
+      text: selectedContent,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          title: "Shared",
+          description: "Your selection was sent successfully.",
+        });
+        return;
+      }
+
+      await navigator.clipboard?.writeText(selectedContent);
+      toast({
+        title: "Copied for sharing",
+        description: "Sharing isn't supported here, so we copied it instead.",
+      });
+    } catch (error) {
+      console.error("Failed to share selection", error);
+      toast({
+        title: "Unable to share",
+        description: "Please try again or copy the verses manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
+      {(selectedVerses.length > 0 || !!textSelection) && (
+        <div className="fixed inset-x-0 bottom-4 z-30 px-3 sm:px-6">
+          <div className="mx-auto max-w-4xl rounded-2xl border border-border/60 bg-card/95 shadow-2xl backdrop-blur">
+            <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-muted-foreground/70">
+                  Quick actions
+                </p>
+                <p className="text-sm font-semibold text-foreground truncate">{selectionLabel}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <HighlightMenu
+                  onHighlight={(color, note) => handleBulkHighlight(color, note)}
+                  onRemoveHighlight={selectedVerses.length ? handleBulkRemoveHighlight : undefined}
+                  currentColor={primaryHighlight?.color}
+                  currentNote={primaryHighlight?.note}
+                  disabled={!selectedVerses.length}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleBulkNote}
+                  disabled={!selectedVerses.length}
+                >
+                  <NotebookPen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add note</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleCopySelection}
+                  disabled={!selectedContent}
+                >
+                  <Copy className="h-4 w-4" />
+                  <span className="hidden sm:inline">Copy</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleShareSelection}
+                  disabled={!selectedContent}
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleClearSelection} aria-label="Clear selection">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Top Navigation */}
       <div className="border-b border-border/70 bg-card/95 shadow-sm">
         <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
