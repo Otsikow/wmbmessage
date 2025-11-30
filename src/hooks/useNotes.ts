@@ -235,7 +235,7 @@ export function useUserNotes() {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      setUserNotes(data || []);
+      setUserNotes((data || []) as UserNote[]);
     } catch (error) {
       console.error("Error fetching user notes:", error);
       toast({
@@ -292,7 +292,7 @@ export function useUserNotes() {
 
       if (error) throw error;
 
-      setUserNotes([data, ...userNotes]);
+      setUserNotes([data as UserNote, ...userNotes]);
       toast({
         title: "Success",
         description: "Note created successfully",
@@ -330,7 +330,7 @@ export function useUserNotes() {
 
       if (error) throw error;
 
-      setUserNotes(userNotes.map((note) => (note.id === id ? data : note)));
+      setUserNotes(userNotes.map((note) => (note.id === id ? (data as UserNote) : note)));
       toast({
         title: "Success",
         description: "Note updated successfully",

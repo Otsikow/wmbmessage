@@ -413,7 +413,7 @@ export default function Reader() {
       <div className="border-b border-border/70 bg-card/95 shadow-sm">
         <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
           <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                 <BackButton aria-label="Go back to home" className={controlButtonClass} />
                 <div className="hidden min-w-0 sm:flex flex-col">
@@ -433,64 +433,64 @@ export default function Reader() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2 sm:justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="gap-2 rounded-xl border border-border/60 bg-background/90 px-3.5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span>Quick actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuLabel>Shortcuts</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setShowCrossRef(true)} className="gap-3 py-3">
-                      <Link2 className="h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">Cross references</span>
-                        <span className="text-xs text-muted-foreground">
-                          Explore related passages and search
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setShowSermonCrossRef(true)}
-                      className="gap-3 py-3"
-                    >
-                      <BookMarked className="h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">Sermon references</span>
-                        <span className="text-xs text-muted-foreground">See related sermons</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => navigate("/search")}
-                      className="gap-3 py-3"
-                    >
-                      <Search className="h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">Search the Bible</span>
-                        <span className="text-xs text-muted-foreground">Jump to the search tool</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => setShowReadingSettings(true)}
-                      className="gap-3 py-3"
-                    >
-                      <Cog className="h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">Reading settings</span>
-                        <span className="text-xs text-muted-foreground">Adjust fonts and theme</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={controlButtonClass}
+                    aria-label="Quick actions"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuLabel>Shortcuts</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setShowCrossRef(true)} className="gap-3 py-3">
+                    <Link2 className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">Cross references</span>
+                      <span className="text-xs text-muted-foreground">
+                        Explore related passages and search
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => setShowSermonCrossRef(true)}
+                    className="gap-3 py-3"
+                  >
+                    <BookMarked className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">Sermon references</span>
+                      <span className="text-xs text-muted-foreground">See related sermons</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/search")}
+                    className="gap-3 py-3"
+                  >
+                    <Search className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">Search the Bible</span>
+                      <span className="text-xs text-muted-foreground">Jump to the search tool</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => setShowReadingSettings(true)}
+                    className="gap-3 py-3"
+                  >
+                    <Cog className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">Reading settings</span>
+                      <span className="text-xs text-muted-foreground">Adjust fonts and theme</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <Dialog open={showCrossRef} onOpenChange={setShowCrossRef}>
                 <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col">
                   <DialogHeader>
                     <DialogTitle>Cross References &amp; Search</DialogTitle>
@@ -619,8 +619,7 @@ export default function Reader() {
                     </div>
                   </div>
                 </DialogContent>
-              </Dialog>
-            </div>
+            </Dialog>
 
             <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
