@@ -12,7 +12,7 @@ export interface CalendarEvent {
 interface CalendarContextType {
   events: CalendarEvent[];
   addEvent: (event: Omit<CalendarEvent, "id">) => void;
-  updateEvent: (id: string, event: Partial<CalendarEvent>) => void;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
 }
 
@@ -22,10 +22,8 @@ const STORAGE_KEY = "calendar-events";
 
 export function CalendarProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    // Skip storage access during SSR/hydration when the window object is unavailable
-    if (typeof window === "undefined") {
-      return [];
-    }
+    // Avoid SSR/hydration errors
+    if (typeof window === "undefined") return [];
 
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -34,7 +32,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 
         if (Array.isArray(parsed)) {
           return parsed.map(
-            (e: { id: string; title: string; date: string; description?: string }) => ({
+            (e: { id: string; title: string; date: string; description?: string; color?: string }) => ({
               ...e,
               date: new Date(e.date),
             })
@@ -42,13 +40,14 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Failed to load calendar events from storage", error);
+      console.error("Failed to load calendar events:", error);
     }
 
-    // Add default sample events
+    // Default sample events
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -70,7 +69,11 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    } catch (error) {
+      console.error("Unable to save calendar events:", error);
+    }
   }, [events]);
 
   const addEvent = (event: Omit<CalendarEvent, "id">) => {
