@@ -93,6 +93,13 @@
   gap: 1rem;
 }
 
+.cascade-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
 .cascade-card {
   position: relative;
   background: rgba(255, 255, 255, 0.78);
