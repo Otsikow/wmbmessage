@@ -408,6 +408,15 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     font-size: 1rem;
     font-family: var(--app-font-family, system-ui);
+    min-height: 100vh;
+    padding-bottom: 0;
+  }
+
+  /* Ensure content isn't hidden behind the fixed mobile navigation */
+  @media (max-width: 768px) {
+    body {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .reader-typography {
