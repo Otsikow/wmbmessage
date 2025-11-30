@@ -3,9 +3,14 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 
 export default function SettingsFontControls() {
   const { settings, updateSettings } = useSettings();
+  const scriptureFontOptions = useScriptureFontOptions();
+  const selectedScriptureFont = scriptureFontOptions.find(
+    (option) => option.id === settings.readerFontFamily
+  );
 
   return (
     <div className="space-y-3">
@@ -72,23 +77,46 @@ export default function SettingsFontControls() {
             <div className="flex-1 space-y-3">
               <div>
                 <Label className="font-medium text-sm sm:text-base">Bible Reading Font</Label>
-                <p className="text-xs sm:text-sm text-muted-foreground">Font for scripture text</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Choose a scripture typeface</p>
               </div>
               <Select
                 value={settings.readerFontFamily}
-                onValueChange={(value: "serif" | "sans-serif" | "monospace") =>
+                onValueChange={(value: ScriptureFontId) =>
                   updateSettings({ readerFontFamily: value })
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Select a scripture font" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="serif" className="font-serif">Serif (Recommended)</SelectItem>
-                  <SelectItem value="sans-serif" className="font-sans">Sans Serif</SelectItem>
-                  <SelectItem value="monospace" className="font-mono">Monospace</SelectItem>
+                  {scriptureFontOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.id} className="py-2">
+                      <div className="flex flex-col gap-1 text-left">
+                        <span className="text-sm font-semibold text-foreground">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                        <span
+                          className="text-sm text-foreground/80"
+                          style={{ fontFamily: option.stack }}
+                        >
+                          {option.preview}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+
+              {selectedScriptureFont && (
+                <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Preview</p>
+                  <p
+                    className="mt-1 text-sm leading-relaxed text-foreground/90"
+                    style={{ fontFamily: selectedScriptureFont.stack }}
+                  >
+                    {selectedScriptureFont.preview}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

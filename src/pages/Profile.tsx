@@ -53,6 +53,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
 import EngagementPrompt from "@/components/engagement/EngagementPrompt";
+import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 
 interface AccountSettingsState {
   emailNotifications: boolean;
@@ -72,6 +73,7 @@ export default function Profile() {
     resetSettings,
     loading: settingsLoading,
   } = useSettings();
+  const scriptureFontOptions = useScriptureFontOptions();
 
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
@@ -858,8 +860,7 @@ export default function Profile() {
                         value={settings.readerFontFamily}
                         onValueChange={(value) =>
                           updateSettings({
-                            readerFontFamily:
-                              value as typeof settings.readerFontFamily,
+                            readerFontFamily: value as ScriptureFontId,
                           })
                         }
                         disabled={settingsLoading}
@@ -868,9 +869,24 @@ export default function Profile() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="serif">Serif</SelectItem>
-                          <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                          <SelectItem value="monospace">Monospace</SelectItem>
+                          {scriptureFontOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id} className="py-2">
+                              <div className="flex flex-col text-left">
+                                <span className="text-sm font-semibold text-foreground">
+                                  {option.label}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {option.description}
+                                </span>
+                                <span
+                                  className="text-sm text-foreground/80"
+                                  style={{ fontFamily: option.stack }}
+                                >
+                                  {option.preview}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

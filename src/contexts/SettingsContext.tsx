@@ -2,11 +2,17 @@ import React, { createContext, useState, useEffect, useContext, useRef } from "r
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "./AuthContext";
+import {
+  DEFAULT_SCRIPTURE_FONT,
+  SCRIPTURE_FONT_STACKS,
+  type ScriptureFontId,
+  normalizeScriptureFont,
+} from "@/hooks/useScriptureFontOptions";
 
 export interface AppSettings {
   fontSize: number; // 14-24px
   fontFamily: "serif" | "sans-serif" | "monospace";
-  readerFontFamily: "serif" | "sans-serif" | "monospace";
+  readerFontFamily: ScriptureFontId;
   colorScheme: "default" | "warm" | "cool" | "high-contrast";
   theme: "light" | "dark";
   bibleVersion: string;
@@ -15,7 +21,7 @@ export interface AppSettings {
 const defaultSettings: AppSettings = {
   fontSize: 16,
   fontFamily: "sans-serif",
-  readerFontFamily: "serif",
+  readerFontFamily: DEFAULT_SCRIPTURE_FONT,
   colorScheme: "default",
   theme: "light",
   bibleVersion: "KJV",
@@ -38,6 +44,7 @@ const clampFontSize = (value: number): number => {
 const sanitizeSettings = (settings: AppSettings): AppSettings => ({
   ...settings,
   fontSize: clampFontSize(settings.fontSize),
+  readerFontFamily: normalizeScriptureFont(settings.readerFontFamily),
 });
 
 interface SettingsContextType {
@@ -122,7 +129,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 ? rawData.font_size
                 : parseInt(String(rawData.font_size || "16"), 10) || 16,
             fontFamily: (rawData.font_family || "sans-serif") as AppSettings['fontFamily'],
-            readerFontFamily: (rawData.reader_font_family || "serif") as AppSettings['readerFontFamily'],
+            readerFontFamily: normalizeScriptureFont(rawData.reader_font_family),
             colorScheme: (rawData.color_scheme || "default") as AppSettings['colorScheme'],
             theme: (rawData.theme || "light") as AppSettings['theme'],
             bibleVersion: rawData.bible_version || "KJV",
@@ -215,10 +222,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
 
       const appFontStack = FONT_STACKS[settings.fontFamily];
-      const readerFontStack = FONT_STACKS[settings.readerFontFamily];
+      const readerFontStack = SCRIPTURE_FONT_STACKS[settings.readerFontFamily];
 
       root.style.setProperty("--app-font-family", appFontStack);
       root.style.setProperty("--reader-font-family", readerFontStack);
+      root.style.setProperty("--scripture-font-family", readerFontStack);
       body.style.fontFamily = appFontStack;
 
       // Apply app font family utility classes for Tailwind components
