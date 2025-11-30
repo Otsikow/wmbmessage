@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import CardGroupCascade from "@/components/CardGroupCascade";
 import Navigation from "@/components/Navigation";
 import DailyVerseCard from "@/components/DailyVerseCard";
 import FeaturedSermons from "@/components/FeaturedSermons";
@@ -19,13 +18,6 @@ const Index = () => {
       <main className="space-y-6">
         <SectionErrorBoundary section="Hero" description="The hero content is temporarily unavailable.">
           <Hero />
-        </SectionErrorBoundary>
-
-        <SectionErrorBoundary
-          section="Feature showcase"
-          description="We couldn't load the devotional feature showcase."
-        >
-          <CardGroupCascade />
         </SectionErrorBoundary>
 
         <SectionErrorBoundary
