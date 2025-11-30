@@ -2,10 +2,12 @@ import { Card } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { BookOpen } from "lucide-react";
 import { useRecentVerses } from "@/hooks/useRecentVerses";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function RecentBibleVerses() {
   const { recentVerses, addRecentVerse } = useRecentVerses();
+  const [hasRevealed, setHasRevealed] = useState(false);
 
   // Add sample verses on first load
   useEffect(() => {
@@ -48,6 +50,16 @@ export default function RecentBibleVerses() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (recentVerses.length === 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => setHasRevealed(true), 100);
+
+    return () => clearTimeout(timer);
+  }, [recentVerses.length]);
+
   if (recentVerses.length === 0) {
     return (
       <div className="w-full">
@@ -63,8 +75,9 @@ export default function RecentBibleVerses() {
   }
 
   return (
-    <div className="w-full">
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">Recent Bible Verses</h2>
+    <div className="relative w-full">
+      <div className="pointer-events-none absolute -inset-x-10 -top-8 -bottom-6 -z-10 bg-[radial-gradient(circle_at_12%_15%,rgba(59,130,246,0.08),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.06),transparent_30%),radial-gradient(circle_at_55%_82%,rgba(99,102,241,0.06),transparent_42%)] blur-3xl opacity-80 animate-[pulse_7s_ease-in-out_infinite]" />
+      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">Recent Bible Verses</h2>
       <Carousel
         opts={{
           align: "start",
@@ -72,21 +85,35 @@ export default function RecentBibleVerses() {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          {recentVerses.map((verse) => (
-            <CarouselItem key={verse.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-              <Card className="p-6 border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all h-full">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-lg">
+        <CarouselContent className="-ml-2 md:-ml-4 transition-[transform] duration-[680ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform">
+          {recentVerses.map((verse, index) => (
+            <CarouselItem
+              key={verse.id}
+              className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
+            >
+              <Card
+                className={cn(
+                  "group relative h-full overflow-hidden rounded-[22px] border border-border/50 bg-white p-6 shadow-[0_8px_20px_rgba(0,0,0,0.04)] backdrop-blur-[1.5px]",
+                  "transition-[transform,opacity,filter,box-shadow] duration-[750ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity,filter]",
+                  "hover:scale-[1.02] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:border-primary/40",
+                  hasRevealed
+                    ? "opacity-100 blur-0 translate-y-0 scale-100 shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+                    : "opacity-0 blur-[14px] translate-y-[30px] scale-[0.96]",
+                )}
+                style={{ transitionDelay: `${index * 180}ms` }}
+              >
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.08),rgba(255,255,255,0.6),rgba(59,130,246,0.06))] opacity-0 blur-sm transition-opacity duration-700 ease-out group-hover:opacity-80" />
+                <div className="relative z-10 flex h-full flex-col items-center gap-4 text-center">
+                  <div className="flex items-center gap-2 text-primary">
+                    <BookOpen className="h-5 w-5" />
+                    <h3 className="font-semibold text-lg text-foreground">
                       {verse.book} {verse.chapter}:{verse.verse}
                     </h3>
                   </div>
-                  <p className="reader-typography text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                  <p className="reader-typography text-base md:text-[17px] leading-relaxed text-muted-foreground/90 transition-transform duration-200 ease-out group-hover:-translate-y-[3px] line-clamp-4">
                     {verse.text}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground/80">
                     {new Date(verse.timestamp).toLocaleDateString()}
                   </p>
                 </div>
