@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export interface CalendarEvent {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   date: Date;
   color?: string;
 }
