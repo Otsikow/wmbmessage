@@ -22,18 +22,26 @@ const STORAGE_KEY = "calendar-events";
 
 export function CalendarProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed.map((e: { id: string; title: string; date: string; description?: string }) => ({ ...e, date: new Date(e.date) }));
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.map((e: { id: string; title: string; date: string; description?: string }) => ({
+          ...e,
+          date: new Date(e.date),
+        }));
+      }
+    } catch (error) {
+      console.warn("Unable to load calendar events from storage, using defaults.", error);
     }
+
     // Add default sample events
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
-    
+
     return [
       {
         id: "1",
@@ -51,7 +59,11 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    } catch (error) {
+      console.warn("Unable to save calendar events to storage.", error);
+    }
   }, [events]);
 
   const addEvent = (event: Omit<CalendarEvent, "id">) => {
