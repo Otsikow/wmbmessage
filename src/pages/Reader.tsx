@@ -42,6 +42,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { useHighlights, HIGHLIGHT_COLORS } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
@@ -434,16 +435,21 @@ export default function Reader() {
                 </div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={controlButtonClass}
-                    aria-label="Quick actions"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={controlButtonClass}
+                        aria-label="Quick actions"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Quick actions and shortcuts</TooltipContent>
+                </Tooltip>
                 <DropdownMenuContent align="end" className="w-72">
                   <DropdownMenuLabel>Shortcuts</DropdownMenuLabel>
                   <DropdownMenuSeparator />
