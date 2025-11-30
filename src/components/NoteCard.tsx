@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { Edit, Trash2, BookOpen, MessageSquare } from "lucide-react";
+import DOMPurify from "dompurify";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,7 +92,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
           {/* Content */}
           <div
             className="text-sm text-muted-foreground prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: note.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(note.content) }}
           />
         </div>
       </Card>
