@@ -263,9 +263,10 @@ export default function CrossReferenceViewer({
   }, [initialSearchQuery, performSearch]);
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-      {/* Search Input */}
-      <div className="space-y-2 flex-shrink-0">
+    <ScrollArea className="h-full">
+      <div className="flex flex-col min-h-full space-y-4 pr-4">
+        {/* Search Input */}
+        <div className="space-y-2 flex-shrink-0">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
@@ -318,10 +319,10 @@ export default function CrossReferenceViewer({
             </AlertDescription>
           </Alert>
         )}
-      </div>
+        </div>
 
-      {/* Tabs for organizing content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        {/* Tabs for organizing content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
@@ -344,15 +345,14 @@ export default function CrossReferenceViewer({
         </TabsList>
 
         {/* Search Results Tab */}
-        <TabsContent value="search" className="mt-4 flex-1 overflow-hidden">
-          <ScrollArea className="h-full rounded-md border p-4">
-            {searchLoading || crossReferenceSearchLoading || isSearching ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Searching the Bible...</p>
-              </div>
-            ) : (
-              <>
+        <TabsContent value="search" className="mt-4">
+          {searchLoading || crossReferenceSearchLoading || isSearching ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Searching the Bible...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border p-4">
                 {/* Bible Verses */}
                 {searchResults.length > 0 && (
                   <div className="space-y-4 mb-6">
@@ -498,23 +498,21 @@ export default function CrossReferenceViewer({
                     </div>
                   </div>
                 )}
-              </>
-            )}
-          </ScrollArea>
+            </div>
+          )}
         </TabsContent>
 
         {/* Cross References Tab */}
-        <TabsContent value="cross-refs" className="mt-4 flex-1 overflow-hidden">
-          <ScrollArea className="h-full rounded-md border p-4">
-            {crossRefsLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Loading cross-references...</p>
-              </div>
-            ) : (
-              <>
-                {currentBook && currentChapter && currentVerse ? (
-                  <>
+        <TabsContent value="cross-refs" className="mt-4">
+          {crossRefsLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading cross-references...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border p-4">
+              {currentBook && currentChapter && currentVerse ? (
+                <>
                     {/* Current Verse Info */}
                     <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Cross-references for:</p>
@@ -616,12 +614,12 @@ export default function CrossReferenceViewer({
                     </div>
                   </div>
                 )}
-              </>
-            )}
-          </ScrollArea>
+            </div>
+          )}
         </TabsContent>
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </ScrollArea>
   );
 }
 
