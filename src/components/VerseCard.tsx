@@ -189,128 +189,128 @@ export default function VerseCard({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-end gap-1.5 border-t border-border/60 pt-3 text-muted-foreground">
-            <span className="sr-only">
-              {book} {chapter}:{verse.number}
-            </span>
+          {isSelected && (
+            <div className="flex flex-wrap items-center justify-end gap-1.5 pt-3 text-muted-foreground">
+              <span className="sr-only">
+                {book} {chapter}:{verse.number}
+              </span>
 
-            {isSelected && (
               <div className="flex flex-wrap items-center gap-1.5 transition-all duration-200">
                 <HighlightMenu
                   onHighlight={(color, noteValue) => onHighlight(verse.number, color, noteValue)}
                   onRemoveHighlight={
                     highlight ? () => onRemoveHighlight(verse.number) : undefined
                   }
-                currentColor={highlight?.color}
-                currentNote={highlight?.note}
-              />
+                  currentColor={highlight?.color}
+                  currentNote={highlight?.note}
+                />
 
-              {onAddNote && (
+                {onAddNote && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAddNote(verse.number, event);
+                        }}
+                      >
+                        <NotebookPen className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Add study note</TooltipContent>
+                  </Tooltip>
+                )}
+
+                {onSermonCrossRef && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onSermonCrossRef(verse.number);
+                        }}
+                      >
+                        <AudioLines className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      View sermon references
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className={cn("h-8 w-8", isBookmarked && "text-primary")}
                       onClick={(event) => {
                         event.stopPropagation();
-                        onAddNote(verse.number, event);
+                        onToggleBookmark(verse.number);
                       }}
                     >
-                      <NotebookPen className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Add study note</TooltipContent>
-                </Tooltip>
-              )}
-
-              {onSermonCrossRef && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onSermonCrossRef(verse.number);
-                      }}
-                    >
-                      <AudioLines className="h-3.5 w-3.5" />
+                      <Bookmark
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          isBookmarked && "fill-current"
+                        )}
+                      />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    View sermon references
+                    {isBookmarked ? "Remove bookmark" : "Bookmark verse"}
                   </TooltipContent>
                 </Tooltip>
-              )}
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn("h-8 w-8", isBookmarked && "text-primary")}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onToggleBookmark(verse.number);
-                    }}
-                  >
-                    <Bookmark
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        isBookmarked && "fill-current"
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onViewCrossReferences(verse.number);
+                      }}
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">View cross references</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleCopy();
+                      }}
+                    >
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
                       )}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {isBookmarked ? "Remove bookmark" : "Bookmark verse"}
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onViewCrossReferences(verse.number);
-                    }}
-                  >
-                    <Link2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">View cross references</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleCopy();
-                    }}
-                  >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {copied ? "Copied" : "Copy verse"}
-                </TooltipContent>
-              </Tooltip>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {copied ? "Copied" : "Copy verse"}
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
