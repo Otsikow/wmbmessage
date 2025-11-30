@@ -45,6 +45,7 @@ import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
 import VerseCard from "@/components/VerseCard";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
@@ -57,6 +58,7 @@ export default function Reader() {
   const { settings, updateSettings } = useSettings();
   const { createUserNote } = useUserNotes();
   const { recordActivity } = useEngagement();
+  const scriptureFontOptions = useScriptureFontOptions();
 
   const searchParams = useMemo(() => {
     if (typeof window === "undefined") {
@@ -364,13 +366,9 @@ export default function Reader() {
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
 
-  const readerFontClass = cn(
-    "reader-typography",
-    settings.readerFontFamily === "serif"
-      ? "font-serif"
-      : settings.readerFontFamily === "monospace"
-      ? "font-mono"
-      : "font-sans"
+  const readerFontClass = cn("reader-typography");
+  const selectedScriptureFont = scriptureFontOptions.find(
+    (option) => option.id === settings.readerFontFamily
   );
   const controlButtonClass =
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
@@ -570,23 +568,28 @@ export default function Reader() {
                         </div>
                         <Select
                           value={settings.readerFontFamily}
-                          onValueChange={(value: "serif" | "sans-serif" | "monospace") =>
+                          onValueChange={(value: ScriptureFontId) =>
                             updateSettings({ readerFontFamily: value })
                           }
                         >
                           <SelectTrigger className="rounded-xl">
-                            <SelectValue />
+                            <SelectValue placeholder="Choose a scripture font" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="serif" className="font-serif">
-                              Serif (classic reading)
-                            </SelectItem>
-                            <SelectItem value="sans-serif" className="font-sans">
-                              Sans serif (modern)
-                            </SelectItem>
-                            <SelectItem value="monospace" className="font-mono">
-                              Monospace (study)
-                            </SelectItem>
+                            {scriptureFontOptions.map((option) => (
+                              <SelectItem key={option.id} value={option.id} className="py-2">
+                                <div className="flex flex-col gap-1 text-left">
+                                  <span className="text-sm font-semibold text-foreground">{option.label}</span>
+                                  <span className="text-xs text-muted-foreground">{option.description}</span>
+                                  <span
+                                    className="text-sm text-foreground/80"
+                                    style={{ fontFamily: option.stack }}
+                                  >
+                                    {option.preview}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -614,9 +617,17 @@ export default function Reader() {
 
                       <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
                         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Preview</p>
-                        <div className={cn("mt-3 text-sm sm:text-base leading-7", readerFontClass)}>
+                        <div
+                          className={cn("mt-3 text-sm sm:text-base leading-7", readerFontClass)}
+                          style={{ fontFamily: selectedScriptureFont?.stack }}
+                        >
                           In the beginning God created the heaven and the earth. (Genesis 1:1)
                         </div>
+                        {selectedScriptureFont && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Using {selectedScriptureFont.label}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </DialogContent>

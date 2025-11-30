@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600&family=EB+Garamond:wght@400;600&family=Gentium+Book+Plus:wght@400;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:wght@400;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,6 +13,7 @@ All colors MUST be HSL.
     --base-font-size: 16px;
     --app-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --reader-font-family: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
+    --scripture-font-family: "Gentium Book Plus", "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
     --background: 0 0% 99%;
     --foreground: 215 25% 15%;
 
@@ -411,7 +414,10 @@ All colors MUST be HSL.
   }
 
   .reader-typography {
-    font-family: var(--reader-font-family, var(--app-font-family, inherit)) !important;
+    font-family: var(
+      --scripture-font-family,
+      var(--reader-font-family, var(--app-font-family, inherit))
+    ) !important;
   }
 }
 

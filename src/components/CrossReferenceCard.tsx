@@ -51,7 +51,7 @@ export default function CrossReferenceCard({
         <CardContent className="space-y-3">
           <p
             className={cn(
-              "text-sm leading-relaxed",
+              "reader-typography text-sm leading-relaxed",
               bibleVerse.isJesusWords && "text-jesus-words font-medium"
             )}
           >

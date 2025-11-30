@@ -205,7 +205,7 @@ export default function DailyQuote() {
 
           <div className="space-y-2">
             <h4 className="text-lg font-semibold text-foreground">Scripture Reading</h4>
-            <blockquote className="text-base md:text-lg leading-relaxed text-foreground/90">
+            <blockquote className="reader-typography text-base md:text-lg leading-relaxed text-foreground/90">
               “{reading.verse.text}”
             </blockquote>
             <p className="text-sm font-semibold text-primary">
