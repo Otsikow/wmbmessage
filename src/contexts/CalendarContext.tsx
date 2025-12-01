@@ -1,5 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
-import type { ReactNode } from "react";
+import { createContext, useState, useEffect, useContext, type ReactNode } from "react";
 
 export interface CalendarEvent {
   id: string;
