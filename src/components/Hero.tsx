@@ -1,17 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   BookOpen,
   Search,
   MessageSquare,
-  FileText,
-  Download,
   Sparkles,
-  Target,
 } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import RecentBibleVerses from "@/components/RecentBibleVerses";
+import FlipTilesGrid from "@/components/FlipTilesGrid";
 import heroImage from "@/assets/bible-hero-bg.jpg";
 import logoImage from "@/assets/logo-hero.png";
 
@@ -95,67 +92,9 @@ export default function Hero() {
             <RecentBibleVerses />
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mt-12 w-full max-w-7xl">
-            <Link to="/plans" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-glow hover:border-primary transition-all cursor-pointer h-full bg-gradient-to-b from-primary/5 to-background">
-                <Target className="h-10 w-10 text-primary mb-4" />
-                <h3 className="text-lg font-semibold mb-3">Bible Reading Plans</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Follow guided plans with streak tracking, notes, and synced bookmarks.
-                </p>
-              </Card>
-            </Link>
-
-            <Link to="/reader" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
-                <BookOpen className="h-10 w-10 text-primary mb-4" />
-                <h3 className="text-lg font-semibold mb-3">Bible Reading</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Read scripture with powerful search, notes, and cross-references.
-                </p>
-              </Card>
-            </Link>
-
-            <Link to="/wmb-sermons" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-secondary/50 transition-all cursor-pointer h-full">
-                <MessageSquare className="h-10 w-10 text-secondary mb-4" />
-                <h3 className="text-lg font-semibold mb-3">WMB Sermons</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Explore sermons with verse connections and deep insights.
-                </p>
-              </Card>
-            </Link>
-
-            <Link to="/search" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-accent/50 transition-all cursor-pointer h-full">
-                <Search className="h-10 w-10 text-accent mb-4" />
-                <h3 className="text-lg font-semibold mb-3">Smart Search</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Find verses, topics, and sermon quotes instantly.
-                </p>
-              </Card>
-            </Link>
-
-            <Link to="/notes" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
-                <FileText className="h-10 w-10 text-primary mb-4" />
-                <h3 className="text-lg font-semibold mb-3">Notes</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Create and organize your personal Bible study notes.
-                </p>
-              </Card>
-            </Link>
-
-            <Link to="/downloads" className="block h-full">
-              <Card className="p-6 md:p-8 border border-border/50 shadow-sm hover:shadow-lg hover:border-secondary/50 transition-all cursor-pointer h-full">
-                <Download className="h-10 w-10 text-secondary mb-4" />
-                <h3 className="text-lg font-semibold mb-3">Downloads</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Access offline Bibles and sermon resources.
-                </p>
-              </Card>
-            </Link>
+          {/* 3D Flip Tiles Grid - Feature Cards */}
+          <div className="w-full max-w-7xl mt-12">
+            <FlipTilesGrid autoPlay={true} triggerOnScroll={false} />
           </div>
         </div>
       </div>
