@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import DOMPurify from "@/lib/dompurify";
 
 export interface NoteEditorProps {
   open: boolean;
@@ -55,7 +56,7 @@ export function NoteEditor({
       setSelectedSourceType(initialData.source_type);
       setTitle(initialData.title || "");
       if (editorRef.current) {
-        editorRef.current.innerHTML = initialData.content;
+        editorRef.current.innerHTML = DOMPurify.sanitize(initialData.content);
       }
     } else {
       setSourceReference(sourceId);
@@ -87,8 +88,9 @@ export function NoteEditor({
       return;
     }
 
-    const content = editorRef.current.innerHTML;
-    if (!content.trim()) {
+    const sanitizedContent = DOMPurify.sanitize(editorRef.current.innerHTML);
+
+    if (!sanitizedContent.trim()) {
       toast({
         title: "Add note content",
         description: "Write something in the note body before saving.",
@@ -101,7 +103,7 @@ export function NoteEditor({
       source_type: selectedSourceType,
       source_id: sourceReference,
       title: title.trim() || sourceReference,
-      content,
+      content: sanitizedContent,
       verse_reference: selectedSourceType === "bible" ? sourceReference : null,
     });
 
