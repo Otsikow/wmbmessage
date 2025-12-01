@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import DOMPurify from "@/lib/dompurify";
 
 export interface UserNote {
   id: string;
@@ -37,6 +38,7 @@ export interface NoteCardProps {
 
 export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const sanitizedContent = DOMPurify.sanitize(note.content);
 
   const handleDelete = () => {
     onDelete(note.id);
@@ -91,7 +93,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
           {/* Content */}
           <div
             className="text-sm text-muted-foreground prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: note.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>
       </Card>
