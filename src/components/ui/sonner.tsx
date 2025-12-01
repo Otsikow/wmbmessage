@@ -1,13 +1,13 @@
-import * as React from "react";
+import { useState, useEffect, type ComponentProps } from "react";
 import { Toaster as Sonner, toast } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+type ToasterProps = ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   // Use system preference directly instead of theme context to avoid hook issues
-  const [theme, setTheme] = React.useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
-  React.useEffect(() => {
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const updateTheme = () => {
       const isDark = document.documentElement.classList.contains("dark") || 
