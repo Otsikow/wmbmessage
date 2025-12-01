@@ -93,16 +93,16 @@ export default function RecentBibleVerses() {
             >
               <Card
                 className={cn(
-                  "group relative h-full overflow-hidden rounded-[22px] border border-border/50 bg-white p-6 shadow-[0_8px_20px_rgba(0,0,0,0.04)] backdrop-blur-[1.5px]",
+                  "group relative h-full overflow-hidden rounded-[22px] border border-border/50 bg-card/80 dark:bg-card/60 p-6 shadow-[0_8px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)] backdrop-blur-[1.5px]",
                   "transition-[transform,opacity,filter,box-shadow] duration-[750ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity,filter]",
-                  "hover:scale-[1.02] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:border-primary/40",
+                  "hover:scale-[1.02] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_10px_25px_rgba(0,0,0,0.4)] hover:border-primary/40",
                   hasRevealed
-                    ? "opacity-100 blur-0 translate-y-0 scale-100 shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+                    ? "opacity-100 blur-0 translate-y-0 scale-100 shadow-[0_12px_28px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
                     : "opacity-0 blur-[14px] translate-y-[30px] scale-[0.96]",
                 )}
                 style={{ transitionDelay: `${index * 180}ms` }}
               >
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.08),rgba(255,255,255,0.6),rgba(59,130,246,0.06))] opacity-0 blur-sm transition-opacity duration-700 ease-out group-hover:opacity-80" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.08),rgba(255,255,255,0.6),rgba(59,130,246,0.06))] dark:bg-[linear-gradient(135deg,rgba(59,130,246,0.15),rgba(30,41,59,0.4),rgba(59,130,246,0.1))] opacity-0 blur-sm transition-opacity duration-700 ease-out group-hover:opacity-80 dark:group-hover:opacity-60" />
                 <div className="relative z-10 flex h-full flex-col items-center gap-4 text-center">
                   <div className="flex items-center gap-2 text-primary">
                     <BookOpen className="h-5 w-5" />
