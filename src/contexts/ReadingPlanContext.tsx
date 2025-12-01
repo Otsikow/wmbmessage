@@ -25,7 +25,7 @@ import {
   ReminderPreferences,
   UserPlanProgress,
 } from "@/types/readingPlans";
-import { useEngagement } from "@/contexts/EngagementContext";
+import { useOptionalEngagement } from "@/contexts/EngagementContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
@@ -222,7 +222,8 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
   } | null>(null);
   const [storageKey, setStorageKey] = useState(() => STORAGE_KEY_BASE);
   const [isRemoteHydrated, setIsRemoteHydrated] = useState(() => !user);
-  const { recordActivity } = useEngagement();
+  const optionalEngagement = useOptionalEngagement();
+  const recordActivity = optionalEngagement?.recordActivity;
 
   useEffect(() => {
     const nextKey = buildStorageKey(user?.id ?? null);
@@ -597,7 +598,7 @@ export const ReadingPlanProvider = ({ children }: { children: React.ReactNode })
           setCelebration({ streak: streakCount, timestamp: timestamp.toISOString() });
         }
 
-        recordActivity("bible-reading", {
+        optionalEngagement?.recordActivity("bible-reading", {
           description: `Completed day ${dayNumber} of ${plan.title}`,
           pointsOverride: pointsEarned,
           timestamp,

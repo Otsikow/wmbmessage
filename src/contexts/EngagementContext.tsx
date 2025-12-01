@@ -317,3 +317,5 @@ export const useEngagement = () => {
   }
   return context;
 };
+
+export const useOptionalEngagement = () => useContext(EngagementContext);
