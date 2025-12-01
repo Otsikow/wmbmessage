@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 
 interface AuthContextType {
@@ -39,17 +39,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    const supabase = getSupabaseClient();
+
+    if ((supabase as any).__disabled) {
+      console.warn("Supabase client is disabled; skipping auth session checks.");
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     // Get initial session
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => {
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
+      .then(({ data: { session }, error }) => {
+        if (!mounted) return;
+
+        if (error) {
+          console.error("Failed to initialize auth session", error);
           setLoading(false);
+          return;
         }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Failed to initialize auth session", error);
