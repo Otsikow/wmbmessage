@@ -16,19 +16,29 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Force single React instance
-      react: path.resolve(__dirname, "node_modules/react"),
+      // Force single React instance for ALL imports (namespace and direct)
+      "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
     },
-    dedupe: ["react", "react-dom", "@tanstack/react-query"],
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query"],
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "@tanstack/react-query"],
+    include: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query"],
+    // Force rebuild of optimized deps
     force: true,
+    esbuildOptions: {
+      // Ensure consistent React resolution
+      define: {
+        global: 'globalThis',
+      },
+    },
   },
   build: {
     commonjsOptions: {
       include: [/node_modules/],
+      transformMixedEsModules: true,
     },
     rollupOptions: {
       input: {
