@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
@@ -70,40 +71,41 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ContextProviderBoundary
-        contextName="Authentication"
-        description="We couldn't connect to the authentication session."
-      >
-        <AuthProvider>
-          <ContextProviderBoundary
-            contextName="Settings"
-            description="Personalized reading preferences failed to load."
-          >
-            <SettingsProvider>
-              <ContextProviderBoundary
-                contextName="Calendar"
-                description="Calendar data could not be initialized."
-              >
-                <CalendarProvider>
-                  <ContextProviderBoundary
-                    contextName="Engagement"
-                    description="We couldn't load your engagement stats."
-                  >
-                    <EngagementProvider>
-                      <ContextProviderBoundary
-                        contextName="Reading plans"
-                        description="Reading plan progress is unavailable right now."
-                      >
-                      <ReadingPlanProvider>
-                        <BrowserRouter>
-                          <TooltipProvider>
-                            <Toaster />
-                            <Sonner />
-                            <OfflineIndicator />
-                            <GlobalLoadingOverlay />
-                            <RouteTransitionIndicator />
-                            <RouteErrorBoundary>
-                              <Routes>
+      <ThemeProvider defaultTheme="system">
+        <ContextProviderBoundary
+          contextName="Authentication"
+          description="We couldn't connect to the authentication session."
+        >
+          <AuthProvider>
+            <ContextProviderBoundary
+              contextName="Settings"
+              description="Personalized reading preferences failed to load."
+            >
+              <SettingsProvider>
+                <ContextProviderBoundary
+                  contextName="Calendar"
+                  description="Calendar data could not be initialized."
+                >
+                  <CalendarProvider>
+                    <ContextProviderBoundary
+                      contextName="Engagement"
+                      description="We couldn't load your engagement stats."
+                    >
+                      <EngagementProvider>
+                        <ContextProviderBoundary
+                          contextName="Reading plans"
+                          description="Reading plan progress is unavailable right now."
+                        >
+                          <ReadingPlanProvider>
+                            <BrowserRouter>
+                              <TooltipProvider>
+                                <Toaster />
+                                <Sonner />
+                                <OfflineIndicator />
+                                <GlobalLoadingOverlay />
+                                <RouteTransitionIndicator />
+                                <RouteErrorBoundary>
+                                  <Routes>
                                   {/* Home Page */}
                                   <Route
                                     path="/"
@@ -270,25 +272,26 @@ function App() {
                                       </ProtectedRoute>
                                     }
                                   />
-                                  {/* Catch-All */}
-                                  <Route
-                                    path="*"
-                                    element={withSectionBoundary("Not found", <NotFound />)}
-                                  />
-                                </Routes>
-                              </RouteErrorBoundary>
-                            </TooltipProvider>
-                          </BrowserRouter>
-                        </ReadingPlanProvider>
-                      </ContextProviderBoundary>
-                    </EngagementProvider>
-                  </ContextProviderBoundary>
-                </CalendarProvider>
+                                    {/* Catch-All */}
+                                    <Route
+                                      path="*"
+                                      element={withSectionBoundary("Not found", <NotFound />)}
+                                    />
+                                  </Routes>
+                                </RouteErrorBoundary>
+                              </TooltipProvider>
+                            </BrowserRouter>
+                          </ReadingPlanProvider>
+                        </ContextProviderBoundary>
+                      </EngagementProvider>
+                    </ContextProviderBoundary>
+                  </CalendarProvider>
               </ContextProviderBoundary>
             </SettingsProvider>
           </ContextProviderBoundary>
         </AuthProvider>
       </ContextProviderBoundary>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
