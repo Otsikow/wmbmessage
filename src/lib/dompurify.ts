@@ -1,5 +1,6 @@
-// Lightweight DOMPurify-compatible sanitizer for offline usage
-// This provides a minimal sanitize implementation to strip dangerous HTML.
+// DOMPurify-compatible sanitizer for offline usage.
+// This mimics the DOMPurify API surface we rely on while aggressively stripping
+// dangerous markup to avoid XSS when rendering stored note content.
 
 const BLOCKED_TAGS = [
   "script",
@@ -16,14 +17,32 @@ const BLOCKED_TAGS = [
   "textarea",
   "select",
   "option",
+  "template",
+  "svg",
+  "math",
 ];
 
-const UNSAFE_ATTRIBUTES = new Set(["srcdoc"]);
+const UNSAFE_ATTRIBUTES = new Set([
+  "srcdoc",
+  "xlink:href",
+  "xml:base",
+  "xmlns",
+]);
+
+const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:", "data:", ""]);
 
 const isSafeUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+
+  // Block javascript: or other executable protocol attempts outright
+  if (/^(javascript|vbscript|data:text\/html)/i.test(trimmed)) {
+    return false;
+  }
+
   try {
-    const url = new URL(value, window.location.origin);
-    return ["http:", "https:", "mailto:", "tel:", ""].includes(url.protocol);
+    const url = new URL(trimmed, window.location.origin);
+    return SAFE_URL_PROTOCOLS.has(url.protocol);
   } catch (error) {
     // If URL construction fails, treat it as unsafe
     return false;
@@ -43,6 +62,19 @@ const sanitize = (dirty: string) => {
   template.content
     .querySelectorAll(BLOCKED_TAGS.join(","))
     .forEach((node) => node.remove());
+
+  // Remove HTML comments which can hide malicious payloads
+  template.content
+    .querySelectorAll('*')
+    .forEach((element) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_COMMENT);
+      const commentsToRemove: Comment[] = [];
+      while (walker.nextNode()) {
+        const current = walker.currentNode as Comment;
+        commentsToRemove.push(current);
+      }
+      commentsToRemove.forEach((comment) => comment.remove());
+    });
 
   // Scrub attributes that can lead to script execution or injection
   template.content.querySelectorAll<HTMLElement>("*").forEach((element) => {
