@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/config";
 
 interface AuthContextType {
   user: User | null;
@@ -28,16 +29,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      // Skip Supabase auth initialization when the app isn't configured.
+      // This prevents the provider from throwing hard-to-diagnose errors
+      // (e.g. "Cannot read properties of null (reading 'useState')") when
+      // the auth client isn't available.
+      console.warn("Supabase auth is not configured; skipping session initialization.");
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to initialize auth session", error);
+        if (mounted) {
+          setLoading(false);
+        }
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -52,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
