@@ -7,8 +7,35 @@ import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
 import SectionErrorBoundary from "@/components/SectionErrorBoundary";
 import { ReadingPlanWidget } from "@/components/reading-plans/ReadingPlanWidget";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
+  const { loading: authLoading } = useAuth();
+  const { loading: settingsLoading } = useSettings();
+  const isInitializing = authLoading || settingsLoading;
+
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
+          </span>
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-foreground">
+              Preparing your experience
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Loading authentication, settings, and personalization…
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen space-y-4">
       <SectionErrorBoundary section="Header" description="The main navigation header failed to render.">
