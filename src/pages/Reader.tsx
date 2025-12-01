@@ -13,6 +13,11 @@ import {
   Sun,
   Type,
   MoreHorizontal,
+  Highlighter,
+  Copy,
+  BookmarkPlus,
+  NotebookPen,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,7 +49,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
-import { useHighlights, HIGHLIGHT_COLORS } from "@/hooks/useHighlights";
+import { useHighlights } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
@@ -55,6 +60,7 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
 import { useEngagement } from "@/contexts/EngagementContext";
+import HighlightMenu from "@/components/HighlightMenu";
 
 const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
@@ -366,6 +372,12 @@ export default function Reader() {
     }
   };
 
+  const handleBulkBookmark = async () => {
+    if (!selectedVerses.length) return;
+
+    await Promise.all(selectedVerses.map((verseNumber) => toggleBookmark(verseNumber)));
+  };
+
   const primarySelectedVerse = selectedVerses[0];
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
@@ -407,6 +419,13 @@ export default function Reader() {
 
     return () => document.removeEventListener("selectionchange", handleSelectionChange);
   }, []);
+
+  const hasSelection = selectedVerses.length > 0 || Boolean(textSelection);
+  const selectionLabel = selectedVerses.length
+    ? `${selectedVerses.length} verse${selectedVerses.length === 1 ? "" : "s"} selected`
+    : textSelection
+      ? "Text selected"
+      : "";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
@@ -783,6 +802,77 @@ export default function Reader() {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Selection Actions */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-4 z-30 transition-all duration-200", 
+          hasSelection ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+        )}
+        aria-hidden={!hasSelection}
+      >
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Highlighter className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-foreground">Bulk actions</span>
+                <span className="text-xs text-muted-foreground">{selectionLabel}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <HighlightMenu
+                onHighlight={(color, note) => handleBulkHighlight(color, note)}
+                onRemoveHighlight={selectedVerses.length ? handleBulkRemoveHighlight : undefined}
+                disabled={!selectedVerses.length}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleBulkNote}
+                disabled={!selectedVerses.length}
+              >
+                <NotebookPen className="h-4 w-4" />
+                Add note
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleBulkBookmark}
+                disabled={!selectedVerses.length}
+              >
+                <BookmarkPlus className="h-4 w-4" />
+                Bookmark
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleCopySelection}
+                disabled={!hasSelection}
+              >
+                <Copy className="h-4 w-4" />
+                Copy
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+                onClick={handleClearSelection}
+                disabled={!hasSelection}
+              >
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Sermon Cross References Modal */}
