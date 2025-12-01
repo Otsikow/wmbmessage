@@ -101,6 +101,16 @@
   will-change: transform;
 }
 
+/* Dark mode styles */
+.dark .flip-tile-face {
+  background: linear-gradient(145deg, hsl(var(--card) / 0.7), hsl(var(--card) / 0.6));
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 hsl(var(--card) / 0.3);
+}
+
 /* Front face */
 .flip-tile-front {
   transform: rotateY(0deg);
@@ -119,6 +129,14 @@
       0 8px 20px rgba(0, 0, 0, 0.06),
       inset 0 1px 0 rgba(255, 255, 255, 0.9),
       0 0 0 1px var(--tone-color, rgba(34, 68, 204, 0.3));
+  }
+
+  .dark .flip-tile-link:hover .flip-tile-face {
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.5),
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 hsl(var(--card) / 0.3),
+      0 0 0 1px var(--tone-color, rgba(59, 130, 246, 0.5));
   }
 }
 
@@ -202,11 +220,19 @@
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
+.dark .tile-title {
+  color: hsl(var(--foreground));
+}
+
 .tile-description {
   font-size: 0.95rem;
   line-height: 1.6;
   color: #6f7380;
   transition: transform 0.3s ease;
+}
+
+.dark .tile-description {
+  color: hsl(var(--muted-foreground));
 }
 
 @media (hover: hover) {
@@ -237,6 +263,14 @@
   pointer-events: none;
   animation: glowPulse 4s ease-in-out infinite;
   animation-delay: calc(var(--flip-delay, 0s) + 0.8s);
+}
+
+.dark .tile-glow-pulse {
+  background: linear-gradient(
+    145deg,
+    var(--tone-color, rgba(59, 130, 246, 0.12)),
+    transparent
+  );
 }
 
 /* ========================================
