@@ -49,8 +49,8 @@ const cards = [
 ];
 
 const toneColors = {
-  blue: "#1E40AF",
-  gold: "#DAA520",
+  blue: "#2244CC",
+  gold: "#D4A215",
 };
 
 const CardGroupCascade = () => {
@@ -63,7 +63,7 @@ const CardGroupCascade = () => {
 
       <div className="cascade-inner">
         <header className="cascade-header">
-          <p className="cascade-eyebrow">Guidance & Study</p>
+          <p className="cascade-eyebrow">Guidance &amp; Study</p>
           <h2 className="cascade-title">Beautifully organized for your devotion</h2>
           <p className="cascade-subtitle">
             Six focused spaces crafted with premium clarity, calm gradients, and a gentle
@@ -77,13 +77,17 @@ const CardGroupCascade = () => {
               key={title}
               className="cascade-card"
               style={{
-                animationDelay: `${index * 120}ms`,
+                animationDelay: `${index * 150}ms`,
+                ["--tone-color" as const]: toneColors[tone],
               }}
             >
               <div className="card-ripple" />
               <div className="card-shimmer" />
-              <div className="icon-wrapper" style={{ color: toneColors[tone] }}>
-                <Icon size={44} strokeWidth={1.8} />
+              <div className="light-sweep" />
+              <div className="icon-wrapper">
+                <span className="icon-halo" />
+                <span className="icon-glow" />
+                <Icon size={48} strokeWidth={1.8} />
               </div>
               <div className="card-body">
                 <h3 className="card-title">{title}</h3>
