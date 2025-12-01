@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   isSupabaseConfigured,
   supabase,
 } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { offlineStorage, STORES } from "@/lib/offlineStorage";
 
 export interface Note {
   id: string;
@@ -210,18 +211,85 @@ export function useNotes() {
 export function useUserNotes() {
   const [userNotes, setUserNotes] = useState<UserNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [offlineReady, setOfflineReady] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
+  useEffect(() => {
+    offlineStorage
+      .init()
+      .then(() => setOfflineReady(true))
+      .catch((error) => console.error("Failed to init offline storage", error));
+  }, []);
+
+  const saveNoteOffline = async (
+    input: CreateUserNoteInput,
+    showToast = true
+  ): Promise<UserNote | null> => {
+    if (!user || !offlineReady) return null;
+
+    const timestamp = new Date().toISOString();
+    const localNote: UserNote = {
+      id: crypto.randomUUID(),
+      user_id: user.id,
+      source_type: input.source_type,
+      source_id: input.source_id,
+      title: input.title || input.source_id,
+      content: input.content,
+      verse_reference: input.verse_reference || null,
+      sermon_title: input.sermon_title,
+      tags: input.tags,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    setUserNotes([localNote, ...userNotes]);
+
+    try {
+      await offlineStorage.put(STORES.NOTES, localNote);
+      if (showToast) {
+        toast({
+          title: "Saved offline",
+          description: "We'll sync your note when Supabase is available.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to store note offline", error);
+      if (showToast) {
+        toast({
+          title: "Note saved locally",
+          description: "We saved your note, but offline cache could not be updated.",
+        });
+      }
+    }
+
+    return localNote;
+  };
+
   const fetchUserNotes = async () => {
-    if (!isSupabaseConfigured) {
-      console.warn("Supabase is not configured. Skipping user notes fetch.");
+    if (!user) {
       setUserNotes([]);
       setLoading(false);
       return;
     }
 
-    if (!user) {
+    if (!isSupabaseConfigured) {
+      if (offlineReady) {
+        try {
+          const cachedNotes = await offlineStorage.getByIndex<UserNote>(
+            STORES.NOTES,
+            "user_id",
+            user.id
+          );
+          setUserNotes(cachedNotes);
+          setLoading(false);
+          return;
+        } catch (error) {
+          console.error("Failed to load cached notes", error);
+        }
+      }
+
+      console.warn("Supabase is not configured. Skipping user notes fetch.");
       setUserNotes([]);
       setLoading(false);
       return;
@@ -250,17 +318,11 @@ export function useUserNotes() {
 
   useEffect(() => {
     fetchUserNotes();
-  }, [user]);
+  }, [user, offlineReady]);
 
   const createUserNote = async (input: CreateUserNoteInput) => {
     if (!isSupabaseConfigured) {
-      toast({
-        title: "Notes unavailable",
-        description:
-          "Supabase is not configured. Add your Supabase keys to create notes.",
-        variant: "destructive",
-      });
-      return null;
+      return saveNoteOffline(input);
     }
 
     if (!user) {
@@ -300,6 +362,15 @@ export function useUserNotes() {
       return data;
     } catch (error) {
       console.error("Error creating user note:", error);
+      const localNote = await saveNoteOffline(input, false);
+      if (localNote) {
+        toast({
+          title: "Saved offline",
+          description: "We couldn't reach Supabase, but your note was saved locally.",
+        });
+        return localNote;
+      }
+
       toast({
         title: "Error",
         description: "Failed to create note",
