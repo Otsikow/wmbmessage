@@ -78,8 +78,8 @@ const CardGroupCascade = () => {
               className="cascade-card"
               style={{
                 animationDelay: `${index * 150}ms`,
-                ["--tone-color" as const]: toneColors[tone],
-              }}
+                "--tone-color": toneColors[tone],
+              } as React.CSSProperties}
             >
               <div className="card-ripple" />
               <div className="card-shimmer" />
