@@ -3,6 +3,7 @@ import { Share2, Facebook, Twitter, Mail, Link as LinkIcon } from "lucide-react"
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import BackButton from "@/components/BackButton";
+import { buildShareAttribution } from "@/lib/share";
 
 export default function Share() {
   const handleShare = (platform: string) => {
@@ -10,7 +11,9 @@ export default function Share() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(window.location.origin);
+    const linkWithBrand = `Shared via ${buildShareAttribution()}`;
+
+    navigator.clipboard.writeText(linkWithBrand);
     toast.success("Link copied to clipboard!");
   };
 

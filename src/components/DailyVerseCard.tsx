@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEngagement } from "@/contexts/EngagementContext";
+import { appendShareAttribution } from "@/lib/share";
 
 const DailyVerseCard = () => {
   const { dailyContent, loading, error, refreshContent } = useDailyContent();
@@ -23,7 +24,9 @@ const DailyVerseCard = () => {
   const handleCopy = async () => {
     if (!dailyContent) return;
 
-    const text = `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"\n\n- MessageGuide`;
+    const text = appendShareAttribution(
+      `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`
+    );
 
     try {
       await navigator.clipboard.writeText(text);
@@ -43,7 +46,9 @@ const DailyVerseCard = () => {
   const handleShare = async () => {
     if (!dailyContent) return;
 
-    const text = `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`;
+    const text = appendShareAttribution(
+      `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`
+    );
 
     if (navigator.share) {
       try {
