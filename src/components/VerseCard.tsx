@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { appendShareAttribution } from "@/lib/share";
 import { Link2, Bookmark, Copy, Check, NotebookPen, AudioLines } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import HighlightMenu from "@/components/HighlightMenu";
@@ -82,7 +83,7 @@ export default function VerseCard({
     return false;
   };
   const handleCopy = async () => {
-    const verseText = `${book} ${chapter}:${verse.number}\n${verse.text}`;
+    const verseText = appendShareAttribution(`${book} ${chapter}:${verse.number}\n${verse.text}`);
     try {
       const copiedSuccessfully = await copyToClipboard(verseText);
       if (!copiedSuccessfully) {

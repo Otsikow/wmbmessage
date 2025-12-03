@@ -51,6 +51,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useBibleData, BIBLE_BOOKS } from "@/hooks/useBibleData";
 import { useHighlights } from "@/hooks/useHighlights";
 import { cn } from "@/lib/utils";
+import { appendShareAttribution } from "@/lib/share";
 import CrossReferenceViewer from "@/components/CrossReferenceViewer";
 import SermonCrossReferenceModal from "@/components/SermonCrossReferenceModal";
 import VerseCard from "@/components/VerseCard";
@@ -352,14 +353,16 @@ export default function Reader() {
 
     if (!contentToCopy) return;
 
+    const attributedContent = appendShareAttribution(contentToCopy);
+
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(contentToCopy);
+        await navigator.clipboard.writeText(attributedContent);
         return;
       }
 
       const textarea = document.createElement("textarea");
-      textarea.value = contentToCopy;
+      textarea.value = attributedContent;
       textarea.setAttribute("readonly", "");
       textarea.style.position = "absolute";
       textarea.style.left = "-9999px";
