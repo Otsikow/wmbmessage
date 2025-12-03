@@ -115,6 +115,34 @@ export function useHighlights(book: string, chapter: number) {
     }
 
     try {
+      const localHighlights = loadLocalHighlights();
+
+      if (localHighlights.length > 0) {
+        try {
+          const { error: syncError } = await supabase
+            .from("user_highlights")
+            .upsert(
+              localHighlights.map((highlight) => ({
+                user_id: user.id,
+                book,
+                chapter,
+                verse: highlight.verse,
+                color: highlight.color,
+                note: highlight.note,
+              })),
+              { onConflict: "user_id,book,chapter,verse" }
+            );
+
+          if (!syncError) {
+            persistLocalHighlights([]);
+          } else {
+            console.warn("Failed to sync local highlights to Supabase", syncError);
+          }
+        } catch (syncError) {
+          console.warn("Error syncing local highlights to Supabase", syncError);
+        }
+      }
+
       const [highlightsResult, bookmarksResult] = await Promise.all([
         supabase
           .from("user_highlights")
@@ -129,7 +157,9 @@ export function useHighlights(book: string, chapter: number) {
       if (highlightsResult.error) throw highlightsResult.error;
       if (bookmarksResult.error) throw bookmarksResult.error;
 
-      setHighlights(highlightsResult.data || []);
+      const syncedHighlights = highlightsResult.data || [];
+      setHighlights(syncedHighlights);
+      persistLocalHighlights(syncedHighlights);
       setBookmarks([]);
       fallbackNotifiedRef.current = false;
       errorNotifiedRef.current = false;

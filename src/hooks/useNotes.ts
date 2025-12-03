@@ -222,6 +222,40 @@ export function useUserNotes() {
       .catch((error) => console.error("Failed to init offline storage", error));
   }, []);
 
+  const syncOfflineNotes = async () => {
+    if (!user || !offlineReady || !isSupabaseConfigured) return;
+
+    try {
+      const cachedNotes = await offlineStorage.getByIndex<UserNote>(
+        STORES.NOTES,
+        "user_id",
+        user.id
+      );
+
+      if (!cachedNotes.length) return;
+
+      const { error } = await supabase
+        .from("user_notes")
+        .upsert(
+          cachedNotes.map((note) => ({
+            ...note,
+            tags: note.tags || [],
+            sermon_title: note.sermon_title || null,
+            verse_reference: note.verse_reference || null,
+          })),
+          { onConflict: "id" }
+        );
+
+      if (error) throw error;
+
+      await Promise.all(
+        cachedNotes.map((note) => offlineStorage.delete(STORES.NOTES, note.id))
+      );
+    } catch (error) {
+      console.error("Failed to sync offline notes", error);
+    }
+  };
+
   const saveNoteOffline = async (
     input: CreateUserNoteInput,
     showToast = true
@@ -317,7 +351,15 @@ export function useUserNotes() {
   };
 
   useEffect(() => {
-    fetchUserNotes();
+    const loadNotes = async () => {
+      if (user && offlineReady && isSupabaseConfigured) {
+        await syncOfflineNotes();
+      }
+
+      await fetchUserNotes();
+    };
+
+    loadNotes();
   }, [user, offlineReady]);
 
   const createUserNote = async (input: CreateUserNoteInput) => {
