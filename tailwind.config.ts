@@ -97,6 +97,21 @@ export default {
           "0%, 100%": { boxShadow: "0 0 20px hsl(var(--gold-glow) / 0.3)" },
           "50%": { boxShadow: "0 0 40px hsl(var(--gold-glow) / 0.6)" },
         },
+        // Aura background blob animations
+        "blob-drift": {
+          "0%": { transform: "translate3d(0, 0, 0) scale(1)" },
+          "50%": { transform: "translate3d(5px, 4px, 0) scale(1.02)" },
+          "100%": { transform: "translate3d(3px, 6px, 0) scale(1)" },
+        },
+        "blob-drift-reverse": {
+          "0%": { transform: "translate3d(0, 0, 0) scale(1)" },
+          "50%": { transform: "translate3d(-4px, 3px, 0) scale(0.98)" },
+          "100%": { transform: "translate3d(-2px, 5px, 0) scale(1.01)" },
+        },
+        "particle-float": {
+          "0%, 100%": { transform: "translate3d(0, 0, 0)", opacity: "0.3" },
+          "50%": { transform: "translate3d(15px, -20px, 0)", opacity: "0.6" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.3s ease-out",
@@ -105,6 +120,10 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out",
         "scale-in": "scale-in 0.4s ease-out",
         "glow": "glow 3s ease-in-out infinite",
+        // Aura background animations (Tailwind utility classes)
+        "blob-drift": "blob-drift 45s cubic-bezier(0.25, 1, 0.5, 1) infinite alternate",
+        "blob-drift-reverse": "blob-drift-reverse 30s cubic-bezier(0.25, 1, 0.5, 1) infinite alternate",
+        "particle-float": "particle-float 35s cubic-bezier(0.25, 1, 0.5, 1) infinite",
       },
       boxShadow: {
         elegant: "var(--shadow-elegant)",
