@@ -37,7 +37,7 @@ import {
   type WMBSermonResult,
 } from "@/hooks/useBibleSearch";
 import { useNavigate } from "react-router-dom";
-import heroImage from "@/assets/hero-modern.jpg";
+import heroImage from "@/assets/dove-peace.jpg";
 import { themeLibrary } from "@/data/themeLibrary";
 import {
   searchThemes,
@@ -263,10 +263,10 @@ const SearchPage = () => {
         className={`relative overflow-hidden ${heroHasQuery ? "py-10" : "py-20"}`}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-50"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+          style={{ backgroundImage: `url(${heroImage})`, backgroundPosition: 'center 30%' }}
         />
-        <div className="absolute inset-0 bg-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/60 to-background/80" />
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div
