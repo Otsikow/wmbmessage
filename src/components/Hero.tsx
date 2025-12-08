@@ -57,44 +57,44 @@ export default function Hero() {
             </div>
 
             {/* Glass Action Buttons */}
-            <div className="flex flex-col w-full max-w-3xl gap-4 sm:flex-row sm:flex-wrap sm:justify-center pt-4">
-              <Link to="/plans" className="w-full sm:w-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full max-w-4xl pt-6">
+              <Link to="/plans" className="w-full">
                 <Button
                   size="lg"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground shadow-lg hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
                 >
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Bible Reading Plans
+                  <Sparkles className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">Bible Reading Plans</span>
                 </Button>
               </Link>
 
-              <Link to="/reader" className="w-full sm:w-auto">
+              <Link to="/reader" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full bg-primary/80 backdrop-blur-md border border-primary/30 text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
                 >
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  Start Reading
+                  <BookOpen className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">Start Reading</span>
                 </Button>
               </Link>
 
-              <Link to="/search" className="w-full sm:w-auto">
+              <Link to="/search" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-foreground shadow-lg hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
                 >
-                  <Search className="mr-2 h-5 w-5" />
-                  Search Scripture
+                  <Search className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">Search Scripture</span>
                 </Button>
               </Link>
 
-              <Link to="/wmb-sermons" className="w-full sm:w-auto">
+              <Link to="/wmb-sermons" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full bg-secondary/80 backdrop-blur-md border border-secondary/30 text-secondary-foreground shadow-lg hover:bg-secondary/90 transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
                 >
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  WMB Sermons
+                  <MessageSquare className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">WMB Sermons</span>
                 </Button>
               </Link>
             </div>
