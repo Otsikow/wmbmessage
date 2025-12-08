@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface AnimatedBackgroundProps {
@@ -18,7 +18,7 @@ interface AnimatedBackgroundProps {
  * and optional cursor-reactive parallax effects.
  * All animations are GPU-accelerated using translate3d.
  */
-export function AnimatedBackground({
+function AnimatedBackgroundBase({
   className,
   cursorReactive = true,
   showParticles = true,
@@ -177,4 +177,6 @@ export function AnimatedBackground({
   );
 }
 
+// Memoize for performance
+export const AnimatedBackground = memo(AnimatedBackgroundBase);
 export default AnimatedBackground;

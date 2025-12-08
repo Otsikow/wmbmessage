@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, memo } from "react";
+import React, { useEffect, useRef, useCallback, memo } from "react";
 import "./AnimatedBackground.css";
 
 interface ParallaxState {
@@ -16,7 +16,7 @@ interface ParallaxState {
  * - GPU-accelerated transforms
  * - Mobile optimized (CSS-only animations)
  */
-const AnimatedBackground = memo(function AnimatedBackground() {
+function AnimatedBackgroundComponent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const parallaxRef = useRef<ParallaxState>({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
@@ -163,6 +163,9 @@ const AnimatedBackground = memo(function AnimatedBackground() {
       </div>
     </div>
   );
-});
+}
+
+// Memoize the component for performance
+const AnimatedBackground = memo(AnimatedBackgroundComponent);
 
 export default AnimatedBackground;
