@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
-import { CalendarDays, Quote } from "lucide-react";
+import { CalendarDays, Quote, Share2, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { appendShareAttribution } from "@/lib/share";
 
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -139,8 +141,58 @@ function getReadingForDate(date: Date): DailyReading {
 
 export default function DailyQuote() {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   const reading = useMemo(() => getReadingForDate(selectedDate), [selectedDate]);
+
+  const buildShareText = () => {
+    return appendShareAttribution(
+      `Daily Quote – ${format(selectedDate, "MMMM d, yyyy")}\n\n📖 Scripture Reading\n"${reading.verse.text}"\n— ${reading.verse.reference}\n\n💬 Message Insight\n"${reading.message.text}"\n— ${reading.message.reference}`
+    );
+  };
+
+  const handleCopy = async () => {
+    const text = buildShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast({
+        title: "Copied!",
+        description: "Daily quote copied to clipboard.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to copy content.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const text = buildShareText();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Daily Quote – ${format(selectedDate, "MMMM d, yyyy")}`,
+          text,
+        });
+      } catch (err) {
+        // Ignore aborted share
+        if ((err as Error).name !== "AbortError") {
+          toast({
+            title: "Error",
+            description: "Failed to share content.",
+            variant: "destructive",
+          });
+        }
+      }
+    } else {
+      handleCopy();
+    }
+  };
 
   return (
     <Card variant="glass" className="relative overflow-hidden shadow-depth border-primary/20">
@@ -178,7 +230,29 @@ export default function DailyQuote() {
               </div>
             </div>
 
-            <div className="flex sm:justify-end">
+            <div className="flex gap-2 sm:justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopy}
+                className="h-10 w-10 rounded-full glass glass-neon-primary hover:scale-110 transition-all duration-300"
+                aria-label="Copy quote"
+              >
+                {copied ? (
+                  <Check className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Copy className="h-5 w-5 text-primary icon-neon" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleShare}
+                className="h-10 w-10 rounded-full glass glass-neon-primary hover:scale-110 transition-all duration-300"
+                aria-label="Share quote"
+              >
+                <Share2 className="h-5 w-5 text-primary icon-neon" />
+              </Button>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
