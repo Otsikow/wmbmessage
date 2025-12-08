@@ -58,18 +58,20 @@ export default function HighlightMenu({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant={currentColor ? "default" : "ghost"}
+          variant={currentColor ? "default" : "outline"}
           size="icon"
           className={cn(
-            "h-8 w-8",
-            currentColor && "bg-primary/10 hover:bg-primary/20"
+            "h-9 w-9",
+            currentColor 
+              ? "bg-primary/10 hover:bg-primary/20" 
+              : "border-white/10 bg-white/5 hover:bg-white/10"
           )}
           disabled={disabled}
           title="Highlight verse"
           onClick={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <Highlighter className="h-3.5 w-3.5" />
+          <Highlighter className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent

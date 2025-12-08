@@ -833,8 +833,8 @@ export default function Reader() {
         aria-hidden={!hasSelection}
       >
         <div className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div className="flex flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 shadow-lg backdrop-blur-xl sm:gap-3 sm:justify-between sm:p-3">
+            <div className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Highlighter className="h-4 w-4" />
               </div>
@@ -844,7 +844,7 @@ export default function Reader() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <HighlightMenu
                 onHighlight={(color, note) => handleBulkHighlight(color, note)}
                 onRemoveHighlight={selectedVerses.length ? handleBulkRemoveHighlight : undefined}
@@ -853,7 +853,7 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 sm:px-3 px-2"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
                 onClick={handleBulkNote}
                 disabled={!selectedVerses.length}
               >
@@ -863,7 +863,7 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 sm:px-3 px-2"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
                 onClick={handleBulkBookmark}
                 disabled={!selectedVerses.length}
               >
@@ -873,7 +873,7 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 sm:px-3 px-2"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
                 onClick={handleCopySelection}
                 disabled={!hasSelection}
               >
@@ -883,7 +883,7 @@ export default function Reader() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 sm:px-3 px-2"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 hover:bg-white/10"
                 onClick={handleClearSelection}
                 disabled={!hasSelection}
               >
