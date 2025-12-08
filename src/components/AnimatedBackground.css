@@ -1,0 +1,513 @@
+/* ============================================
+   AnimatedBackground.css
+   Premium Aura-style animated background
+   ============================================ */
+
+/* CSS Variables for theming - can be overridden */
+:root {
+  /* Blob colors - uses HSL for easy theming */
+  --aura-blob-primary: 220 80% 55%; /* Blue */
+  --aura-blob-secondary: 270 70% 60%; /* Purple */
+  --aura-blob-accent: 180 70% 50%; /* Teal */
+  --aura-blob-small: 200 75% 55%; /* Light blue */
+  
+  /* Particle color */
+  --aura-particle: 220 20% 60%;
+  
+  /* Opacity values */
+  --aura-blob-opacity: 0.18;
+  --aura-blob-opacity-secondary: 0.15;
+  --aura-blob-opacity-accent: 0.12;
+  --aura-particle-opacity: 0.4;
+  
+  /* Animation timing */
+  --aura-easing: cubic-bezier(0.25, 1, 0.5, 1);
+  --aura-duration-slow: 45s;
+  --aura-duration-medium: 30s;
+  --aura-duration-fast: 22s;
+}
+
+/* Dark mode adjustments */
+.dark {
+  --aura-blob-primary: 220 85% 60%;
+  --aura-blob-secondary: 270 75% 65%;
+  --aura-blob-accent: 180 75% 55%;
+  --aura-blob-small: 200 80% 60%;
+  
+  --aura-particle: 220 30% 70%;
+  
+  --aura-blob-opacity: 0.12;
+  --aura-blob-opacity-secondary: 0.10;
+  --aura-blob-opacity-accent: 0.08;
+  --aura-particle-opacity: 0.35;
+}
+
+/* Warm color scheme */
+:root[data-color-scheme="warm"] {
+  --aura-blob-primary: 24 80% 55%;
+  --aura-blob-secondary: 350 70% 60%;
+  --aura-blob-accent: 45 80% 55%;
+  --aura-blob-small: 35 75% 55%;
+}
+
+/* Cool color scheme */
+:root[data-color-scheme="cool"] {
+  --aura-blob-primary: 205 85% 55%;
+  --aura-blob-secondary: 240 70% 60%;
+  --aura-blob-accent: 175 80% 50%;
+  --aura-blob-small: 195 80% 55%;
+}
+
+/* High contrast - reduced opacity */
+:root[data-color-scheme="high-contrast"] {
+  --aura-blob-opacity: 0.08;
+  --aura-blob-opacity-secondary: 0.06;
+  --aura-blob-opacity-accent: 0.05;
+  --aura-particle-opacity: 0.25;
+}
+
+/* ============================================
+   Main Container
+   ============================================ */
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform;
+  contain: strict;
+}
+
+/* ============================================
+   Gradient Blobs - GPU Accelerated
+   ============================================ */
+.animated-bg__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Primary blob - Blue, largest, slowest */
+.animated-bg__blob--primary {
+  width: clamp(400px, 50vw, 800px);
+  height: clamp(400px, 50vw, 800px);
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    hsl(var(--aura-blob-primary) / var(--aura-blob-opacity)) 0%,
+    hsl(var(--aura-blob-primary) / calc(var(--aura-blob-opacity) * 0.5)) 50%,
+    transparent 70%
+  );
+  animation: blob-drift-1 var(--aura-duration-slow) var(--aura-easing) infinite alternate;
+}
+
+/* Secondary blob - Purple */
+.animated-bg__blob--secondary {
+  width: clamp(350px, 45vw, 700px);
+  height: clamp(350px, 45vw, 700px);
+  top: 30%;
+  right: -15%;
+  background: radial-gradient(
+    circle at 60% 40%,
+    hsl(var(--aura-blob-secondary) / var(--aura-blob-opacity-secondary)) 0%,
+    hsl(var(--aura-blob-secondary) / calc(var(--aura-blob-opacity-secondary) * 0.5)) 50%,
+    transparent 70%
+  );
+  animation: blob-drift-2 var(--aura-duration-medium) var(--aura-easing) infinite alternate;
+}
+
+/* Accent blob - Teal */
+.animated-bg__blob--accent {
+  width: clamp(300px, 40vw, 600px);
+  height: clamp(300px, 40vw, 600px);
+  bottom: 10%;
+  left: 20%;
+  background: radial-gradient(
+    circle at 40% 60%,
+    hsl(var(--aura-blob-accent) / var(--aura-blob-opacity-accent)) 0%,
+    hsl(var(--aura-blob-accent) / calc(var(--aura-blob-opacity-accent) * 0.5)) 50%,
+    transparent 70%
+  );
+  animation: blob-drift-3 38s var(--aura-easing) infinite alternate;
+}
+
+/* Small floating blob */
+.animated-bg__blob--small {
+  width: clamp(200px, 25vw, 400px);
+  height: clamp(200px, 25vw, 400px);
+  top: 60%;
+  right: 25%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    hsl(var(--aura-blob-small) / var(--aura-blob-opacity-accent)) 0%,
+    hsl(var(--aura-blob-small) / calc(var(--aura-blob-opacity-accent) * 0.4)) 50%,
+    transparent 70%
+  );
+  animation: blob-drift-4 var(--aura-duration-fast) var(--aura-easing) infinite alternate;
+}
+
+/* ============================================
+   Blob Drift Animations
+   ============================================ */
+@keyframes blob-drift-1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(3px, 4px, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(6px, 2px, 0) scale(1);
+  }
+  75% {
+    transform: translate3d(4px, 5px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(5px, 6px, 0) scale(1.01);
+  }
+}
+
+@keyframes blob-drift-2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(-4px, 3px, 0) scale(0.98);
+  }
+  50% {
+    transform: translate3d(-2px, 5px, 0) scale(1.02);
+  }
+  75% {
+    transform: translate3d(-5px, 2px, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(-4px, 4px, 0) scale(0.99);
+  }
+}
+
+@keyframes blob-drift-3 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4px, -3px, 0) scale(1.03);
+  }
+  66% {
+    transform: translate3d(-3px, -5px, 0) scale(0.97);
+  }
+  100% {
+    transform: translate3d(2px, -4px, 0) scale(1.01);
+  }
+}
+
+@keyframes blob-drift-4 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  20% {
+    transform: translate3d(-3px, 4px, 0) scale(1.04);
+  }
+  40% {
+    transform: translate3d(4px, 2px, 0) scale(0.96);
+  }
+  60% {
+    transform: translate3d(2px, -3px, 0) scale(1.02);
+  }
+  80% {
+    transform: translate3d(-2px, -2px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(3px, 3px, 0) scale(1);
+  }
+}
+
+/* ============================================
+   Particles Container
+   ============================================ */
+.animated-bg__particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ============================================
+   Particle Dots
+   ============================================ */
+.animated-bg__particle {
+  position: absolute;
+  border-radius: 50%;
+  background: hsl(var(--aura-particle) / var(--aura-particle-opacity));
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Individual particle positioning and animation */
+.animated-bg__particle--1 {
+  width: 2px;
+  height: 2px;
+  top: 15%;
+  left: 20%;
+  animation: particle-float-1 28s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--2 {
+  width: 3px;
+  height: 3px;
+  top: 25%;
+  left: 70%;
+  animation: particle-float-2 35s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--3 {
+  width: 1px;
+  height: 1px;
+  top: 40%;
+  left: 30%;
+  animation: particle-float-3 42s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--4 {
+  width: 2px;
+  height: 2px;
+  top: 55%;
+  left: 85%;
+  animation: particle-float-4 32s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--5 {
+  width: 1px;
+  height: 1px;
+  top: 70%;
+  left: 15%;
+  animation: particle-float-5 38s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--6 {
+  width: 3px;
+  height: 3px;
+  top: 80%;
+  left: 60%;
+  animation: particle-float-6 45s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--7 {
+  width: 2px;
+  height: 2px;
+  top: 10%;
+  left: 50%;
+  animation: particle-float-1 52s var(--aura-easing) infinite reverse;
+}
+
+.animated-bg__particle--8 {
+  width: 1px;
+  height: 1px;
+  top: 35%;
+  left: 90%;
+  animation: particle-float-2 48s var(--aura-easing) infinite reverse;
+}
+
+.animated-bg__particle--9 {
+  width: 2px;
+  height: 2px;
+  top: 65%;
+  left: 40%;
+  animation: particle-float-3 55s var(--aura-easing) infinite reverse;
+}
+
+.animated-bg__particle--10 {
+  width: 3px;
+  height: 3px;
+  top: 85%;
+  left: 25%;
+  animation: particle-float-4 60s var(--aura-easing) infinite reverse;
+}
+
+.animated-bg__particle--11 {
+  width: 1px;
+  height: 1px;
+  top: 45%;
+  left: 5%;
+  animation: particle-float-5 40s var(--aura-easing) infinite;
+}
+
+.animated-bg__particle--12 {
+  width: 2px;
+  height: 2px;
+  top: 20%;
+  left: 95%;
+  animation: particle-float-6 36s var(--aura-easing) infinite;
+}
+
+/* ============================================
+   Particle Float Animations
+   ============================================ */
+@keyframes particle-float-1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate3d(15px, -20px, 0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(-10px, -35px, 0);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translate3d(20px, -15px, 0);
+    opacity: 0.7;
+  }
+}
+
+@keyframes particle-float-2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.4;
+  }
+  33% {
+    transform: translate3d(-25px, 15px, 0);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translate3d(10px, 30px, 0);
+    opacity: 0.3;
+  }
+}
+
+@keyframes particle-float-3 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: translate3d(20px, -10px, 0);
+    opacity: 0.3;
+  }
+  40% {
+    transform: translate3d(-15px, -25px, 0);
+    opacity: 0.7;
+  }
+  60% {
+    transform: translate3d(5px, -40px, 0);
+    opacity: 0.4;
+  }
+  80% {
+    transform: translate3d(-10px, -20px, 0);
+    opacity: 0.6;
+  }
+}
+
+@keyframes particle-float-4 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(-30px, -20px, 0);
+    opacity: 0.65;
+  }
+}
+
+@keyframes particle-float-5 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.45;
+  }
+  25% {
+    transform: translate3d(12px, 18px, 0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate3d(-8px, 35px, 0);
+    opacity: 0.55;
+  }
+  75% {
+    transform: translate3d(18px, 12px, 0);
+    opacity: 0.35;
+  }
+}
+
+@keyframes particle-float-6 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.4;
+  }
+  33% {
+    transform: translate3d(-18px, -22px, 0);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translate3d(22px, -8px, 0);
+    opacity: 0.3;
+  }
+}
+
+/* ============================================
+   Mobile Optimization
+   Reduce animation complexity on mobile
+   ============================================ */
+@media (max-width: 768px) {
+  .animated-bg__blob {
+    filter: blur(60px);
+  }
+
+  .animated-bg__blob--primary {
+    width: 280px;
+    height: 280px;
+  }
+
+  .animated-bg__blob--secondary {
+    width: 240px;
+    height: 240px;
+  }
+
+  .animated-bg__blob--accent {
+    width: 200px;
+    height: 200px;
+  }
+
+  .animated-bg__blob--small {
+    width: 150px;
+    height: 150px;
+  }
+
+  /* Hide some particles on mobile for performance */
+  .animated-bg__particle--7,
+  .animated-bg__particle--8,
+  .animated-bg__particle--9,
+  .animated-bg__particle--10,
+  .animated-bg__particle--11,
+  .animated-bg__particle--12 {
+    display: none;
+  }
+}
+
+/* ============================================
+   Reduced Motion Preference
+   Respect user's accessibility settings
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg__blob,
+  .animated-bg__particle {
+    animation: none !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* ============================================
+   Print Styles
+   Hide background when printing
+   ============================================ */
+@media print {
+  .animated-bg {
+    display: none !important;
+  }
+}

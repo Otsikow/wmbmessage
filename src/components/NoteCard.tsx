@@ -47,18 +47,20 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
 
   return (
     <>
-      <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
+      <Card variant="glass" className="p-4 sm:p-6">
         <div className="space-y-3">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                {note.source_type === "bible" ? (
-                  <BookOpen className="h-4 w-4 text-primary" />
-                ) : (
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                )}
-                <h3 className="font-semibold text-base sm:text-lg">
+                <span className="glass-icon text-primary">
+                  {note.source_type === "bible" ? (
+                    <BookOpen className="h-4 w-4" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4" />
+                  )}
+                </span>
+                <h3 className="font-semibold text-base sm:text-lg glass-heading">
                   {note.title || note.source_id}
                 </h3>
               </div>
@@ -66,7 +68,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs glass-body">
                 {formatDistanceToNow(new Date(note.updated_at), {
                   addSuffix: true,
                 })}
@@ -76,6 +78,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
                 size="icon"
                 onClick={() => onEdit(note)}
                 title="Edit note"
+                className="hover:bg-white/10"
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -84,6 +87,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
                 size="icon"
                 onClick={() => setShowDeleteDialog(true)}
                 title="Delete note"
+                className="hover:bg-white/10"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -92,7 +96,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
 
           {/* Content */}
           <div
-            className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+            className="text-sm glass-body prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>

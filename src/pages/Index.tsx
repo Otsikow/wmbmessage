@@ -18,13 +18,15 @@ const Index = () => {
 
   if (isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
+      <div className="relative flex min-h-screen items-center justify-center bg-background px-4 overflow-hidden">
+        {/* Subtle mesh gradient background */}
+        <div className="absolute inset-0 mesh-gradient opacity-40" />
+        <div className="relative flex flex-col items-center gap-4 text-center glass rounded-glass p-8">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary animate-pulse-soft">
+            <Loader2 className="h-7 w-7 animate-spin icon-neon" aria-hidden="true" />
           </span>
           <div className="space-y-1">
-            <p className="text-lg font-semibold text-foreground">
+            <p className="text-lg font-semibold text-gradient-blue-purple">
               Preparing your experience
             </p>
             <p className="text-sm text-muted-foreground">
@@ -55,7 +57,9 @@ const Index = () => {
         </SectionErrorBoundary>
 
         {/* Daily Messages Section - Positioned after Hero */}
-        <section className="container mx-auto max-w-4xl space-y-6 px-4 py-8">
+        <section className="relative container mx-auto max-w-4xl space-y-6 px-4 py-8">
+          {/* Subtle mesh gradient for this section */}
+          <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none -z-10" />
           <SectionErrorBoundary
             section="Reading plan"
             description="We couldn't load your reading plan widget."

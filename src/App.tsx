@@ -17,6 +17,7 @@ import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import SectionErrorBoundary from "@/components/SectionErrorBoundary";
 import ContextProviderBoundary from "@/components/ContextProviderBoundary";
 import { RouteTransitionIndicator } from "@/components/RouteTransitionIndicator";
+import AnimatedBackground from "@/components/AnimatedBackground";
 
 // Pages
 import Index from "./pages/Index";
@@ -72,6 +73,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system">
+        <AnimatedBackground />
         <ContextProviderBoundary
           contextName="Authentication"
           description="We couldn't connect to the authentication session."

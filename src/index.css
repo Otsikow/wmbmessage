@@ -4,9 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================
+   MESSAGEGUIDE DESIGN SYSTEM (CLEAN VERSION)
+   All colors MUST be HSL.
+   Aura UI removed completely.
+   Legacy Glass-Card UI preserved.
+   ============================================ */
 
 @layer base {
   :root {
@@ -14,6 +17,7 @@ All colors MUST be HSL.
     --app-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --reader-font-family: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
     --scripture-font-family: "Gentium Book Plus", "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
+
     --background: 0 0% 99%;
     --foreground: 215 25% 15%;
 
@@ -46,14 +50,6 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    --hero-bg: 215 80% 35%;
-    --subtle-bg: 215 10% 97%;
-    --gold-glow: 35 70% 55%;
-    --jesus-words: 0 70% 50%;
-    --shadow-elegant: 0 10px 40px -10px hsl(215 80% 35% / 0.15);
-    --shadow-glow: 0 0 60px hsl(35 70% 55% / 0.12);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5% 26%;
     --sidebar-primary: 240 6% 10%;
@@ -62,8 +58,13 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 6% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 215 80% 35%;
+
     font-size: var(--base-font-size, 16px);
   }
+
+  /* ===============================
+     LIGHT MODE COLOR VARIANTS
+     =============================== */
 
   :root[data-color-scheme="warm"] {
     --background: 32 55% 96%;
@@ -95,13 +96,6 @@ All colors MUST be HSL.
     --border: 28 35% 82%;
     --input: 28 35% 82%;
     --ring: 24 70% 46%;
-
-    --hero-bg: 24 70% 40%;
-    --subtle-bg: 34 45% 92%;
-    --gold-glow: 30 72% 58%;
-    --jesus-words: 0 70% 45%;
-    --shadow-elegant: 0 10px 40px -10px hsl(24 70% 40% / 0.18);
-    --shadow-glow: 0 0 60px hsl(24 70% 52% / 0.16);
 
     --sidebar-background: 34 45% 94%;
     --sidebar-foreground: 25 35% 24%;
@@ -144,13 +138,6 @@ All colors MUST be HSL.
     --input: 210 25% 84%;
     --ring: 205 80% 45%;
 
-    --hero-bg: 205 80% 38%;
-    --subtle-bg: 210 40% 95%;
-    --gold-glow: 205 75% 58%;
-    --jesus-words: 0 75% 50%;
-    --shadow-elegant: 0 10px 40px -10px hsl(205 80% 38% / 0.18);
-    --shadow-glow: 0 0 60px hsl(200 75% 55% / 0.16);
-
     --sidebar-background: 210 45% 95%;
     --sidebar-foreground: 220 25% 22%;
     --sidebar-primary: 205 80% 45%;
@@ -192,13 +179,6 @@ All colors MUST be HSL.
     --input: 215 20% 25%;
     --ring: 220 100% 32%;
 
-    --hero-bg: 220 100% 32%;
-    --subtle-bg: 0 0% 96%;
-    --gold-glow: 35 100% 50%;
-    --jesus-words: 0 85% 40%;
-    --shadow-elegant: 0 10px 40px -10px hsl(220 15% 20% / 0.3);
-    --shadow-glow: 0 0 60px hsl(220 100% 32% / 0.2);
-
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 35% 15%;
     --sidebar-primary: 220 100% 32%;
@@ -209,52 +189,50 @@ All colors MUST be HSL.
     --sidebar-ring: 220 100% 32%;
   }
 
+  /* ===============================
+     DARK MODES
+     Aura removed entirely.
+     =============================== */
+
   .dark {
-    --background: 215 30% 8%;
-    --foreground: 35 25% 95%;
+    --background: 230 25% 7%;
+    --foreground: 220 15% 95%;
 
-    --card: 215 25% 12%;
-    --card-foreground: 35 25% 95%;
+    --card: 230 20% 11%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 215 25% 12%;
-    --popover-foreground: 35 25% 95%;
+    --popover: 230 20% 11%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 215 85% 60%;
-    --primary-foreground: 215 30% 8%;
-    --primary-hover: 215 85% 55%;
+    --primary: 235 85% 65%;
+    --primary-foreground: 230 25% 7%;
+    --primary-hover: 235 85% 58%;
 
-    --secondary: 35 60% 55%;
-    --secondary-foreground: 215 30% 8%;
-    --secondary-hover: 35 65% 50%;
+    --secondary: 270 65% 60%;
+    --secondary-foreground: 230 25% 7%;
+    --secondary-hover: 270 65% 52%;
 
-    --muted: 215 25% 18%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 230 20% 16%;
+    --muted-foreground: 220 15% 70%;
 
-    --accent: 35 70% 60%;
-    --accent-foreground: 215 30% 8%;
+    --accent: 195 85% 55%;
+    --accent-foreground: 230 25% 7%;
 
-    --destructive: 0 63% 51%;
-    --destructive-foreground: 35 25% 95%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 220 15% 95%;
 
-    --border: 215 25% 22%;
-    --input: 215 25% 22%;
-    --ring: 215 85% 60%;
+    --border: 230 20% 20%;
+    --input: 230 20% 20%;
+    --ring: 235 85% 65%;
 
-    --hero-bg: 215 85% 25%;
-    --subtle-bg: 215 30% 10%;
-    --gold-glow: 35 70% 55%;
-    --jesus-words: 0 75% 55%;
-    --shadow-elegant: 0 10px 40px -10px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 60px hsl(35 70% 55% / 0.2);
-
-    --sidebar-background: 240 6% 10%;
-    --sidebar-foreground: 240 5% 96%;
-    --sidebar-primary: 224 76% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 16%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 230 20% 10%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 235 85% 65%;
+    --sidebar-primary-foreground: 230 25% 7%;
+    --sidebar-accent: 230 18% 16%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 230 20% 18%;
+    --sidebar-ring: 235 85% 65%;
   }
 
   .dark[data-color-scheme="warm"] {
@@ -287,13 +265,6 @@ All colors MUST be HSL.
     --border: 28 25% 26%;
     --input: 28 25% 26%;
     --ring: 24 80% 65%;
-
-    --hero-bg: 24 65% 32%;
-    --subtle-bg: 28 30% 18%;
-    --gold-glow: 28 78% 60%;
-    --jesus-words: 0 78% 58%;
-    --shadow-elegant: 0 10px 40px -10px hsl(24 80% 50% / 0.35);
-    --shadow-glow: 0 0 60px hsl(24 80% 60% / 0.25);
 
     --sidebar-background: 28 35% 16%;
     --sidebar-foreground: 35 30% 92%;
@@ -336,13 +307,6 @@ All colors MUST be HSL.
     --input: 217 25% 26%;
     --ring: 205 90% 68%;
 
-    --hero-bg: 205 75% 32%;
-    --subtle-bg: 217 28% 18%;
-    --gold-glow: 200 80% 60%;
-    --jesus-words: 0 80% 60%;
-    --shadow-elegant: 0 10px 40px -10px hsl(205 90% 50% / 0.35);
-    --shadow-glow: 0 0 60px hsl(200 85% 60% / 0.25);
-
     --sidebar-background: 217 28% 15%;
     --sidebar-foreground: 200 20% 92%;
     --sidebar-primary: 205 90% 68%;
@@ -384,13 +348,6 @@ All colors MUST be HSL.
     --input: 0 0% 30%;
     --ring: 60 100% 55%;
 
-    --hero-bg: 220 100% 45%;
-    --subtle-bg: 0 0% 10%;
-    --gold-glow: 60 100% 60%;
-    --jesus-words: 0 90% 68%;
-    --shadow-elegant: 0 10px 40px -10px hsl(0 0% 0% / 0.6);
-    --shadow-glow: 0 0 60px hsl(0 0% 100% / 0.35);
-
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 60 100% 55%;
@@ -400,9 +357,11 @@ All colors MUST be HSL.
     --sidebar-border: 0 0% 30%;
     --sidebar-ring: 60 100% 55%;
   }
-}
 
-@layer base {
+  /* ===============================
+     BASE ELEMENTS
+     =============================== */
+
   * {
     @apply border-border;
   }
@@ -415,13 +374,13 @@ All colors MUST be HSL.
     padding-bottom: 0;
   }
 
-  /* Ensure content isn't hidden behind the fixed mobile navigation */
   @media (max-width: 768px) {
     body {
       padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
     }
   }
 
+  /* Reader Typography */
   .reader-typography {
     font-family: var(
       --scripture-font-family,
@@ -441,5 +400,118 @@ All colors MUST be HSL.
 
   .responsive-section {
     padding-inline: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  /* ============================================
+     LEGACY GLASS CARD SYSTEM (PRESERVED)
+     ============================================ */
+
+  .glass-card {
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-blur: blur(16px);
+    --glass-saturate: saturate(180%);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-hover: rgba(255, 255, 255, 0.25);
+    --glass-inner-glow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    --glass-radius: 20px;
+
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.03)
+    );
+    background-color: var(--glass-bg);
+    backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-inner-glow);
+    filter: drop-shadow(var(--glass-shadow));
+    transition: all 0.35s ease;
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%,
+      transparent 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-card-hoverable {
+    transform: translateY(0);
+  }
+
+  .glass-card-hoverable:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--glass-inner-glow), 0 12px 35px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-heading {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .glass-body {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  @media (max-width: 768px) {
+    .glass-card {
+      --glass-blur: blur(10px);
+      --glass-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-card-hoverable:hover {
+      transform: translateY(-2px) scale(1.005);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card,
+    .glass-card-hoverable {
+      transition: none;
+    }
+    .glass-card-hoverable:hover {
+      transform: none;
+    }
+  }
+}
+
+/* Light mode overrides for glass cards */
+@layer components {
+  :root:not(.dark) .glass-card {
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-border-hover: rgba(0, 0, 0, 0.15);
+    --glass-inner-glow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.8),
+      rgba(255, 255, 255, 0.4)
+    );
+  }
+
+  :root:not(.dark) .glass-heading {
+    color: hsl(var(--foreground));
+  }
+
+  :root:not(.dark) .glass-body {
+    color: hsl(var(--muted-foreground));
   }
 }
