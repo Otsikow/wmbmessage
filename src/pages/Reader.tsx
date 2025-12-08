@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -62,6 +62,7 @@ import { useUserNotes } from "@/hooks/useNotes";
 import BackButton from "@/components/BackButton";
 import { useEngagement } from "@/contexts/EngagementContext";
 import HighlightMenu from "@/components/HighlightMenu";
+import { useSwipe } from "@/hooks/useSwipe";
 
 const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
@@ -385,6 +386,30 @@ export default function Reader() {
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === currentBook);
   const maxChapter = currentBookData?.chapters || 1;
+
+  const goToPreviousChapter = useCallback(() => {
+    if (currentChapter > 1) {
+      setCurrentChapter((prev) => prev - 1);
+      setSelectedVerses([]);
+      setFocusedVerse(undefined);
+    }
+  }, [currentChapter]);
+
+  const goToNextChapter = useCallback(() => {
+    if (currentChapter < maxChapter) {
+      setCurrentChapter((prev) => prev + 1);
+      setSelectedVerses([]);
+      setFocusedVerse(undefined);
+    }
+  }, [currentChapter, maxChapter]);
+
+  // Swipe gesture support for mobile chapter navigation
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: goToNextChapter,
+    onSwipeRight: goToPreviousChapter,
+    minSwipeDistance: 50,
+    maxSwipeTime: 500,
+  });
 
   const readerFontClass = cn("reader-typography");
   const selectedScriptureFont = scriptureFontOptions.find(
@@ -719,7 +744,7 @@ export default function Reader() {
 
       {/* Bible Content */}
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-        <Card className="border border-border/60 bg-card/95 shadow-xl">
+        <Card ref={swipeRef} className="border border-border/60 bg-card/95 shadow-xl">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-10 space-y-8">
             <div className="space-y-2 text-center">
               <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground/70">Holy Bible • King James Version</p>
@@ -774,11 +799,7 @@ export default function Reader() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-8 border-t border-border/70 max-w-4xl mx-auto">
               <Button
                 variant="outline"
-                onClick={() => {
-                  setCurrentChapter(Math.max(1, currentChapter - 1));
-                  setSelectedVerses([]);
-                  setFocusedVerse(undefined);
-                }}
+                onClick={goToPreviousChapter}
                 disabled={currentChapter <= 1}
                 className="w-full sm:w-auto justify-center sm:justify-start"
                 size="lg"
@@ -789,11 +810,7 @@ export default function Reader() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setCurrentChapter(Math.min(maxChapter, currentChapter + 1));
-                  setSelectedVerses([]);
-                  setFocusedVerse(undefined);
-                }}
+                onClick={goToNextChapter}
                 disabled={currentChapter >= maxChapter}
                 className="w-full sm:w-auto justify-center sm:justify-end"
                 size="lg"
