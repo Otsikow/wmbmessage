@@ -111,11 +111,11 @@ const DailyVerseCard = () => {
   }
 
   return (
-    <Card className="w-full bg-gradient-to-br from-primary/5 to-secondary/5">
+    <Card variant="glass" className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-2xl">
-          <Book className="h-6 w-6 text-primary" />
-          Daily Inspiration
+          <Book className="h-6 w-6 text-primary icon-neon" />
+          <span className="text-gradient-blue-purple">Daily Inspiration</span>
         </CardTitle>
         <CardDescription>
           Your daily verse and quote for {new Date().toLocaleDateString("en-US", { 
@@ -128,9 +128,9 @@ const DailyVerseCard = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Bible Verse Section */}
-        <div className="space-y-3 p-4 bg-card rounded-lg border">
+        <div className="space-y-3 p-4 glass-subtle rounded-glass border border-primary/10">
           <div className="flex items-center gap-2">
-            <Book className="h-5 w-5 text-primary" />
+            <Book className="h-5 w-5 text-primary icon-neon" />
             <h3 className="font-semibold text-lg">
               {dailyContent.bible_book} {dailyContent.bible_chapter}:{dailyContent.bible_verse}
             </h3>
@@ -142,9 +142,9 @@ const DailyVerseCard = () => {
 
         {/* Sermon Quote Section */}
         {dailyContent.sermon_paragraph && (
-          <div className="space-y-3 p-4 bg-card rounded-lg border">
+          <div className="space-y-3 p-4 glass-subtle rounded-glass border border-secondary/10">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
+              <MessageSquare className="h-5 w-5 text-secondary icon-neon" />
               <h3 className="font-semibold text-lg">
                 {dailyContent.sermon_paragraph.sermon.title}
               </h3>
@@ -170,16 +170,26 @@ const DailyVerseCard = () => {
             variant="outline"
             size="sm"
             disabled={isRefreshing}
-            className="flex-1"
+            className="flex-1 glass-subtle border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button onClick={handleCopy} variant="outline" size="sm" className="flex-1">
+          <Button 
+            onClick={handleCopy} 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 glass-subtle border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
+          >
             <Copy className="h-4 w-4 mr-2" />
             Copy
           </Button>
-          <Button onClick={handleShare} variant="outline" size="sm" className="flex-1">
+          <Button 
+            onClick={handleShare} 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 glass-subtle border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
+          >
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>

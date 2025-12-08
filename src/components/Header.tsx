@@ -38,16 +38,20 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 border-b border-border shadow-sm">
+    <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass">
       <div className="container flex flex-col gap-2 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3">
             {showBackButton ? (
               <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" />
             ) : null}
-            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3">
-              <img src={logoImage} alt="MessageGuide Logo" className="h-10 md:h-12 w-auto" />
-              <span className="text-lg md:text-xl font-bold text-primary">
+            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3 group">
+              <img 
+                src={logoImage} 
+                alt="MessageGuide Logo" 
+                className="h-10 md:h-12 w-auto transition-transform duration-300 group-hover:scale-105" 
+              />
+              <span className="text-lg md:text-xl font-bold text-gradient-blue-purple">
                 MessageGuide
               </span>
             </Link>
@@ -56,23 +60,23 @@ export default function Header({
           <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
 
-            <nav className="hidden lg:flex items-center space-x-6">
-              <Link to="/bible" className="text-sm font-medium transition-colors hover:text-primary">
+            <nav className="hidden lg:flex items-center space-x-1">
+              <Link to="/bible" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Bible
               </Link>
-              <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link to="/messages" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Messages
               </Link>
-              <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link to="/search" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Search
               </Link>
-              <Link to="/cross-references" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link to="/cross-references" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 References
               </Link>
-              <Link to="/library" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link to="/library" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Library
               </Link>
-              <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link to="/settings" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Settings
               </Link>
 

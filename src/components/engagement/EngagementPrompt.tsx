@@ -22,11 +22,11 @@ export function EngagementPrompt() {
       : "A few minutes of reading today will keep your streak alive.";
 
   return (
-    <Alert className="border-primary/30 bg-primary/5">
+    <Alert className="glass glass-neon-primary border-primary/20 rounded-glass">
       {hasActivityToday ? (
-        <Sparkles className="h-5 w-5 text-primary" />
+        <Sparkles className="h-5 w-5 text-primary icon-neon" />
       ) : (
-        <BellRing className="h-5 w-5 text-primary" />
+        <BellRing className="h-5 w-5 text-primary icon-neon" />
       )}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -37,7 +37,12 @@ export function EngagementPrompt() {
             {subtitle}
           </AlertDescription>
         </div>
-        <Button asChild variant={hasActivityToday ? "outline" : "default"} size="sm" className="mt-2 sm:mt-0">
+        <Button 
+          asChild 
+          variant={hasActivityToday ? "outline" : "default"} 
+          size="sm" 
+          className={`mt-2 sm:mt-0 ${hasActivityToday ? "glass-subtle border-primary/20 hover:bg-primary/10" : "btn-glow"}`}
+        >
           <Link to="/reader">
             <BookOpenCheck className="mr-2 h-4 w-4" />
             {hasActivityToday ? "Review today's progress" : "Start today's reading"}

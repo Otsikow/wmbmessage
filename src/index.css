@@ -6,6 +6,7 @@
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
+Premium UI Package: Aura-inspired glass aesthetics with animated backgrounds.
 */
 
 @layer base {
@@ -53,6 +54,22 @@ All colors MUST be HSL.
     --shadow-elegant: 0 10px 40px -10px hsl(215 80% 35% / 0.15);
     --shadow-glow: 0 0 60px hsl(35 70% 55% / 0.12);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Premium UI - Gradient colors (light mode) */
+    --gradient-start: 220 70% 50%;
+    --gradient-mid: 260 60% 50%;
+    --gradient-end: 280 50% 45%;
+
+    /* Premium UI - Neon accent colors */
+    --neon-blue: 210 100% 60%;
+    --neon-purple: 270 100% 65%;
+    --neon-cyan: 185 100% 55%;
+
+    /* Premium UI - Glass effect variables */
+    --glass-blur: 20px;
+    --glass-opacity: 0.7;
+    --glass-border-opacity: 0.2;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5% 26%;
@@ -210,51 +227,71 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 215 30% 8%;
-    --foreground: 35 25% 95%;
+    /* Premium dark mode foundation with blue-purple accent gradients */
+    --background: 230 25% 7%;
+    --foreground: 220 15% 95%;
 
-    --card: 215 25% 12%;
-    --card-foreground: 35 25% 95%;
+    --card: 230 20% 11%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 215 25% 12%;
-    --popover-foreground: 35 25% 95%;
+    --popover: 230 20% 11%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 215 85% 60%;
-    --primary-foreground: 215 30% 8%;
-    --primary-hover: 215 85% 55%;
+    /* Blue-purple primary accent */
+    --primary: 235 85% 65%;
+    --primary-foreground: 230 25% 7%;
+    --primary-hover: 235 85% 58%;
 
-    --secondary: 35 60% 55%;
-    --secondary-foreground: 215 30% 8%;
-    --secondary-hover: 35 65% 50%;
+    /* Purple secondary accent */
+    --secondary: 270 65% 60%;
+    --secondary-foreground: 230 25% 7%;
+    --secondary-hover: 270 65% 52%;
 
-    --muted: 215 25% 18%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 230 20% 16%;
+    --muted-foreground: 220 15% 70%;
 
-    --accent: 35 70% 60%;
-    --accent-foreground: 215 30% 8%;
+    /* Cyan accent for highlights */
+    --accent: 195 85% 55%;
+    --accent-foreground: 230 25% 7%;
 
-    --destructive: 0 63% 51%;
-    --destructive-foreground: 35 25% 95%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 220 15% 95%;
 
-    --border: 215 25% 22%;
-    --input: 215 25% 22%;
-    --ring: 215 85% 60%;
+    --border: 230 20% 20%;
+    --input: 230 20% 20%;
+    --ring: 235 85% 65%;
 
-    --hero-bg: 215 85% 25%;
-    --subtle-bg: 215 30% 10%;
-    --gold-glow: 35 70% 55%;
-    --jesus-words: 0 75% 55%;
-    --shadow-elegant: 0 10px 40px -10px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 60px hsl(35 70% 55% / 0.2);
+    --hero-bg: 235 70% 20%;
+    --subtle-bg: 230 25% 9%;
+    --gold-glow: 270 70% 60%;
+    --jesus-words: 0 80% 58%;
+    --shadow-elegant: 0 10px 40px -10px hsl(235 100% 50% / 0.3);
+    --shadow-glow: 0 0 60px hsl(270 70% 60% / 0.25);
 
-    --sidebar-background: 240 6% 10%;
-    --sidebar-foreground: 240 5% 96%;
-    --sidebar-primary: 224 76% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 16%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 217 91% 60%;
+    /* Premium UI - Gradient colors (dark mode - blue-purple spectrum) */
+    --gradient-start: 220 80% 55%;
+    --gradient-mid: 260 75% 55%;
+    --gradient-end: 290 70% 50%;
+
+    /* Premium UI - Neon accent colors (brighter for dark mode) */
+    --neon-blue: 210 100% 65%;
+    --neon-purple: 270 100% 70%;
+    --neon-cyan: 185 100% 60%;
+
+    /* Premium UI - Glass effect variables (dark mode) */
+    --glass-blur: 24px;
+    --glass-opacity: 0.4;
+    --glass-border-opacity: 0.15;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    --sidebar-background: 230 20% 10%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 235 85% 65%;
+    --sidebar-primary-foreground: 230 25% 7%;
+    --sidebar-accent: 230 18% 16%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 230 20% 18%;
+    --sidebar-ring: 235 85% 65%;
   }
 
   .dark[data-color-scheme="warm"] {
@@ -441,5 +478,240 @@ All colors MUST be HSL.
 
   .responsive-section {
     padding-inline: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  /* ============================================
+     PREMIUM UI PACKAGE - Glass & Animated Styles
+     ============================================ */
+
+  /* Glass Card Base Styles */
+  .glass {
+    background: hsla(var(--card) / var(--glass-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsla(0 0% 100% / var(--glass-border-opacity));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-subtle {
+    background: hsla(var(--card) / 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(0 0% 100% / 0.1);
+  }
+
+  .glass-elevated {
+    background: hsla(var(--card) / 0.5);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    border: 1px solid hsla(0 0% 100% / 0.25);
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.16),
+      0 4px 16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 1px hsla(0 0% 100% / 0.1);
+  }
+
+  /* Neon accent tints for glass cards */
+  .glass-neon-primary {
+    border-color: hsla(var(--primary) / 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 0 20px hsla(var(--primary) / 0.15),
+      inset 0 1px 1px hsla(0 0% 100% / 0.1);
+  }
+
+  .glass-neon-secondary {
+    border-color: hsla(var(--secondary) / 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 0 20px hsla(var(--secondary) / 0.15),
+      inset 0 1px 1px hsla(0 0% 100% / 0.1);
+  }
+
+  .glass-neon-accent {
+    border-color: hsla(var(--accent) / 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 0 20px hsla(var(--accent) / 0.15),
+      inset 0 1px 1px hsla(0 0% 100% / 0.1);
+  }
+
+  /* Hover lift effect for interactive cards */
+  .hover-lift {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.18),
+      0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .dark .hover-lift:hover {
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.4),
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      0 0 30px hsla(var(--primary) / 0.15);
+  }
+
+  /* Premium gradient text */
+  .text-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-blue-purple {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)) 0%,
+      hsl(var(--gradient-mid)) 50%,
+      hsl(var(--gradient-end)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Animated gradient background */
+  .bg-gradient-animated {
+    background: linear-gradient(
+      -45deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end)),
+      hsl(var(--gradient-start))
+    );
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsla(var(--muted) / 0.5) 0%,
+      hsla(var(--muted) / 0.8) 50%,
+      hsla(var(--muted) / 0.5) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+  }
+
+  /* Neon icon glow */
+  .icon-neon {
+    filter: drop-shadow(0 0 6px hsla(var(--primary) / 0.5));
+    transition: filter 0.3s ease;
+  }
+
+  .icon-neon:hover {
+    filter: drop-shadow(0 0 12px hsla(var(--primary) / 0.7));
+  }
+
+  /* Inner shine effect for glass elements */
+  .inner-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .inner-shine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      hsla(0 0% 100% / 0.15) 0%,
+      transparent 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Floating animation for decorative elements */
+  .float {
+    animation: float-slow 6s ease-in-out infinite;
+  }
+
+  /* Pulse soft animation */
+  .pulse-soft {
+    animation: pulse-soft 4s ease-in-out infinite;
+  }
+
+  /* Premium button glow */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-glow::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      135deg,
+      hsla(var(--primary) / 0.5),
+      hsla(var(--secondary) / 0.5),
+      hsla(var(--primary) / 0.5)
+    );
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(8px);
+  }
+
+  .btn-glow:hover::after {
+    opacity: 1;
+  }
+
+  /* Mesh gradient overlay */
+  .mesh-gradient {
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, hsla(var(--gradient-start) / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 60%, hsla(var(--gradient-mid) / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 60% at 50% 90%, hsla(var(--gradient-end) / 0.1) 0%, transparent 40%);
+  }
+
+  /* GPU-accelerated transform utilities */
+  .gpu-accelerated {
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+  }
+
+  /* Rounded glass corners */
+  .rounded-glass {
+    border-radius: 20px;
+  }
+
+  .rounded-glass-lg {
+    border-radius: 24px;
+  }
+
+  /* Depth shadow for 3D effect */
+  .shadow-depth {
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.07),
+      0 2px 4px rgba(0, 0, 0, 0.07),
+      0 4px 8px rgba(0, 0, 0, 0.07),
+      0 8px 16px rgba(0, 0, 0, 0.07),
+      0 16px 32px rgba(0, 0, 0, 0.07);
+  }
+
+  .dark .shadow-depth {
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.15),
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      0 8px 16px rgba(0, 0, 0, 0.15),
+      0 16px 32px rgba(0, 0, 0, 0.15),
+      0 0 40px hsla(var(--primary) / 0.1);
   }
 }
