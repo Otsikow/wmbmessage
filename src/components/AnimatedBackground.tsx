@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, memo } from "react";
+import * as React from "react";
 import "./AnimatedBackground.css";
 
 interface ParallaxState {
@@ -17,18 +17,18 @@ interface ParallaxState {
  * - Mobile optimized (CSS-only animations)
  */
 function AnimatedBackgroundComponent() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const parallaxRef = useRef<ParallaxState>({ x: 0, y: 0 });
-  const rafRef = useRef<number | null>(null);
-  const isMobileRef = useRef(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const parallaxRef = React.useRef<ParallaxState>({ x: 0, y: 0 });
+  const rafRef = React.useRef<number | null>(null);
+  const isMobileRef = React.useRef(false);
 
   // Check if mobile on mount
-  useEffect(() => {
+  React.useEffect(() => {
     isMobileRef.current = window.matchMedia("(max-width: 768px)").matches;
   }, []);
 
   // Smooth parallax update using RAF
-  const updateParallax = useCallback(() => {
+  const updateParallax = React.useCallback(() => {
     if (!containerRef.current || isMobileRef.current) return;
 
     const { x, y } = parallaxRef.current;
@@ -46,7 +46,7 @@ function AnimatedBackgroundComponent() {
   }, []);
 
   // Mouse move handler with throttling via RAF
-  const handleMouseMove = useCallback(
+  const handleMouseMove = React.useCallback(
     (e: MouseEvent) => {
       if (isMobileRef.current) return;
 
@@ -72,7 +72,7 @@ function AnimatedBackgroundComponent() {
   );
 
   // Scroll parallax handler
-  const handleScroll = useCallback(() => {
+  const handleScroll = React.useCallback(() => {
     if (!containerRef.current || isMobileRef.current) return;
 
     const scrollY = window.scrollY;
@@ -89,7 +89,7 @@ function AnimatedBackgroundComponent() {
   }, []);
 
   // Set up event listeners
-  useEffect(() => {
+  React.useEffect(() => {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
 
@@ -166,6 +166,6 @@ function AnimatedBackgroundComponent() {
 }
 
 // Memoize the component for performance
-const AnimatedBackground = memo(AnimatedBackgroundComponent);
+const AnimatedBackground = React.memo(AnimatedBackgroundComponent);
 
 export default AnimatedBackground;
