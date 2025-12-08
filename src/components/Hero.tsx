@@ -58,7 +58,7 @@ export default function Hero() {
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-foreground drop-shadow-lg">
                 Your Guide to the
-                <span className="block text-gradient-blue-purple mt-2 drop-shadow-lg">Message of The Hour</span>
+                <span className="block text-gradient-gold mt-2 drop-shadow-lg">Message of The Hour</span>
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-foreground/90 max-w-3xl mx-auto drop-shadow-md">
                 Read the Bible, explore William Marrion Branham's sermons, and
