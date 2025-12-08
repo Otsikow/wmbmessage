@@ -16,57 +16,60 @@ const DailyVerseCard = () => {
 
   useEffect(() => {
     if (!dailyContent || loading || error) return;
+
     recordActivity("daily-devotional", {
       description: `${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}`,
     });
   }, [dailyContent, error, loading, recordActivity]);
 
-  const handleCopy = async () => {
-    if (!dailyContent) return;
+  const buildShareText = () => {
+    if (!dailyContent) return "";
 
-    const text = appendShareAttribution(
+    return appendShareAttribution(
       `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`
     );
+  };
+
+  const handleCopy = async () => {
+    const text = buildShareText();
+    if (!text) return;
 
     try {
       await navigator.clipboard.writeText(text);
       toast({
         title: "Copied!",
-        description: "Daily content copied to clipboard",
+        description: "Daily content copied to clipboard.",
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Error",
-        description: "Failed to copy to clipboard",
+        description: "Failed to copy content.",
         variant: "destructive",
       });
     }
   };
 
   const handleShare = async () => {
-    if (!dailyContent) return;
-
-    const text = appendShareAttribution(
-      `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`
-    );
+    const text = buildShareText();
+    if (!text) return;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: "Daily Inspiration - MessageGuide",
-          text: text,
+          text,
         });
       } catch (err) {
+        // Ignore aborted share
         if ((err as Error).name !== "AbortError") {
           toast({
             title: "Error",
-            description: "Failed to share content",
+            description: "Failed to share content.",
             variant: "destructive",
           });
         }
       }
     } else {
-      // Fallback to copy
       handleCopy();
     }
   };
@@ -75,12 +78,16 @@ const DailyVerseCard = () => {
     setIsRefreshing(true);
     await refreshContent();
     setIsRefreshing(false);
+
     toast({
       title: "Refreshed!",
-      description: "New daily content loaded",
+      description: "New daily content loaded.",
     });
   };
 
+  /* ─────────────────────────────
+     LOADING STATE
+  ───────────────────────────── */
   if (loading) {
     return (
       <Card variant="glass" hoverable={false} className="w-full">
@@ -104,32 +111,40 @@ const DailyVerseCard = () => {
     );
   }
 
-  // Gracefully hide the component if there's an error or no content
-  // The DailyQuote component will still be visible as a fallback
+  /* ─────────────────────────────
+     ERROR OR EMPTY → DO NOT BREAK PAGE
+  ───────────────────────────── */
   if (error || !dailyContent) {
     return null;
   }
 
+  /* ─────────────────────────────
+     MAIN UI
+  ───────────────────────────── */
   return (
     <Card variant="glass" hoverable={false} className="w-full">
       <CardHeader>
-        <CardTitle glass className="flex items-center gap-2 text-2xl">
+        <CardTitle className="flex items-center gap-2 text-2xl glass-heading">
           <span className="glass-icon text-primary">
             <Book className="h-6 w-6" />
           </span>
           Daily Inspiration
         </CardTitle>
+
         <CardDescription glass>
-          Your daily verse and quote for {new Date().toLocaleDateString("en-US", { 
-            weekday: "long", 
-            year: "numeric", 
-            month: "long", 
-            day: "numeric" 
+          Your daily verse and quote for{" "}
+          {new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         </CardDescription>
       </CardHeader>
+
       <CardContent glass className="space-y-6">
-        {/* Bible Verse Section */}
+
+        {/* Bible Verse */}
         <div className="space-y-3 p-4 rounded-[16px] bg-white/[0.04] backdrop-blur-sm border border-white/10">
           <div className="flex items-center gap-2">
             <span className="glass-icon text-primary">
@@ -139,12 +154,13 @@ const DailyVerseCard = () => {
               {dailyContent.bible_book} {dailyContent.bible_chapter}:{dailyContent.bible_verse}
             </h3>
           </div>
+
           <p className="reader-typography glass-body italic leading-relaxed">
             "{dailyContent.bible_verse_text}"
           </p>
         </div>
 
-        {/* Sermon Quote Section */}
+        {/* Sermon Quote */}
         {dailyContent.sermon_paragraph && (
           <div className="space-y-3 p-4 rounded-[16px] bg-white/[0.04] backdrop-blur-sm border border-white/10">
             <div className="flex items-center gap-2">
@@ -155,6 +171,7 @@ const DailyVerseCard = () => {
                 {dailyContent.sermon_paragraph.sermon.title}
               </h3>
             </div>
+
             <p className="text-sm glass-body">
               {new Date(dailyContent.sermon_paragraph.sermon.date).toLocaleDateString("en-US", {
                 year: "numeric",
@@ -163,13 +180,14 @@ const DailyVerseCard = () => {
               })}{" "}
               • {dailyContent.sermon_paragraph.sermon.location}
             </p>
+
             <p className="reader-typography glass-body leading-relaxed">
               {dailyContent.sermon_paragraph.content}
             </p>
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Buttons */}
         <div className="flex gap-2 flex-wrap">
           <Button
             onClick={handleRefresh}
@@ -181,11 +199,23 @@ const DailyVerseCard = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button onClick={handleCopy} variant="outline" size="sm" className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10">
+
+          <Button
+            onClick={handleCopy}
+            variant="outline"
+            size="sm"
+            className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10"
+          >
             <Copy className="h-4 w-4 mr-2" />
             Copy
           </Button>
-          <Button onClick={handleShare} variant="outline" size="sm" className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10">
+
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size="sm"
+            className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10"
+          >
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>

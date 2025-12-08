@@ -101,14 +101,16 @@
   will-change: transform;
 }
 
-/* Dark mode styles */
+/* Dark mode styles - Premium glass effect */
 .dark .flip-tile-face {
-  background: linear-gradient(145deg, hsl(var(--card) / 0.7), hsl(var(--card) / 0.6));
-  border: 1px solid hsl(var(--border) / 0.5);
+  background: linear-gradient(145deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.35));
+  border: 1px solid hsl(0 0% 100% / 0.1);
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.4),
     0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 hsl(var(--card) / 0.3);
+    inset 0 1px 0 hsl(0 0% 100% / 0.08),
+    0 0 40px hsl(var(--primary) / 0.05);
+  backdrop-filter: blur(24px) saturate(150%);
 }
 
 /* Front face */
@@ -135,8 +137,9 @@
     box-shadow:
       0 20px 40px rgba(0, 0, 0, 0.5),
       0 8px 20px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 hsl(var(--card) / 0.3),
-      0 0 0 1px var(--tone-color, rgba(59, 130, 246, 0.5));
+      inset 0 1px 0 hsl(0 0% 100% / 0.1),
+      0 0 0 1px var(--tone-color, rgba(59, 130, 246, 0.5)),
+      0 0 30px var(--tone-color, hsl(var(--primary) / 0.2));
   }
 }
 

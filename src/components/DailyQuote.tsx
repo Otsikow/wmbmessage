@@ -143,7 +143,7 @@ export default function DailyQuote() {
   const reading = useMemo(() => getReadingForDate(selectedDate), [selectedDate]);
 
   return (
-    <Card className="relative overflow-hidden shadow-elegant border border-primary/20">
+    <Card variant="glass" className="relative overflow-hidden shadow-depth border-primary/20">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img 
@@ -152,7 +152,10 @@ export default function DailyQuote() {
           className="w-full h-full object-cover object-top"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/70" />
+        {/* Premium gradient overlay with depth */}
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60 dark:from-background/98 dark:via-background/90 dark:to-background/75" />
+        {/* Subtle mesh overlay */}
+        <div className="absolute inset-0 mesh-gradient opacity-30" />
       </div>
       
       {/* Content */}
@@ -161,9 +164,9 @@ export default function DailyQuote() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex gap-4 items-start text-left">
-              <Quote className="h-8 w-8 sm:h-9 sm:w-9 text-primary flex-shrink-0 mt-1" />
+              <Quote className="h-8 w-8 sm:h-9 sm:w-9 text-primary icon-neon flex-shrink-0 mt-1 float" />
               <div className="space-y-1">
-                <p className="text-xs sm:text-sm font-medium uppercase tracking-wide text-primary/80">
+                <p className="text-xs sm:text-sm font-medium uppercase tracking-wide text-gradient-blue-purple">
                   Daily Quote
                 </p>
                 <h3 className="text-xl sm:text-2xl font-semibold text-foreground">
@@ -181,13 +184,13 @@ export default function DailyQuote() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full border border-border bg-background/80 shadow-sm hover:bg-primary/10"
+                    className="h-10 w-10 rounded-full glass glass-neon-primary hover:scale-110 transition-all duration-300"
                     aria-label="Open calendar"
                   >
-                    <CalendarDays className="h-5 w-5 text-primary" />
+                    <CalendarDays className="h-5 w-5 text-primary icon-neon" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-4" align="end">
+                <PopoverContent className="w-auto p-4 glass rounded-glass" align="end">
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-muted-foreground">
                       Select a date to view its quote
@@ -207,8 +210,8 @@ export default function DailyQuote() {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <h4 className="text-lg font-semibold text-foreground">Message Insight</h4>
+          <div className="space-y-2 p-4 glass-subtle rounded-glass border border-secondary/10">
+            <h4 className="text-lg font-semibold text-gradient-blue-purple">Message Insight</h4>
             <blockquote className="text-base md:text-lg leading-relaxed text-foreground/90 italic">
               “{reading.message.text}”
             </blockquote>
@@ -217,8 +220,8 @@ export default function DailyQuote() {
             </p>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="text-lg font-semibold text-foreground">Scripture Reading</h4>
+          <div className="space-y-2 p-4 glass-subtle rounded-glass border border-primary/10">
+            <h4 className="text-lg font-semibold text-gradient-blue-purple">Scripture Reading</h4>
             <blockquote className="reader-typography text-base md:text-lg leading-relaxed text-foreground/90">
               “{reading.verse.text}”
             </blockquote>

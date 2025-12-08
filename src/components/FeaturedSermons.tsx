@@ -49,7 +49,7 @@ const featuredSermons = [
 
 const FeaturedSermons = () => {
   const renderCard = (sermon: (typeof featuredSermons)[number]) => (
-    <Card variant="glass" className="h-full">
+    <Card variant="glass" className="h-full group">
       <CardHeader className="space-y-3">
         <div className="flex items-center gap-3 text-sm glass-body">
           <span className="glass-icon text-primary">
@@ -57,23 +57,32 @@ const FeaturedSermons = () => {
           </span>
           <span>{sermon.series}</span>
         </div>
-        <CardTitle glass className="text-2xl font-semibold tracking-tight leading-tight">
+
+        <CardTitle className="text-2xl font-semibold tracking-tight leading-tight glass-heading">
           {sermon.title}
         </CardTitle>
+
         <CardDescription glass className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
           <CalendarDays className="h-3.5 w-3.5" />
           {sermon.date}
         </CardDescription>
       </CardHeader>
+
       <CardContent glass className="space-y-5">
-        <p className="text-sm leading-relaxed">{sermon.excerpt}</p>
+        <p className="text-sm leading-relaxed glass-body">{sermon.excerpt}</p>
+
         <div className="flex flex-wrap gap-2">
           {sermon.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm"
+            >
               {tag}
             </Badge>
           ))}
         </div>
+
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2 text-sm glass-body">
             <span className="glass-icon text-secondary">
@@ -81,7 +90,13 @@ const FeaturedSermons = () => {
             </span>
             <span>Listen or read in MessageGuide</span>
           </div>
-          <Button asChild size="sm" variant="outline" className="shadow-none border-white/20 hover:border-white/30 hover:bg-white/10">
+
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="shadow-none border-white/20 hover:border-white/30 hover:bg-white/10"
+          >
             <Link to="/wmb-sermons" aria-label={`Open ${sermon.title} sermon`}>
               View Sermon
             </Link>
@@ -92,25 +107,41 @@ const FeaturedSermons = () => {
   );
 
   return (
-    <section className="bg-muted/30 py-16 sm:py-20">
-      <div className="container space-y-10">
+    <section className="relative py-16 sm:py-20 overflow-hidden">
+      {/* Mesh gradient background */}
+      <div className="absolute inset-0 mesh-gradient opacity-40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-muted/30" />
+
+      <div className="container relative z-10 space-y-10">
+        {/* Header Section */}
         <div className="flex flex-col gap-6 text-center md:text-left md:flex-row md:items-end md:justify-between">
           <div className="space-y-4">
-            <p className="text-sm uppercase tracking-[0.3em] text-primary/80">Featured Sermons</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <p className="text-sm uppercase tracking-[0.3em] text-primary/80">
+              Featured Sermons
+            </p>
+
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gradient-blue-purple">
               Dive deeper into the Message of the Hour
             </h2>
+
             <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
-              Curated sermons from William Marrion Branham to inspire your study, explore prophetic insights, and strengthen your faith journey.
+              Curated sermons from William Marrion Branham to inspire your study, explore prophetic
+              insights, and strengthen your faith journey.
             </p>
           </div>
+
           <div>
-            <Button asChild variant="secondary" className="shadow-sm">
+            <Button
+              asChild
+              variant="secondary"
+              className="glass glass-neon-secondary hover:scale-105 transition-transform duration-300"
+            >
               <Link to="/wmb-sermons">Browse All Sermons</Link>
             </Button>
           </div>
         </div>
 
+        {/* Mobile Carousel */}
         <div className="md:hidden">
           <Carousel opts={{ align: "start" }} className="relative">
             <CarouselContent>
@@ -125,6 +156,7 @@ const FeaturedSermons = () => {
           </Carousel>
         </div>
 
+        {/* Desktop Grid */}
         <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-4 gap-6">
           {featuredSermons.map((sermon) => (
             <div key={sermon.title} className="h-full">

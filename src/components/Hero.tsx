@@ -9,12 +9,13 @@ import {
 import DailyQuote from "@/components/DailyQuote";
 import RecentBibleVerses from "@/components/RecentBibleVerses";
 import FlipTilesGrid from "@/components/FlipTilesGrid";
+import { AnimatedBackground } from "@/components/ui/animated-background";
 import logoImage from "@/assets/logo-hero.png";
 
 export default function Hero() {
   return (
     <section className="relative">
-      {/* Top Hero Section with Video Background */}
+      {/* Top Hero Section with Video + Animated Background */}
       <div className="relative overflow-hidden min-h-[85vh] flex items-center">
         {/* Video Background */}
         <div className="absolute inset-0 z-0">
@@ -29,14 +30,23 @@ export default function Hero() {
             <source src="/videos/bible-hero-video.mov" type="video/quicktime" />
             <source src="/videos/bible-hero-video.mov" type="video/mp4" />
           </video>
-          {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/80" />
+          {/* Premium gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/90" />
         </div>
+
+        {/* Animated Background Layer - Gradient Blobs + Particles */}
+        <AnimatedBackground 
+          className="z-[1] opacity-60"
+          cursorReactive={true}
+          showParticles={true}
+          blobCount={4}
+          parallaxIntensity={0.3}
+        />
 
         <div className="container responsive-section relative z-10 py-16 sm:py-24 lg:py-32">
           <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up px-2 sm:px-0">
-            {/* Logo */}
-            <div className="mb-4">
+            {/* Logo with floating animation */}
+            <div className="mb-4 float">
               <img
                 src={logoImage}
                 alt="MessageGuide Logo"
@@ -44,11 +54,11 @@ export default function Hero() {
               />
             </div>
 
-            {/* Title */}
+            {/* Title with gradient text */}
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-foreground drop-shadow-lg">
                 Your Guide to the
-                <span className="block text-primary mt-2 drop-shadow-lg">Message of The Hour</span>
+                <span className="block text-gradient-blue-purple mt-2 drop-shadow-lg">Message of The Hour</span>
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-foreground/90 max-w-3xl mx-auto drop-shadow-md">
                 Read the Bible, explore William Marrion Branham's sermons, and
@@ -56,14 +66,14 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Glass Action Buttons */}
+            {/* Premium Glass Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full max-w-4xl pt-6">
               <Link to="/plans" className="w-full">
                 <Button
                   size="lg"
-                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <Sparkles className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <Sparkles className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Bible Reading Plans</span>
                 </Button>
               </Link>
@@ -71,9 +81,9 @@ export default function Hero() {
               <Link to="/reader" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <BookOpen className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <BookOpen className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Start Reading</span>
                 </Button>
               </Link>
@@ -81,9 +91,9 @@ export default function Hero() {
               <Link to="/search" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <Search className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <Search className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Search Scripture</span>
                 </Button>
               </Link>
@@ -91,9 +101,9 @@ export default function Hero() {
               <Link to="/wmb-sermons" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg hover:bg-white/20 hover:border-white/40 hover:scale-[1.02] transition-all duration-300"
+                  className="w-full h-12 sm:h-14 glass glass-neon-secondary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <MessageSquare className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <MessageSquare className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">WMB Sermons</span>
                 </Button>
               </Link>
@@ -102,9 +112,12 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Content Below Video - No Video Background */}
-      <div className="bg-background">
-        <div className="container responsive-section py-12 space-y-12">
+      {/* Content Below Video - With Mesh Gradient Background */}
+      <div className="relative bg-background">
+        {/* Subtle mesh gradient overlay */}
+        <div className="absolute inset-0 mesh-gradient opacity-50 pointer-events-none" />
+        
+        <div className="container responsive-section relative z-10 py-12 space-y-12">
           {/* Daily Quote */}
           <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
             <DailyQuote />
