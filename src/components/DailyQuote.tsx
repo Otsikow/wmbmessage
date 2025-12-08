@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import wmbPillarOfFire from "@/assets/wmb-pillar-of-fire.jpg";
 
 interface DailyReading {
   verse: {
@@ -142,7 +143,20 @@ export default function DailyQuote() {
   const reading = useMemo(() => getReadingForDate(selectedDate), [selectedDate]);
 
   return (
-    <Card className="p-5 sm:p-6 md:p-8 shadow-elegant border border-primary/20 bg-card/60 backdrop-blur">
+    <Card className="relative overflow-hidden shadow-elegant border border-primary/20">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img 
+          src={wmbPillarOfFire} 
+          alt="" 
+          className="w-full h-full object-cover object-top"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/70" />
+      </div>
+      
+      {/* Content */}
+      <div className="relative z-10 p-5 sm:p-6 md:p-8">
       <div className="space-y-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -213,6 +227,7 @@ export default function DailyQuote() {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </Card>
   );

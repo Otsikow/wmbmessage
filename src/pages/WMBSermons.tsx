@@ -13,7 +13,7 @@ import {
   FileText,
   StickyNote,
 } from "lucide-react";
-import churchInteriorImage from "@/assets/church-interior.jpg";
+import wmbPillarOfFire from "@/assets/wmb-pillar-of-fire.jpg";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { NoteEditor } from "@/components/NoteEditor";
@@ -196,16 +196,21 @@ export default function WMBSermons() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="relative h-48 md:h-64 overflow-hidden">
-        <img src={churchInteriorImage} alt="Church Interior" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-        <div className="absolute inset-0 flex items-center">
+      <div className="relative h-56 sm:h-64 md:h-80 overflow-hidden">
+        <img 
+          src={wmbPillarOfFire} 
+          alt="William Branham with Pillar of Fire" 
+          className="w-full h-full object-cover object-top"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-transparent" />
+        <div className="absolute inset-0 flex items-end pb-6 sm:pb-8">
           <div className="px-4 sm:px-6 md:px-8 lg:px-12 w-full">
             <div className="flex items-center gap-3 sm:gap-4">
               <BackButton />
               <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">WMB Sermons</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">Explore William Marrion Branham's teachings</p>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground drop-shadow-lg">WMB Sermons</h1>
+                <p className="text-xs sm:text-sm text-foreground/80 drop-shadow">Explore William Marrion Branham's teachings</p>
               </div>
             </div>
           </div>
