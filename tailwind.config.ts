@@ -97,6 +97,18 @@ export default {
           "0%, 100%": { boxShadow: "0 0 20px hsl(var(--gold-glow) / 0.3)" },
           "50%": { boxShadow: "0 0 40px hsl(var(--gold-glow) / 0.6)" },
         },
+        "glass-float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
+        "glass-shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "neon-pulse": {
+          "0%, 100%": { filter: "drop-shadow(0 0 4px currentColor)" },
+          "50%": { filter: "drop-shadow(0 0 8px currentColor) drop-shadow(0 0 12px currentColor)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.3s ease-out",
@@ -105,10 +117,25 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out",
         "scale-in": "scale-in 0.4s ease-out",
         "glow": "glow 3s ease-in-out infinite",
+        "glass-float": "glass-float 3s ease-in-out infinite",
+        "glass-shimmer": "glass-shimmer 3s ease-in-out infinite",
+        "neon-pulse": "neon-pulse 2s ease-in-out infinite",
       },
       boxShadow: {
         elegant: "var(--shadow-elegant)",
         glow: "var(--shadow-glow)",
+        "glass": "inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 8px 25px rgba(0, 0, 0, 0.4)",
+        "glass-hover": "inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 12px 35px rgba(0, 0, 0, 0.5)",
+        "glass-light": "inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 25px rgba(0, 0, 0, 0.12)",
+      },
+      backdropBlur: {
+        "glass": "16px",
+        "glass-mobile": "10px",
+      },
+      backgroundImage: {
+        "glass-gradient": "linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03))",
+        "glass-gradient-light": "linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))",
+        "glass-edge": "linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent)",
       },
     },
   },

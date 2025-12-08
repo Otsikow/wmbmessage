@@ -119,20 +119,47 @@ export default function VerseCard({
       handleSelectVerse();
     }
   };
-  return <div className={cn("group relative overflow-hidden rounded-xl border border-border/60 bg-card/80 p-4 sm:p-5 shadow-sm transition-all cursor-pointer", highlight ? getHighlightColorClass(highlight.color) : "hover:border-primary/50 hover:shadow-md", isSelected && "ring-2 ring-primary border-primary shadow-lg", "backdrop-blur-sm")} role="button" aria-pressed={isSelected} aria-label={`${book} ${chapter}:${verse.number} verse card`} tabIndex={0} onClick={handleSelectVerse} onKeyDown={handleKeyDown}>
+  return <div className={cn(
+    "group relative overflow-hidden rounded-[20px] p-4 sm:p-5 cursor-pointer",
+    // Glass styling
+    "bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
+    "border border-white/[0.08]",
+    "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
+    "drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
+    // Transitions
+    "transition-all duration-[350ms] ease-out",
+    // Highlight colors override glass when present
+    highlight ? getHighlightColorClass(highlight.color) : [
+      "hover:-translate-y-1 hover:scale-[1.01]",
+      "hover:border-white/25",
+      "hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
+    ],
+    // Selected state
+    isSelected && "ring-2 ring-primary border-primary shadow-lg -translate-y-1 scale-[1.01]"
+  )} role="button" aria-pressed={isSelected} aria-label={`${book} ${chapter}:${verse.number} verse card`} tabIndex={0} onClick={handleSelectVerse} onKeyDown={handleKeyDown}>
+      {/* Top edge highlight */}
+      <div 
+        className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px] bg-gradient-to-r from-transparent via-white/20 to-transparent" 
+        aria-hidden="true"
+      />
       <div className="grid grid-cols-[auto,1fr] gap-3 sm:gap-4">
         {/* Verse Number */}
-        <span className={cn("flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors", isSelected && "border-primary text-primary")}>
+        <span className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide transition-colors",
+          "border border-white/20 bg-white/[0.08] backdrop-blur-sm",
+          "text-white/70",
+          isSelected && "border-primary text-primary bg-primary/20"
+        )}>
           {verse.number}
         </span>
 
         {/* Verse Content */}
         <div className="flex flex-col gap-3">
-          <p className={cn("text-sm sm:text-base leading-relaxed text-foreground", verse.isJesusWords && "text-jesus-words font-medium", fontClass)}>
+          <p className={cn("text-sm sm:text-base leading-relaxed glass-heading", verse.isJesusWords && "text-jesus-words font-medium", fontClass)}>
             {verse.text}
           </p>
 
-          {highlight?.note && <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs italic text-primary/90">
+          {highlight?.note && <div className="rounded-[12px] border border-primary/30 bg-primary/10 backdrop-blur-sm px-3 py-2 text-xs italic text-primary/90">
               {highlight.note}
             </div>}
 

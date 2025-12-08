@@ -83,21 +83,21 @@ const DailyVerseCard = () => {
 
   if (loading) {
     return (
-      <Card className="w-full">
+      <Card variant="glass" hoverable={false} className="w-full">
         <CardHeader>
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-64 mt-2" />
+          <Skeleton className="h-8 w-48 bg-white/10" />
+          <Skeleton className="h-4 w-64 mt-2 bg-white/10" />
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full bg-white/10" />
+            <Skeleton className="h-4 w-full bg-white/10" />
+            <Skeleton className="h-4 w-3/4 bg-white/10" />
           </div>
           <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full bg-white/10" />
+            <Skeleton className="h-4 w-full bg-white/10" />
+            <Skeleton className="h-4 w-full bg-white/10" />
           </div>
         </CardContent>
       </Card>
@@ -111,13 +111,15 @@ const DailyVerseCard = () => {
   }
 
   return (
-    <Card className="w-full bg-gradient-to-br from-primary/5 to-secondary/5">
+    <Card variant="glass" hoverable={false} className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-2xl">
-          <Book className="h-6 w-6 text-primary" />
+        <CardTitle glass className="flex items-center gap-2 text-2xl">
+          <span className="glass-icon text-primary">
+            <Book className="h-6 w-6" />
+          </span>
           Daily Inspiration
         </CardTitle>
-        <CardDescription>
+        <CardDescription glass>
           Your daily verse and quote for {new Date().toLocaleDateString("en-US", { 
             weekday: "long", 
             year: "numeric", 
@@ -126,30 +128,34 @@ const DailyVerseCard = () => {
           })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent glass className="space-y-6">
         {/* Bible Verse Section */}
-        <div className="space-y-3 p-4 bg-card rounded-lg border">
+        <div className="space-y-3 p-4 rounded-[16px] bg-white/[0.04] backdrop-blur-sm border border-white/10">
           <div className="flex items-center gap-2">
-            <Book className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-lg">
+            <span className="glass-icon text-primary">
+              <Book className="h-5 w-5" />
+            </span>
+            <h3 className="font-semibold text-lg glass-heading">
               {dailyContent.bible_book} {dailyContent.bible_chapter}:{dailyContent.bible_verse}
             </h3>
           </div>
-          <p className="reader-typography text-muted-foreground italic leading-relaxed">
+          <p className="reader-typography glass-body italic leading-relaxed">
             "{dailyContent.bible_verse_text}"
           </p>
         </div>
 
         {/* Sermon Quote Section */}
         {dailyContent.sermon_paragraph && (
-          <div className="space-y-3 p-4 bg-card rounded-lg border">
+          <div className="space-y-3 p-4 rounded-[16px] bg-white/[0.04] backdrop-blur-sm border border-white/10">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">
+              <span className="glass-icon text-primary">
+                <MessageSquare className="h-5 w-5" />
+              </span>
+              <h3 className="font-semibold text-lg glass-heading">
                 {dailyContent.sermon_paragraph.sermon.title}
               </h3>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm glass-body">
               {new Date(dailyContent.sermon_paragraph.sermon.date).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
@@ -157,7 +163,7 @@ const DailyVerseCard = () => {
               })}{" "}
               • {dailyContent.sermon_paragraph.sermon.location}
             </p>
-            <p className="reader-typography text-muted-foreground leading-relaxed">
+            <p className="reader-typography glass-body leading-relaxed">
               {dailyContent.sermon_paragraph.content}
             </p>
           </div>
@@ -170,16 +176,16 @@ const DailyVerseCard = () => {
             variant="outline"
             size="sm"
             disabled={isRefreshing}
-            className="flex-1"
+            className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button onClick={handleCopy} variant="outline" size="sm" className="flex-1">
+          <Button onClick={handleCopy} variant="outline" size="sm" className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10">
             <Copy className="h-4 w-4 mr-2" />
             Copy
           </Button>
-          <Button onClick={handleShare} variant="outline" size="sm" className="flex-1">
+          <Button onClick={handleShare} variant="outline" size="sm" className="flex-1 border-white/20 hover:border-white/30 hover:bg-white/10">
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </Button>
