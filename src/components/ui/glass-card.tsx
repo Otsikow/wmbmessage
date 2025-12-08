@@ -2,21 +2,20 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/* ============================================================
+   GLASS CARD VARIANTS (Unified + Enhanced)
+   ============================================================ */
+
 const glassCardVariants = cva(
-  // Base styles for all glass cards
-  "relative overflow-hidden rounded-[20px] transition-all duration-300 ease-out will-change-transform",
+  "relative overflow-hidden rounded-[20px] transition-all duration-300 ease-out will-change-transform text-card-foreground",
   {
     variants: {
       variant: {
         default: [
-          // Frosted glass effect
           "bg-card/40 dark:bg-card/30",
           "backdrop-blur-xl backdrop-saturate-150",
-          // Border with glow
           "border border-white/20 dark:border-white/10",
-          // Inset glow
           "shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]",
-          // Ambient shadow
           "shadow-glass",
         ],
         elevated: [
@@ -66,9 +65,12 @@ const glassCardVariants = cva(
 export interface GlassCardProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof glassCardVariants> {
-  /** Add neon accent color tint */
   neonColor?: "primary" | "secondary" | "accent";
 }
+
+/* ============================================================
+   MAIN CARD
+   ============================================================ */
 
 const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
   ({ className, variant, hover, glow, neonColor, children, ...props }, ref) => {
@@ -82,87 +84,106 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
         )}
         {...props}
       >
-        {/* Subtle inner shine effect */}
+        {/* Subtle inner gloss */}
         <div
           className="pointer-events-none absolute inset-0 rounded-[20px]"
           style={{
             background:
-              "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, transparent 100%)",
+              "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%, transparent 100%)",
           }}
         />
-        {/* Content */}
+
+        {/* Top highlight line */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px] bg-gradient-to-r from-transparent via-white/25 to-transparent"
+          aria-hidden="true"
+        />
+
+        {/* Content wrapper */}
         <div className="relative z-10">{children}</div>
       </div>
     );
   }
 );
+
 GlassCard.displayName = "GlassCard";
 
-const GlassCardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
-    {...props}
-  />
-));
+/* ============================================================
+   SUBCOMPONENTS
+   ============================================================ */
+
+const GlassCardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+  )
+);
 GlassCardHeader.displayName = "GlassCardHeader";
 
-const GlassCardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      "text-2xl font-semibold leading-none tracking-tight text-foreground",
-      className
-    )}
-    {...props}
-  />
-));
+const GlassCardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h3
+      ref={ref}
+      className={cn("text-2xl font-semibold leading-none tracking-tight text-white/90", className)}
+      {...props}
+    />
+  )
+);
 GlassCardTitle.displayName = "GlassCardTitle";
 
 const GlassCardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn("text-sm text-muted-foreground/90", className)}
-    {...props}
-  />
+  <p ref={ref} className={cn("text-sm text-white/70", className)} {...props} />
 ));
 GlassCardDescription.displayName = "GlassCardDescription";
 
-const GlassCardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-));
+const GlassCardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("p-6 pt-0 text-white/80", className)} {...props} />
+  )
+);
 GlassCardContent.displayName = "GlassCardContent";
 
-const GlassCardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
-    {...props}
-  />
-));
+const GlassCardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  )
+);
 GlassCardFooter.displayName = "GlassCardFooter";
+
+/* ============================================================
+   ICON WRAPPER (NEON)
+   ============================================================ */
+
+const GlassCardIcon = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>(
+  ({ className, children, ...props }, ref) => (
+    <span
+      ref={ref}
+      className={cn(
+        "inline-flex items-center justify-center",
+        "[&>svg]:drop-shadow-[0_0_5px_currentColor]",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+);
+GlassCardIcon.displayName = "GlassCardIcon";
+
+/* ============================================================
+   EXPORTS
+   ============================================================ */
 
 export {
   GlassCard,
   GlassCardHeader,
-  GlassCardFooter,
   GlassCardTitle,
   GlassCardDescription,
   GlassCardContent,
+  GlassCardFooter,
+  GlassCardIcon,
   glassCardVariants,
 };

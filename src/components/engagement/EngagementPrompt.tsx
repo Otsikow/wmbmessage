@@ -22,26 +22,37 @@ export function EngagementPrompt() {
       : "A few minutes of reading today will keep your streak alive.";
 
   return (
-    <Alert className="glass glass-neon-primary border-primary/20 rounded-glass">
-      {hasActivityToday ? (
-        <Sparkles className="h-5 w-5 text-primary icon-neon" />
-      ) : (
-        <BellRing className="h-5 w-5 text-primary icon-neon" />
-      )}
+    <Alert className="glass-card border-primary/20 bg-white/[0.06] backdrop-blur-[16px] saturate-[180%] rounded-[20px]">
+      <span className="glass-icon text-primary">
+        {hasActivityToday ? (
+          <Sparkles className="h-5 w-5" />
+        ) : (
+          <BellRing className="h-5 w-5" />
+        )}
+      </span>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* text */}
         <div>
-          <AlertTitle className="flex items-center gap-2 text-base font-semibold">
+          <AlertTitle className="flex items-center gap-2 text-base font-semibold glass-heading">
             {hasActivityToday ? "Wonderful consistency!" : "Your reading journey awaits"}
           </AlertTitle>
-          <AlertDescription className="text-sm text-muted-foreground">
+
+          <AlertDescription className="text-sm glass-body">
             {subtitle}
           </AlertDescription>
         </div>
-        <Button 
-          asChild 
-          variant={hasActivityToday ? "outline" : "default"} 
-          size="sm" 
-          className={`mt-2 sm:mt-0 ${hasActivityToday ? "glass-subtle border-primary/20 hover:bg-primary/10" : "btn-glow"}`}
+
+        {/* button */}
+        <Button
+          asChild
+          size="sm"
+          variant={hasActivityToday ? "outline" : "default"}
+          className={`mt-2 sm:mt-0 ${
+            hasActivityToday
+              ? "border-white/20 hover:border-white/30 hover:bg-white/10"
+              : "btn-glow"
+          }`}
         >
           <Link to="/reader">
             <BookOpenCheck className="mr-2 h-4 w-4" />
