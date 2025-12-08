@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
+import * as React from "react";
+import type { ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
@@ -9,10 +10,10 @@ interface AuthContextType {
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within AuthProvider');
   }
@@ -24,11 +25,11 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isSupabaseConfigured) {
       // Skip Supabase auth initialization when the app isn't configured.
       // This prevents the provider from throwing hard-to-diagnose errors
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const value = useMemo(
+  const value = React.useMemo(
     () => ({ user, session, loading }),
     [user, session, loading]
   );
