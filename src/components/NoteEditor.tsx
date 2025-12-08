@@ -229,7 +229,7 @@ export function NoteEditor({
                 ref={editorRef}
                 contentEditable
                 className={cn(
-                  "min-h-[200px] p-4 focus:outline-none prose prose-sm max-w-none",
+                  "min-h-[200px] p-4 focus:outline-none prose prose-sm dark:prose-invert max-w-none",
                   "prose-p:my-2 prose-ul:my-2 prose-li:my-1"
                 )}
                 onPaste={(e) => {

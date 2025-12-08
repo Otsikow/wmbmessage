@@ -18,6 +18,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import BackButton from "@/components/BackButton";
 import {
   SermonSummary,
@@ -28,6 +30,8 @@ import { useEngagement } from "@/contexts/EngagementContext";
 export default function WMBSermons() {
   const navigate = useNavigate();
   const { createUserNote } = useUserNotes();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { sermons, loading } = useSermonSummaries();
   const [searchQuery, setSearchQuery] = useState("");
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
@@ -69,6 +73,16 @@ export default function WMBSermons() {
 
   const handleAddSermonNote = (sermon: SermonSummary, event: React.MouseEvent) => {
     event.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in or create an account to save notes.",
+      });
+      navigate("/auth/sign-in");
+      return;
+    }
+    
     setSelectedSermonForNote(sermon);
     setIsNoteEditorOpen(true);
   };

@@ -4,6 +4,8 @@ import { Plus, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUserNotes } from "@/hooks/useNotes";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { NoteEditor } from "@/components/NoteEditor";
 import { NoteCard, UserNote } from "@/components/NoteCard";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +14,8 @@ import BackButton from "@/components/BackButton";
 export default function Notes() {
   const navigate = useNavigate();
   const { userNotes, loading, createUserNote, updateUserNote, deleteUserNote } = useUserNotes();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<UserNote | null>(null);
@@ -56,6 +60,14 @@ export default function Notes() {
   };
 
   const handleNewNote = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in or create an account to save notes.",
+      });
+      navigate("/auth/sign-in");
+      return;
+    }
     setSelectedNote(null);
     setIsEditorOpen(true);
   };

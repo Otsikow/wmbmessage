@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import typography from "@tailwindcss/typography";
 
 export default {
   darkMode: ["class"],
@@ -21,7 +22,6 @@ export default {
     extend: {
       /* ======================================
          CLEAN COLOR SYSTEM (Option A)
-         Aura removed — only stable variables remain
          ====================================== */
       colors: {
         border: "hsl(var(--border))",
@@ -98,8 +98,7 @@ export default {
       },
 
       /* ======================================
-         ONLY THE ANIMATIONS USED IN YOUR APP
-         (Aura animations removed)
+         ONLY ANIMATIONS USED IN MESSAGEGUIDE
          ====================================== */
       keyframes: {
         "accordion-down": {
@@ -111,7 +110,7 @@ export default {
           to: { height: "0", opacity: "0" },
         },
 
-        /* Onboarding-specific animations */
+        /* Onboarding + soft UI animations */
         "fade-in": {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
@@ -140,7 +139,7 @@ export default {
       },
 
       /* ======================================
-         Glass shadows only (Aura shadows removed)
+         Glass shadows only
          ====================================== */
       boxShadow: {
         glass: "0 8px 25px rgba(0,0,0,0.12)",
@@ -150,5 +149,8 @@ export default {
     },
   },
 
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    typography, // ✅ Keep this for prose rendering
+  ],
 } satisfies Config;
