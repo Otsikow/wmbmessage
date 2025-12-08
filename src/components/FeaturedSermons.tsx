@@ -49,35 +49,39 @@ const featuredSermons = [
 
 const FeaturedSermons = () => {
   const renderCard = (sermon: (typeof featuredSermons)[number]) => (
-    <Card className="h-full border-border/60 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-gradient-to-br from-background via-background/95 to-background">
+    <Card variant="glass" className="h-full">
       <CardHeader className="space-y-3">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-primary" />
+        <div className="flex items-center gap-3 text-sm glass-body">
+          <span className="glass-icon text-primary">
+            <Sparkles className="h-4 w-4" />
+          </span>
           <span>{sermon.series}</span>
         </div>
-        <CardTitle className="text-2xl font-semibold tracking-tight leading-tight text-foreground">
+        <CardTitle glass className="text-2xl font-semibold tracking-tight leading-tight">
           {sermon.title}
         </CardTitle>
-        <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <CardDescription glass className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
           <CalendarDays className="h-3.5 w-3.5" />
           {sermon.date}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <p className="text-sm leading-relaxed text-muted-foreground/90">{sermon.excerpt}</p>
+      <CardContent glass className="space-y-5">
+        <p className="text-sm leading-relaxed">{sermon.excerpt}</p>
         <div className="flex flex-wrap gap-2">
           {sermon.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary border border-primary/20">
+            <Badge key={tag} variant="secondary" className="bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm">
               {tag}
             </Badge>
           ))}
         </div>
         <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Headphones className="h-4 w-4 text-secondary" />
+          <div className="flex items-center gap-2 text-sm glass-body">
+            <span className="glass-icon text-secondary">
+              <Headphones className="h-4 w-4" />
+            </span>
             <span>Listen or read in MessageGuide</span>
           </div>
-          <Button asChild size="sm" variant="outline" className="shadow-none">
+          <Button asChild size="sm" variant="outline" className="shadow-none border-white/20 hover:border-white/30 hover:bg-white/10">
             <Link to="/wmb-sermons" aria-label={`Open ${sermon.title} sermon`}>
               View Sermon
             </Link>
