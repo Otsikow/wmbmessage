@@ -92,7 +92,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
 
           {/* Content */}
           <div
-            className="text-sm text-muted-foreground prose prose-sm max-w-none"
+            className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>

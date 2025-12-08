@@ -59,10 +59,12 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
+import { useAuth } from "@/contexts/AuthContext";
 import BackButton from "@/components/BackButton";
 import { useEngagement } from "@/contexts/EngagementContext";
 import HighlightMenu from "@/components/HighlightMenu";
 import { useSwipe } from "@/hooks/useSwipe";
+import { useToast } from "@/hooks/use-toast";
 
 const LAST_LOCATION_STORAGE_KEY = "reader:lastLocation";
 
@@ -70,7 +72,9 @@ export default function Reader() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettings();
   const { createUserNote } = useUserNotes();
+  const { user } = useAuth();
   const { recordActivity } = useEngagement();
+  const { toast } = useToast();
   const scriptureFontOptions = useScriptureFontOptions();
 
   const searchParams = useMemo(() => {
@@ -261,6 +265,16 @@ export default function Reader() {
 
   const handleAddNote = (verseNumber: number, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in or create an account to save notes.",
+      });
+      navigate("/auth/sign-in");
+      return;
+    }
+    
     const verseRef = `${currentBook} ${currentChapter}:${verseNumber}`;
     setNoteVerseContext(verseRef);
     setFocusedVerse(verseNumber);
@@ -311,6 +325,15 @@ export default function Reader() {
 
   const handleBulkNote = () => {
     if (!selectedVerses.length) return;
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in or create an account to save notes.",
+      });
+      navigate("/auth/sign-in");
+      return;
+    }
 
     const references = selectedVerses
       .map((verse) => `${currentBook} ${currentChapter}:${verse}`)
