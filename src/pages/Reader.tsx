@@ -836,42 +836,42 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 sm:px-3 px-2"
                 onClick={handleBulkNote}
                 disabled={!selectedVerses.length}
               >
                 <NotebookPen className="h-4 w-4" />
-                Add note
+                <span className="hidden sm:inline">Add note</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 sm:px-3 px-2"
                 onClick={handleBulkBookmark}
                 disabled={!selectedVerses.length}
               >
                 <BookmarkPlus className="h-4 w-4" />
-                Bookmark
+                <span className="hidden sm:inline">Bookmark</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 sm:px-3 px-2"
                 onClick={handleCopySelection}
                 disabled={!hasSelection}
               >
                 <Copy className="h-4 w-4" />
-                Copy
+                <span className="hidden sm:inline">Copy</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-2 sm:px-3 px-2"
                 onClick={handleClearSelection}
                 disabled={!hasSelection}
               >
                 <X className="h-4 w-4" />
-                Clear
+                <span className="hidden sm:inline">Clear</span>
               </Button>
             </div>
           </div>
