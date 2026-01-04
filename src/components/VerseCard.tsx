@@ -120,46 +120,37 @@ export default function VerseCard({
     }
   };
   return <div className={cn(
-    "group relative overflow-hidden rounded-[20px] p-4 sm:p-5 cursor-pointer",
-    // Glass styling
-    "bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
-    "border border-white/[0.08]",
-    "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
-    "drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
+    "group relative overflow-hidden rounded-3xl p-5 sm:p-6 cursor-pointer",
+    // Clean modern styling
+    "bg-card/40 hover:bg-card/60",
+    "border border-white/10",
+    "shadow-sm",
     // Transitions
-    "transition-all duration-[350ms] ease-out",
-    // Highlight colors override glass when present
+    "transition-all duration-300 ease-in-out",
+    // Highlight colors override
     highlight ? getHighlightColorClass(highlight.color) : [
-      "hover:-translate-y-1 hover:scale-[1.01]",
-      "hover:border-white/25",
-      "hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
+      "hover:border-primary/20",
     ],
     // Selected state
-    isSelected && "ring-2 ring-primary border-primary shadow-lg -translate-y-1 scale-[1.01]"
+    isSelected && "ring-1 ring-primary border-primary/50 bg-primary/5"
   )} role="button" aria-pressed={isSelected} aria-label={`${book} ${chapter}:${verse.number} verse card`} tabIndex={0} onClick={handleSelectVerse} onKeyDown={handleKeyDown}>
-      {/* Top edge highlight */}
-      <div 
-        className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px] bg-gradient-to-r from-transparent via-white/20 to-transparent" 
-        aria-hidden="true"
-      />
       <div className="grid grid-cols-[auto,1fr] gap-3 sm:gap-4">
         {/* Verse Number */}
         <span className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide transition-colors",
-          "border border-white/20 bg-white/[0.08] backdrop-blur-sm",
-          "text-white/70",
-          isSelected && "border-primary text-primary bg-primary/20"
+          "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors",
+          "bg-white/10 text-muted-foreground",
+          isSelected && "bg-primary text-primary-foreground"
         )}>
           {verse.number}
         </span>
 
         {/* Verse Content */}
         <div className="flex flex-col gap-3">
-          <p className={cn("text-sm sm:text-base leading-relaxed glass-heading", verse.isJesusWords && "text-jesus-words font-medium", fontClass)}>
+          <p className={cn("text-base sm:text-lg leading-relaxed text-foreground", verse.isJesusWords && "text-red-400 font-medium", fontClass)}>
             {verse.text}
           </p>
 
-          {highlight?.note && <div className="rounded-[12px] border border-primary/30 bg-primary/10 backdrop-blur-sm px-3 py-2 text-xs italic text-primary/90">
+          {highlight?.note && <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs italic text-primary">
               {highlight.note}
             </div>}
 
