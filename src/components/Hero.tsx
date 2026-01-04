@@ -71,7 +71,7 @@ export default function Hero() {
               <Link to="/plans" className="w-full">
                 <Button
                   size="lg"
-                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
                   <Sparkles className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Bible Reading Plans</span>
@@ -81,7 +81,7 @@ export default function Hero() {
               <Link to="/reader" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
                   <BookOpen className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Start Reading</span>
@@ -91,7 +91,7 @@ export default function Hero() {
               <Link to="/search" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 glass glass-neon-primary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
+                  className="w-full h-12 sm:h-14 glass glass-neon-primary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
                   <Search className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">Search Scripture</span>
@@ -101,7 +101,7 @@ export default function Hero() {
               <Link to="/wmb-sermons" className="w-full">
                 <Button 
                   size="lg" 
-                  className="w-full h-12 sm:h-14 glass glass-neon-secondary text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
+                  className="w-full h-12 sm:h-14 glass glass-neon-secondary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
                   <MessageSquare className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
                   <span className="truncate">WMB Sermons</span>
