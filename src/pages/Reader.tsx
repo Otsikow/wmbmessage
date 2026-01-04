@@ -766,10 +766,10 @@ export default function Reader() {
       </div>
 
       {/* Bible Content */}
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-        <Card ref={swipeRef} className="border border-border/60 bg-card/95 shadow-xl">
-          <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-10 space-y-8">
-            <div className="space-y-2 text-center">
+      <div className="container max-w-4xl mx-auto px-0 sm:px-4 py-2 md:py-8">
+        <div ref={swipeRef} className="bg-transparent">
+          <div className="py-4 md:py-8 space-y-8">
+            <div className="space-y-2 text-center px-4">
               <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground/70">Holy Bible • King James Version</p>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
                 {currentBook} {currentChapter}
@@ -786,7 +786,7 @@ export default function Reader() {
               <div className="space-y-5 sm:space-y-6">
                 <div
                   ref={versesContainerRef}
-                  className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}
+                  className={cn("space-y-3 sm:space-y-4 mx-auto px-2 sm:px-0", readerFontClass)}
                 >
                   {verses.map((verse) => (
                     <VerseCard
@@ -844,7 +844,7 @@ export default function Reader() {
               </Button>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Selection Actions */}
