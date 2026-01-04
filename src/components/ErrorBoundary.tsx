@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
+import { ErrorFallback } from "./ErrorFallback";
 
-type FallbackRender = (fallbackProps: {
+export type FallbackRender = (fallbackProps: {
   error?: Error;
   reset: () => void;
 }) => ReactNode;
@@ -66,35 +67,14 @@ export class ErrorBoundary extends Component<
       return fallback;
     }
 
+    // Default to the new ErrorFallback component
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
-        <h1 className="text-2xl font-semibold">Something went wrong</h1>
-        <p className="max-w-prose text-muted-foreground">
-          An unexpected error occurred while rendering this page. Please try
-          again or reload the application.
-        </p>
-        {error?.message ? (
-          <pre className="max-w-lg overflow-auto rounded-md bg-muted px-4 py-3 text-left text-sm text-muted-foreground">
-            {error.message}
-          </pre>
-        ) : null}
-        <div className="flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            onClick={this.handleReset}
-          >
-            Try again
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-md border border-input px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            onClick={() => window.location.reload()}
-          >
-            Reload app
-          </button>
-        </div>
-      </div>
+      <ErrorFallback
+        error={error}
+        resetErrorBoundary={this.handleReset}
+        title="Something went wrong"
+        description="An unexpected error occurred while rendering this page. Please try again or reload the application."
+      />
     );
   }
 }
