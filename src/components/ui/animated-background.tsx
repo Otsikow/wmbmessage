@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, memo } from "react";
+import { useEffect, useRef, useCallback, memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface AnimatedBackgroundProps {
