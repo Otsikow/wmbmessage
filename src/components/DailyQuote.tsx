@@ -182,11 +182,7 @@ export default function DailyQuote() {
       } catch (err) {
         // Ignore aborted share
         if ((err as Error).name !== "AbortError") {
-          toast({
-            title: "Error",
-            description: "Failed to share content.",
-            variant: "destructive",
-          });
+          handleCopy();
         }
       }
     } else {
