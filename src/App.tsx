@@ -40,6 +40,7 @@ import CrossReferences from "./pages/CrossReferences";
 import ReadingPlans from "./pages/ReadingPlans";
 import ReadingPlanDetail from "./pages/ReadingPlanDetail";
 import ReadingSession from "./pages/ReadingSession";
+import BookingDemo from "./pages/BookingDemo";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -142,6 +143,10 @@ function App() {
                                   <Route
                                     path="/cross-references"
                                     element={withSectionBoundary("Cross References", <CrossReferences />)}
+                                  />
+                                  <Route
+                                    path="/booking-demo"
+                                    element={withSectionBoundary("Booking Demo", <BookingDemo />)}
                                   />
 
                                   {/* Protected Routes */}
