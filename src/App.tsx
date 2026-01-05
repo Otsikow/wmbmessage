@@ -51,6 +51,7 @@ import VerifyEmail from "./pages/Auth/VerifyEmail";
 // User & Admin Pages
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import BookingDashboard from "./pages/BookingDashboard";
 
 // Legal Pages
 import Privacy from "./pages/Privacy";
@@ -238,6 +239,10 @@ function App() {
                                         {withSectionBoundary("Admin", <Admin />)}
                                       </ProtectedRoute>
                                     }
+                                  />
+                                  <Route
+                                    path="/booking-dashboard"
+                                    element={withSectionBoundary("Booking Dashboard", <BookingDashboard />)}
                                   />
 
                                   {/* Legal Pages */}
