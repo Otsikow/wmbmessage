@@ -214,7 +214,7 @@ const buildBadge = (
   shareText: `${badgeTitle} unlocked in Sermon Scrolls!`,
 });
 
-export const ReadingPlanProvider = ({ children }: { children: React.ReactNode }) => {
+export const ReadingPlanProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [state, setState] = useState<ReadingPlanState>(() => loadState());
   const [celebration, setCelebration] = useState<{
