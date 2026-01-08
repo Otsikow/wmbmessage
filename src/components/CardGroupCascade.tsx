@@ -6,6 +6,7 @@ import {
   Search,
   Target,
 } from "lucide-react";
+import * as React from "react";
 import "./CardGroupCascade.css";
 
 const cards = [
