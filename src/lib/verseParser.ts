@@ -18,9 +18,9 @@ export function parseVerseReference(reference: string): ParsedReference | null {
   if (!match) return null;
   
   const bookName = match[1].trim();
-  const chapter = parseInt(match[2]);
-  const startVerse = match[3] ? parseInt(match[3]) : undefined;
-  const endVerse = match[4] ? parseInt(match[4]) : undefined;
+  let chapter = parseInt(match[2]);
+  let startVerse = match[3] ? parseInt(match[3]) : undefined;
+  let endVerse = match[4] ? parseInt(match[4]) : undefined;
   
   // Find the book (case-insensitive, partial match)
   const book = BIBLE_BOOKS.find(b => 
@@ -29,6 +29,25 @@ export function parseVerseReference(reference: string): ParsedReference | null {
   );
   
   if (!book) return null;
+
+  if (!startVerse && !endVerse) {
+    const chapterDigits = match[2];
+
+    if (book.chapters === 1 && chapter > 1) {
+      startVerse = chapter;
+      chapter = 1;
+    } else if (chapterDigits.length >= 3 && chapter > book.chapters) {
+      const verseDigits = chapterDigits.slice(-2);
+      const chapterDigitsPart = chapterDigits.slice(0, -2);
+      const derivedChapter = parseInt(chapterDigitsPart);
+      const derivedVerse = parseInt(verseDigits);
+
+      if (derivedChapter >= 1 && derivedChapter <= book.chapters) {
+        chapter = derivedChapter;
+        startVerse = derivedVerse;
+      }
+    }
+  }
   
   return {
     book: book.name,
