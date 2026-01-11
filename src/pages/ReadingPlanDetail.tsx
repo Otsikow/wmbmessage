@@ -91,7 +91,13 @@ const ReadingPlanDetail = () => {
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Button onClick={() => startPlan(plan.id)} className="flex-1">
+            <Button
+              onClick={() => {
+                startPlan(plan.id);
+                navigate(`/plans/${plan.id}/day/${currentDayNumber}`);
+              }}
+              className="flex-1"
+            >
               Resume Plan
             </Button>
             <Button
