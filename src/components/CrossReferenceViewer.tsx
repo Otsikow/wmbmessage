@@ -90,6 +90,11 @@ export default function CrossReferenceViewer({
   const [crossReferenceSearchResults, setCrossReferenceSearchResults] = useState<
     CrossReferenceRecord[]
   >([]);
+  const [crossRefTarget, setCrossRefTarget] = useState<{
+    book: string;
+    chapter: number;
+    verse: number;
+  } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(initialTab ?? "search");
 
@@ -101,24 +106,40 @@ export default function CrossReferenceViewer({
   } = useCrossReferenceSearch();
   
   // Fetch cross-references for current verse if viewing a specific verse
+  const displayBook = crossRefTarget?.book ?? currentBook ?? "";
+  const displayChapter = crossRefTarget?.chapter ?? currentChapter ?? 0;
+  const displayVerse = crossRefTarget?.verse ?? currentVerse;
+
   const { 
     crossReferences, 
     userCrossReferences, 
     loading: crossRefsLoading 
   } = useCrossReferences(
-    currentBook || "",
-    currentChapter || 0,
-    currentVerse
+    displayBook,
+    displayChapter,
+    displayVerse
   );
 
   // Auto-switch to cross-references tab if viewing a specific verse with references
   useEffect(() => {
+    if (crossRefTarget?.book && crossRefTarget?.chapter && crossRefTarget?.verse) {
+      setActiveTab("cross-refs");
+      return;
+    }
+
     if (currentBook && currentChapter && currentVerse) {
       if (crossReferences.length > 0 || userCrossReferences.length > 0) {
         setActiveTab("cross-refs");
       }
     }
-  }, [currentBook, currentChapter, currentVerse, crossReferences.length, userCrossReferences.length]);
+  }, [
+    currentBook,
+    currentChapter,
+    currentVerse,
+    crossRefTarget,
+    crossReferences.length,
+    userCrossReferences.length,
+  ]);
 
   const performSearch = useCallback(
     async (
@@ -131,6 +152,16 @@ export default function CrossReferenceViewer({
       const parsed = parseVerseReference(query);
 
       if (parsed) {
+        const parsedVerse = parsed.startVerse ?? parsed.endVerse;
+        if (parsedVerse) {
+          setCrossRefTarget({
+            book: parsed.book,
+            chapter: parsed.chapter,
+            verse: parsedVerse,
+          });
+        } else {
+          setCrossRefTarget(null);
+        }
         setManualReferences((previous) => {
           const exists = previous.some(
             (ref) =>
@@ -153,12 +184,13 @@ export default function CrossReferenceViewer({
         setSermonResults([]);
         setCrossReferenceSearchResults([]);
         if (!options.skipTabSwitch) {
-          setActiveTab("search");
+          setActiveTab(parsedVerse ? "cross-refs" : "search");
         }
         return;
       }
 
       setIsSearching(true);
+      setCrossRefTarget(null);
       if (!options.skipTabSwitch) {
         setActiveTab("search");
       }
@@ -201,6 +233,7 @@ export default function CrossReferenceViewer({
     setSermonResults([]);
     setManualReferences([]);
     setCrossReferenceSearchResults([]);
+    setCrossRefTarget(null);
   };
 
   const totalCrossRefs = crossReferences.length + userCrossReferences.length;
@@ -267,14 +300,14 @@ export default function CrossReferenceViewer({
       <div className="flex flex-col min-h-full space-y-4 pr-4">
         {/* Search Input */}
         <div className="space-y-2 flex-shrink-0">
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Input
               placeholder='Try: "love", "faith", "John 3:16", "Genesis 1:1-3"'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pr-8"
+              className="h-11 rounded-xl pr-8 shadow-sm focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             {searchInput && (
               <Button
@@ -295,6 +328,7 @@ export default function CrossReferenceViewer({
               isSearching ||
               !searchInput.trim()
             }
+            className="h-11 w-full rounded-xl sm:w-auto"
           >
             {searchLoading || crossReferenceSearchLoading || isSearching ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -511,13 +545,13 @@ export default function CrossReferenceViewer({
             </div>
           ) : (
             <div className="rounded-md border p-4">
-              {currentBook && currentChapter && currentVerse ? (
+              {displayBook && displayChapter && displayVerse ? (
                 <>
                     {/* Current Verse Info */}
                     <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Cross-references for:</p>
                       <p className="font-semibold text-primary">
-                        {currentBook} {currentChapter}:{currentVerse}
+                        {displayBook} {displayChapter}:{displayVerse}
                       </p>
                     </div>
 
