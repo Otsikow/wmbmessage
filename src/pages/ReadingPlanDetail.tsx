@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ReminderPreferencesForm from "@/components/reading-plans/ReminderPreferencesForm";
 import AiReflectionCard from "@/components/reading-plans/AiReflectionCard";
 import { useReadingPlans } from "@/contexts/ReadingPlanContext";
+import { getReaderLinkForRange } from "@/lib/scripture";
 import { ReminderPreferences } from "@/types/readingPlans";
 import { format } from "date-fns";
 import { Flame, BookOpen, CheckCircle, DownloadCloud } from "lucide-react";
@@ -166,7 +167,13 @@ const ReadingPlanDetail = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/plans/${plan.id}/day/${day.dayNumber}`)}
+                          onClick={() =>
+                            navigate(
+                              day.scriptures[0]
+                                ? getReaderLinkForRange(day.scriptures[0])
+                                : `/plans/${plan.id}/day/${day.dayNumber}`,
+                            )
+                          }
                         >
                           Open Reader
                         </Button>
