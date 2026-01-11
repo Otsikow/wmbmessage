@@ -1,11 +1,4 @@
-import {
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-  type ReactNode,
-} from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Search, BookOpen, Book, Sparkles, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,7 +67,6 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
-  const quickThemes = useMemo(() => themeLibrary.slice(0, 6), []);
 
   const placeholders: Record<SearchMode, string> = {
     keyword: "Search by keyword, verse, or message theme...",
@@ -342,25 +334,6 @@ const SearchPage = () => {
                 </div>
               </ToggleGroupItem>
             </ToggleGroup>
-
-            <div className="mt-6 w-full">
-              <p className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Sparkles className="h-4 w-4" /> Popular themes
-              </p>
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                {quickThemes.map((theme) => (
-                  <Button
-                    key={theme.id}
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => handleThemeExplore(theme.theme)}
-                  >
-                    {theme.theme}
-                  </Button>
-                ))}
-              </div>
-            </div>
 
             <div className="mt-6 flex justify-center">
               <Dialog>
