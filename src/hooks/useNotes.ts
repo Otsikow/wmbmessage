@@ -222,8 +222,10 @@ export function useUserNotes() {
       .catch((error) => console.error("Failed to init offline storage", error));
   }, []);
 
-  const syncOfflineNotes = async () => {
-    if (!user || !offlineReady || !isSupabaseConfigured) return;
+  const syncOfflineNotes = async (): Promise<{ count: number; error?: unknown }> => {
+    if (!user || !offlineReady || !isSupabaseConfigured) {
+      return { count: 0 };
+    }
 
     try {
       const cachedNotes = await offlineStorage.getByIndex<UserNote>(
@@ -232,7 +234,9 @@ export function useUserNotes() {
         user.id
       );
 
-      if (!cachedNotes.length) return;
+      if (!cachedNotes.length) {
+        return { count: 0 };
+      }
 
       const { error } = await supabase
         .from("user_notes")
@@ -251,8 +255,10 @@ export function useUserNotes() {
       await Promise.all(
         cachedNotes.map((note) => offlineStorage.delete(STORES.NOTES, note.id))
       );
+      return { count: cachedNotes.length };
     } catch (error) {
       console.error("Failed to sync offline notes", error);
+      return { count: 0, error };
     }
   };
 
@@ -500,5 +506,7 @@ export function useUserNotes() {
     updateUserNote,
     deleteUserNote,
     refetch: fetchUserNotes,
+    syncOfflineNotes,
+    isSupabaseConfigured,
   };
 }
