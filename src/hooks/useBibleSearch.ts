@@ -46,6 +46,9 @@ interface SupabaseBibleVerseRow {
   text: string;
 }
 
+const MAX_BIBLE_RESULTS = 1500;
+const MAX_SERMON_RESULTS = 500;
+
 export function useBibleSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export function useBibleSearch() {
             .from('bible_verses')
             .select('*')
             .or(`text.ilike.%${normalizedQuery}%,book.ilike.%${normalizedQuery}%`)
-            .limit(75);
+            .limit(MAX_BIBLE_RESULTS);
 
           if (supabaseError) {
             console.warn('Supabase Bible search failed:', supabaseError);
@@ -92,18 +95,14 @@ export function useBibleSearch() {
         }
       }
 
-      if (allResults.length >= 20) {
-        return deduplicateResults(allResults).slice(0, 100);
-      }
-
       // Strategy 2: Search cached KJV dataset bundled with the app
-      const localResults = await searchLocalBibleVerses(query, variations);
+      const localResults = await searchLocalBibleVerses(query, variations, MAX_BIBLE_RESULTS);
       if (localResults.length > 0) {
         allResults.push(...localResults);
       }
 
-      if (allResults.length >= 75) {
-        return deduplicateResults(allResults).slice(0, 100);
+      if (allResults.length >= MAX_BIBLE_RESULTS) {
+        return deduplicateResults(allResults).slice(0, MAX_BIBLE_RESULTS);
       }
 
       // Strategy 3: Try getBible.net API (broad coverage)
@@ -134,13 +133,9 @@ export function useBibleSearch() {
         console.warn('getBible.net search failed:', err);
       }
 
-      if (allResults.length >= 50) {
-        return deduplicateResults(allResults).slice(0, 100);
-      }
-
       // Strategy 4: Try word variations and synonyms to improve results
       for (const variant of variations) {
-        if (allResults.length >= 100) break;
+        if (allResults.length >= MAX_BIBLE_RESULTS) break;
 
         try {
           const response = await fetch(
@@ -236,7 +231,7 @@ export function useBibleSearch() {
         setError(`No results found for "${query}". Try different keywords or a specific verse reference.`);
       }
 
-      return deduplicated.slice(0, 100);
+      return deduplicated.slice(0, MAX_BIBLE_RESULTS);
     } catch (err) {
       console.error('Bible search error:', err);
       setError('Search failed. Please check your connection and try again.');
@@ -280,8 +275,11 @@ export function useBibleSearch() {
         if (Array.isArray(sermonData)) {
           sermonData.forEach((sermon: any) => {
             const paragraphs = sermon.sermon_paragraphs || [];
+            const titleMatches = sermon.title?.toLowerCase().includes(searchTerm);
+            const locationMatches = sermon.location?.toLowerCase().includes(searchTerm);
             paragraphs.forEach((para: any) => {
-              if (para.content?.toLowerCase().includes(searchTerm)) {
+              const paragraphMatches = para.content?.toLowerCase().includes(searchTerm);
+              if (paragraphMatches || titleMatches || locationMatches) {
                 const formattedDate = formatSermonDate(sermon.date);
 
                 results.push({
@@ -303,7 +301,7 @@ export function useBibleSearch() {
         results = sampleResults;
       }
 
-      return results.slice(0, 50);
+      return results.slice(0, MAX_SERMON_RESULTS);
     } catch (err) {
       console.error("Sermon search error:", err);
       setError("Failed to search sermons");
@@ -353,6 +351,9 @@ async function searchLocalBibleVerses(
       if (cleaned) tokenSet.add(cleaned);
     });
     words.forEach((word) => tokenSet.add(word));
+    if (cleanedQuery.length > 2) {
+      tokenSet.add(cleanedQuery);
+    }
 
     const results: BibleSearchResult[] = [];
     const seenKeys = new Set<string>();
@@ -378,10 +379,11 @@ async function searchLocalBibleVerses(
       if (seenKeys.has(key)) continue;
 
       const verseLower = verse.text.toLowerCase();
+      const tokens = Array.from(tokenSet).filter((token) => token.length > 2);
       const matchesWords =
-        words.length === 0
-          ? tokenSet.size === 0 || Array.from(tokenSet).some((token) => verseLower.includes(token))
-          : words.every((word) => verseLower.includes(word));
+        tokens.length === 0
+          ? false
+          : tokens.some((token) => verseLower.includes(token));
 
       if (!matchesWords) continue;
 
