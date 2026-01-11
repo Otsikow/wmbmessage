@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReadingPlans } from "@/contexts/ReadingPlanContext";
+import { getReaderLinkForRange } from "@/lib/scripture";
 import { cn } from "@/lib/utils";
 
 const ConfettiOverlay = ({ active }: { active: boolean }) => (
@@ -95,6 +96,9 @@ export const ReadingPlanWidget = () => {
   const percent = Math.round(
     (totalCompleted / Math.max(1, plan.durationDays)) * 100,
   );
+  const readerLink = day.scriptures[0]
+    ? getReaderLinkForRange(day.scriptures[0])
+    : `/plans/${plan.id}/day/${day.dayNumber}`;
 
   return (
     <Card variant="glass" hoverable={false} className="relative overflow-hidden">
@@ -137,7 +141,7 @@ export const ReadingPlanWidget = () => {
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild className="flex-1">
-            <Link to={`/plans/${plan.id}/day/${day.dayNumber}`}>
+            <Link to={readerLink}>
               <PlayCircle className="mr-2 h-4 w-4" /> Continue Reading
             </Link>
           </Button>
