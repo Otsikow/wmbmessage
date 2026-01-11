@@ -804,6 +804,7 @@ export default function Reader() {
                       }
                       isBookmarked={isVerseBookmarked(verse.number)}
                       isSelected={selectedVerses.includes(verse.number)}
+                      isFocused={focusedVerse === verse.number}
                       onHighlight={handleHighlight}
                       onRemoveHighlight={handleRemoveHighlight}
                       onToggleBookmark={handleToggleBookmark}

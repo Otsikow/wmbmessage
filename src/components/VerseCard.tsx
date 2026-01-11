@@ -30,6 +30,7 @@ interface VerseCardProps {
   onSermonCrossRef?: (verseNumber: number) => void;
   onSelect?: (verseNumber: number) => void;
   fontClass?: string;
+  isFocused?: boolean;
 }
 export default function VerseCard({
   book,
@@ -45,7 +46,8 @@ export default function VerseCard({
   onAddNote,
   onSermonCrossRef,
   onSelect,
-  fontClass = ""
+  fontClass = "",
+  isFocused = false
 }: VerseCardProps) {
   const {
     toast
@@ -122,21 +124,30 @@ export default function VerseCard({
   return <div className={cn(
     "group relative overflow-hidden rounded-[20px] p-4 sm:p-5 cursor-pointer",
     // Glass styling
-    "bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
-    "border border-white/[0.08]",
-    "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
-    "drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
+    "bg-white/70 dark:bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
+    "border border-border/60 dark:border-white/[0.08]",
+    "shadow-[0_8px_24px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
+    "dark:drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
     // Transitions
     "transition-all duration-[350ms] ease-out",
     // Highlight colors override glass when present
     highlight ? getHighlightColorClass(highlight.color) : [
       "hover:-translate-y-1 hover:scale-[1.01]",
-      "hover:border-white/25",
-      "hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
+      "hover:border-border/80 dark:hover:border-white/25",
+      "hover:shadow-[0_12px_30px_rgba(15,23,42,0.18)]",
+      "dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
     ],
+    // Focused state
+    isFocused && "bg-primary/[0.06] dark:bg-primary/[0.12] border-primary/50 shadow-[0_12px_30px_rgba(59,130,246,0.2)]",
     // Selected state
     isSelected && "ring-2 ring-primary border-primary shadow-lg -translate-y-1 scale-[1.01]"
   )} role="button" aria-pressed={isSelected} aria-label={`${book} ${chapter}:${verse.number} verse card`} tabIndex={0} onClick={handleSelectVerse} onKeyDown={handleKeyDown}>
+      {isFocused && (
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/90 via-primary/50 to-transparent"
+          aria-hidden="true"
+        />
+      )}
       {/* Top edge highlight */}
       <div 
         className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px] bg-gradient-to-r from-transparent via-white/20 to-transparent" 
@@ -146,8 +157,9 @@ export default function VerseCard({
         {/* Verse Number */}
         <span className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide transition-colors",
-          "border border-white/20 bg-white/[0.08] backdrop-blur-sm",
-          "text-white/70",
+          "border border-border/60 dark:border-white/20 bg-white/70 dark:bg-white/[0.08] backdrop-blur-sm",
+          "text-foreground/70 dark:text-white/70",
+          isFocused && "border-primary/60 text-primary bg-primary/10",
           isSelected && "border-primary text-primary bg-primary/20"
         )}>
           {verse.number}
