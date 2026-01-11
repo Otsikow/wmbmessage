@@ -1,14 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { offlineStorage, STORES } from '@/lib/offlineStorage';
+import type { UserNote } from '@/hooks/useNotes';
 
 export const OfflineIndicator = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showIndicator, setShowIndicator] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingNotesCount, setPendingNotesCount] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const fetchPendingNotes = useCallback(async () => {
+    if (!user) {
+      setPendingNotesCount(0);
+      return;
+    }
+
+    try {
+      await offlineStorage.init();
+      const cachedNotes = await offlineStorage.getByIndex<UserNote>(
+        STORES.NOTES,
+        'user_id',
+        user.id
+      );
+      setPendingNotesCount(cachedNotes.length);
+    } catch (error) {
+      console.error('Failed to check pending offline notes:', error);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -31,6 +55,7 @@ export const OfflineIndicator = () => {
 
       // Auto-hide after 5 seconds
       setTimeout(() => setShowIndicator(false), 5000);
+      void fetchPendingNotes();
     };
 
     const handleOffline = () => {
@@ -55,7 +80,26 @@ export const OfflineIndicator = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [toast]);
+  }, [fetchPendingNotes, toast]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const updatePendingNotes = async () => {
+      if (!isMounted) return;
+      await fetchPendingNotes();
+    };
+
+    updatePendingNotes();
+    const interval = window.setInterval(updatePendingNotes, 10000);
+    window.addEventListener('focus', updatePendingNotes);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', updatePendingNotes);
+    };
+  }, [fetchPendingNotes]);
 
   const handleManualSync = async () => {
     if (!isOnline) {
@@ -86,18 +130,22 @@ export const OfflineIndicator = () => {
       });
     } finally {
       setIsSyncing(false);
+      await fetchPendingNotes();
     }
   };
 
-  if (!showIndicator && isOnline) {
+  if (!showIndicator && isOnline && pendingNotesCount === 0) {
     return null;
   }
+
+  const hasPendingNotes = pendingNotesCount > 0;
+  const pendingNotesLabel = `${pendingNotesCount} offline note${pendingNotesCount === 1 ? '' : 's'}`;
 
   return (
     <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
       <Alert
         className={`shadow-lg border-2 transition-all duration-300 ${
-          isOnline
+          isOnline && !hasPendingNotes
             ? 'bg-green-50 border-green-500 dark:bg-green-950 dark:border-green-700'
             : 'bg-yellow-50 border-yellow-500 dark:bg-yellow-950 dark:border-yellow-700'
         }`}
@@ -105,18 +153,33 @@ export const OfflineIndicator = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {isOnline ? (
-              <Wifi className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <Wifi
+                className={`h-5 w-5 ${
+                  hasPendingNotes
+                    ? 'text-yellow-600 dark:text-yellow-400'
+                    : 'text-green-600 dark:text-green-400'
+                }`}
+              />
             ) : (
               <WifiOff className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
             )}
             <AlertDescription className="font-medium">
               {isOnline ? (
-                <span className="text-green-800 dark:text-green-200">
-                  Connected - All changes saved
+                <span
+                  className={
+                    hasPendingNotes
+                      ? 'text-yellow-800 dark:text-yellow-200'
+                      : 'text-green-800 dark:text-green-200'
+                  }
+                >
+                  {hasPendingNotes
+                    ? `Sync pending - ${pendingNotesLabel}`
+                    : 'Connected - All changes saved'}
                 </span>
               ) : (
                 <span className="text-yellow-800 dark:text-yellow-200">
                   Offline Mode - Reading locally
+                  {hasPendingNotes ? ` • ${pendingNotesLabel} waiting to sync` : ''}
                 </span>
               )}
             </AlertDescription>
