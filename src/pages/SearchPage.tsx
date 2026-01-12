@@ -373,6 +373,7 @@ const SearchPage = () => {
                   </DialogHeader>
                   <div className="flex-1 overflow-hidden px-6 py-4">
                     <CrossReferenceViewer
+                      initialSearchQuery={searchQuery}
                       onNavigate={(book, chapter, verse) => {
                         const params = new URLSearchParams();
                         params.set("book", book);
