@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -97,6 +97,7 @@ export default function CrossReferenceViewer({
   } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(initialTab ?? "search");
+  const lastInitialQuery = useRef<string>("");
 
   const { searchBible, searchWMBSermons, loading: searchLoading, error: searchError } = useBibleSearch();
   const {
@@ -119,6 +120,16 @@ export default function CrossReferenceViewer({
     displayChapter,
     displayVerse
   );
+
+  useEffect(() => {
+    const trimmedQuery = initialSearchQuery.trim();
+    if (!trimmedQuery) return;
+    if (trimmedQuery === lastInitialQuery.current) return;
+
+    setSearchInput(initialSearchQuery);
+    lastInitialQuery.current = trimmedQuery;
+    void performSearch(trimmedQuery, { keepInput: true });
+  }, [initialSearchQuery, performSearch]);
 
   // Auto-switch to cross-references tab if viewing a specific verse with references
   useEffect(() => {
