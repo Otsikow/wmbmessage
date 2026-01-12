@@ -106,9 +106,7 @@ export function useLibraryItems() {
   const [highlights, setHighlights] = useState<LibraryHighlight[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(true);
   const [highlightsLoading, setHighlightsLoading] = useState(true);
-  const bookmarkFallbackNotified = useRef(false);
   const highlightFallbackNotified = useRef(false);
-  const bookmarkErrorNotified = useRef(false);
   const highlightErrorNotified = useRef(false);
 
   const canUseSupabase = useMemo(() => SUPABASE_CONFIGURED && Boolean(user), [user]);
@@ -122,61 +120,21 @@ export function useLibraryItems() {
     []
   );
 
-  const notifyFallback = useCallback(
-    (type: "bookmark" | "highlight") => {
-      if (type === "bookmark") {
-        if (bookmarkFallbackNotified.current) return;
-        bookmarkFallbackNotified.current = true;
-      } else {
-        if (highlightFallbackNotified.current) return;
-        highlightFallbackNotified.current = true;
-      }
+  const notifyHighlightFallback = useCallback(() => {
+    if (highlightFallbackNotified.current) return;
+    highlightFallbackNotified.current = true;
 
-      toast({
-        title: "Offline data restored",
-        description:
-          type === "bookmark"
-            ? "Showing your saved bookmarks from this device while we reconnect."
-            : "Showing your saved highlights from this device while we reconnect.",
-      });
-    },
-    [toast]
-  );
+    toast({
+      title: "Offline data restored",
+      description: "Showing your saved highlights from this device while we reconnect.",
+    });
+  }, [toast]);
 
   const fetchBookmarks = useCallback(async () => {
-    if (!canUseSupabase) {
-      setBookmarks(loadLocalBookmarks());
-      setBookmarksLoading(false);
-      return;
-    }
-
     setBookmarksLoading(true);
-
-    try {
-      // Note: user_bookmarks table is for sermons, not Bible verses
-      // Return empty array for now
-      const remoteBookmarks: LibraryBookmark[] = [];
-      setBookmarks(remoteBookmarks);
-      bookmarkFallbackNotified.current = false;
-      bookmarkErrorNotified.current = false;
-    } catch (error) {
-      console.error("Failed to load bookmarks", error);
-      const localBookmarks = loadLocalBookmarks();
-      if (localBookmarks.length > 0) {
-        setBookmarks(localBookmarks);
-        notifyFallback("bookmark");
-      } else if (!bookmarkErrorNotified.current) {
-        toast({
-          title: "Error",
-          description: "We couldn't load your bookmarks right now.",
-          variant: "destructive",
-        });
-        bookmarkErrorNotified.current = true;
-      }
-    } finally {
-      setBookmarksLoading(false);
-    }
-  }, [canUseSupabase, loadLocalBookmarks, notifyFallback, toast, user]);
+    setBookmarks(loadLocalBookmarks());
+    setBookmarksLoading(false);
+  }, [loadLocalBookmarks]);
 
   const fetchHighlights = useCallback(async () => {
     if (!canUseSupabase) {
@@ -205,7 +163,7 @@ export function useLibraryItems() {
       const localHighlights = loadLocalHighlights();
       if (localHighlights.length > 0) {
         setHighlights(localHighlights);
-        notifyFallback("highlight");
+        notifyHighlightFallback();
       } else if (!highlightErrorNotified.current) {
         toast({
           title: "Error",
@@ -217,7 +175,7 @@ export function useLibraryItems() {
     } finally {
       setHighlightsLoading(false);
     }
-  }, [canUseSupabase, loadLocalHighlights, notifyFallback, toast, user]);
+  }, [canUseSupabase, loadLocalHighlights, notifyHighlightFallback, toast, user]);
 
   useEffect(() => {
     fetchBookmarks();
@@ -273,43 +231,19 @@ export function useLibraryItems() {
 
   const removeBookmark = useCallback(
     async (bookmark: LibraryBookmark): Promise<boolean> => {
-      if (!canUseSupabase) {
-        removeLocalItem("bookmarks", bookmark);
-        setBookmarks((prev) =>
-          prev.filter(
-            (item) =>
-              item.book !== bookmark.book ||
-              item.chapter !== bookmark.chapter ||
-              item.verse !== bookmark.verse
-          )
-        );
-        toast({ title: "Bookmark removed", description: "Removed from your library." });
-        return true;
-      }
-
-      try {
-        const { error } = await supabase
-          .from("user_bookmarks")
-          .delete()
-          .eq("id", bookmark.id)
-          .eq("user_id", user!.id);
-
-        if (error) throw error;
-
-        setBookmarks((prev) => prev.filter((item) => item.id !== bookmark.id));
-        toast({ title: "Bookmark removed", description: "Removed from your library." });
-        return true;
-      } catch (error) {
-        console.error("Failed to delete bookmark", error);
-        toast({
-          title: "Error",
-          description: "We couldn't remove that bookmark.",
-          variant: "destructive",
-        });
-        return false;
-      }
+      removeLocalItem("bookmarks", bookmark);
+      setBookmarks((prev) =>
+        prev.filter(
+          (item) =>
+            item.book !== bookmark.book ||
+            item.chapter !== bookmark.chapter ||
+            item.verse !== bookmark.verse
+        )
+      );
+      toast({ title: "Bookmark removed", description: "Removed from your library." });
+      return true;
     },
-    [canUseSupabase, removeLocalItem, toast, user]
+    [removeLocalItem, toast]
   );
 
   const removeHighlight = useCallback(
