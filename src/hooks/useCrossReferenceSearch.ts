@@ -83,7 +83,7 @@ async function fetchCrossReferenceData(): Promise<CrossReferenceRecord[]> {
   ]);
 
   if (combined.length === 0) {
-    throw new Error("Cross-reference data is unavailable");
+    console.warn("Cross-reference data is unavailable.");
   }
 
   return combined;
@@ -137,4 +137,3 @@ export function useCrossReferenceSearch() {
     error,
   };
 }
-
