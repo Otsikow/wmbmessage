@@ -1,7 +1,10 @@
-const REMOTE_KJV_URL =
-  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/kjv.json";
+const REMOTE_KJV_URLS = [
+  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/kjv.json",
+  "https://cdn.jsdelivr.net/gh/thiagobodruk/bible@master/json/kjv.json",
+];
 const LOCAL_SAMPLE_PATH = "/sample-data/bible-verses-sample.json";
 const LOCAL_STORAGE_KEY = "messageguide:kjv:raw-v1";
+const FETCH_TIMEOUT_MS = 15000;
 
 interface RemoteBibleBook {
   name: string;
@@ -100,25 +103,27 @@ async function loadRawBibleData(): Promise<string | null> {
     }
   }
 
-  try {
-    const response = await fetch(REMOTE_KJV_URL, {
-      signal: AbortSignal.timeout(15000),
-      cache: "force-cache",
-    });
+  for (const url of REMOTE_KJV_URLS) {
+    try {
+      const response = await fetch(url, {
+        signal: createTimeoutSignal(FETCH_TIMEOUT_MS),
+        cache: "force-cache",
+      });
 
-    if (response.ok) {
-      const raw = await response.text();
-      if (raw && typeof window !== "undefined") {
-        try {
-          window.localStorage?.setItem(LOCAL_STORAGE_KEY, raw);
-        } catch (error) {
-          console.warn("Unable to cache KJV dataset:", error);
+      if (response.ok) {
+        const raw = await response.text();
+        if (raw && typeof window !== "undefined") {
+          try {
+            window.localStorage?.setItem(LOCAL_STORAGE_KEY, raw);
+          } catch (error) {
+            console.warn("Unable to cache KJV dataset:", error);
+          }
         }
+        return raw;
       }
-      return raw;
+    } catch (error) {
+      console.warn(`Unable to download KJV dataset from ${url}:`, error);
     }
-  } catch (error) {
-    console.warn("Unable to download KJV dataset:", error);
   }
 
   return null;
@@ -185,6 +190,20 @@ async function loadLocalSampleVerses(): Promise<BibleVerseRecord[]> {
 
 function buildChapterKey(book: string, chapter: number) {
   return `${book.trim().toLowerCase()}-${chapter}`;
+}
+
+function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
+  if (typeof AbortSignal !== "undefined" && "timeout" in AbortSignal) {
+    return AbortSignal.timeout(timeoutMs);
+  }
+
+  if (typeof AbortController === "undefined") {
+    return undefined;
+  }
+
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
 }
 
 const JESUS_WORDS_RANGES: Record<
