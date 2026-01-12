@@ -18,10 +18,12 @@ export interface Highlight {
 export interface Bookmark {
   id: string;
   user_id: string;
-  sermon_id: string;
-  paragraph_number: number;
+  book: string;
+  chapter: number;
+  verse: number;
   note?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export const HIGHLIGHT_COLORS = [
@@ -100,11 +102,12 @@ export function useHighlights(book: string, chapter: number) {
   const fetchHighlightsAndBookmarks = async () => {
     setLoading(true);
 
+    const localBookmarks = loadLocalBookmarks();
+    setBookmarks(localBookmarks);
+
     if (!canUseSupabase) {
       const localHighlights = loadLocalHighlights();
-      const localBookmarks = loadLocalBookmarks();
       setHighlights(localHighlights);
-      setBookmarks(localBookmarks);
       setLoading(false);
       return;
     }
@@ -143,24 +146,20 @@ export function useHighlights(book: string, chapter: number) {
         }
       }
 
-      const [highlightsResult, bookmarksResult] = await Promise.all([
+      const [highlightsResult] = await Promise.all([
         supabase
           .from("user_highlights")
           .select("*")
           .eq("user_id", user.id)
           .eq("book", book)
           .eq("chapter", chapter),
-        // Note: user_bookmarks are for sermons, not Bible verses
-        Promise.resolve({ data: [], error: null }),
       ]);
 
       if (highlightsResult.error) throw highlightsResult.error;
-      if (bookmarksResult.error) throw bookmarksResult.error;
 
       const syncedHighlights = highlightsResult.data || [];
       setHighlights(syncedHighlights);
       persistLocalHighlights(syncedHighlights);
-      setBookmarks([]);
       fallbackNotifiedRef.current = false;
       errorNotifiedRef.current = false;
     } catch (error) {
@@ -329,19 +328,49 @@ export function useHighlights(book: string, chapter: number) {
   };
 
   const toggleBookmark = async (verse: number, note?: string): Promise<boolean> => {
-    // Note: Bookmarking is disabled for Bible verses
-    // user_bookmarks table is designed for sermon bookmarks only
-    toast({
-      title: "Feature unavailable",
-      description: "Bible verse bookmarking will be available in a future update.",
+    const now = new Date().toISOString();
+    let didRemove = false;
+
+    setBookmarks((prev) => {
+      const existing = prev.find((bookmark) => bookmark.verse === verse);
+      if (existing) {
+        didRemove = true;
+        const next = prev.filter((bookmark) => bookmark.verse !== verse);
+        persistLocalBookmarks(next);
+        return next;
+      }
+
+      const newBookmark: Bookmark = {
+        id: generateId(),
+        user_id: user?.id || "local",
+        book,
+        chapter,
+        verse,
+        note,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const next = [...prev, newBookmark].sort((a, b) => a.verse - b.verse);
+      persistLocalBookmarks(next);
+      return next;
     });
-    return false;
+
+    toast({
+      title: didRemove ? "Bookmark removed" : "Bookmark added",
+      description: didRemove
+        ? `Removed bookmark from ${book} ${chapter}:${verse}.`
+        : `${book} ${chapter}:${verse} has been bookmarked.`,
+    });
+
+    return true;
   };
 
   const getVerseHighlight = (verse: number): Highlight | undefined =>
     highlights.find((h) => h.verse === verse);
 
-  const isVerseBookmarked = (verse: number): boolean => false; // Bookmarks are for sermons only
+  const isVerseBookmarked = (verse: number): boolean =>
+    bookmarks.some((bookmark) => bookmark.verse === verse);
 
   return {
     highlights,
