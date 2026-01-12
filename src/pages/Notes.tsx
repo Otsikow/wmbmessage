@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Loader2, Filter } from "lucide-react";
+import { Plus, Loader2, Filter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useUserNotes } from "@/hooks/useNotes";
@@ -13,13 +13,37 @@ import BackButton from "@/components/BackButton";
 
 export default function Notes() {
   const navigate = useNavigate();
-  const { userNotes, loading, createUserNote, updateUserNote, deleteUserNote } = useUserNotes();
+  const {
+    userNotes,
+    loading,
+    createUserNote,
+    updateUserNote,
+    deleteUserNote,
+    refetch,
+    syncOfflineNotes,
+    isSupabaseConfigured,
+  } = useUserNotes();
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<UserNote | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<"all" | string>("all");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   // Group notes by source type
   const groupedNotes = useMemo(() => {
@@ -72,6 +96,60 @@ export default function Notes() {
     setIsEditorOpen(true);
   };
 
+  const handleSyncNotes = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to sync your notes.",
+      });
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Sync unavailable",
+        description: "Supabase is not configured. Add your keys to sync notes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isOnline) {
+      toast({
+        title: "You're offline",
+        description: "Reconnect to the internet to sync your notes.",
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    const { count, error } = await syncOfflineNotes();
+    await refetch();
+    setIsSyncing(false);
+
+    if (error) {
+      toast({
+        title: "Sync failed",
+        description: "We couldn't sync your offline notes. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (count === 0) {
+      toast({
+        title: "You're all caught up",
+        description: "No offline notes were waiting to sync.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Notes synced",
+      description: `Synced ${count} offline note${count === 1 ? "" : "s"}.`,
+    });
+  };
+
   const filteredNotes = useMemo(() => {
     if (selectedFilter === "all") return userNotes;
     return groupedNotes[selectedFilter] || [];
@@ -94,14 +172,30 @@ export default function Notes() {
                 </p>
               </div>
             </div>
-            <Button
-              className="shrink-0 w-full sm:w-auto"
-              size="lg"
-              onClick={handleNewNote}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Note
-            </Button>
+            <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2">
+              <Button
+                className="shrink-0 w-full sm:w-auto"
+                size="lg"
+                variant="outline"
+                onClick={handleSyncNotes}
+                disabled={isSyncing || !isOnline}
+              >
+                {isSyncing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                {isSyncing ? "Syncing..." : "Sync Notes"}
+              </Button>
+              <Button
+                className="shrink-0 w-full sm:w-auto"
+                size="lg"
+                onClick={handleNewNote}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Note
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
