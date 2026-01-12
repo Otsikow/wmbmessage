@@ -212,6 +212,7 @@ export function useUserNotes() {
   const [userNotes, setUserNotes] = useState<UserNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [offlineReady, setOfflineReady] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -227,6 +228,7 @@ export function useUserNotes() {
       return { count: 0 };
     }
 
+    setIsSyncing(true);
     try {
       const cachedNotes = await offlineStorage.getByIndex<UserNote>(
         STORES.NOTES,
@@ -235,6 +237,7 @@ export function useUserNotes() {
       );
 
       if (!cachedNotes.length) {
+        setIsSyncing(false);
         return { count: 0 };
       }
 
@@ -255,9 +258,11 @@ export function useUserNotes() {
       await Promise.all(
         cachedNotes.map((note) => offlineStorage.delete(STORES.NOTES, note.id))
       );
+      setIsSyncing(false);
       return { count: cachedNotes.length };
     } catch (error) {
       console.error("Failed to sync offline notes", error);
+      setIsSyncing(false);
       return { count: 0, error };
     }
   };
@@ -359,13 +364,30 @@ export function useUserNotes() {
   useEffect(() => {
     const loadNotes = async () => {
       if (user && offlineReady && isSupabaseConfigured) {
-        await syncOfflineNotes();
+        const result = await syncOfflineNotes();
+        if (result.count > 0) {
+          toast({
+            title: "Notes synced",
+            description: `Synced ${result.count} offline note(s) to the cloud.`,
+          });
+        }
       }
 
       await fetchUserNotes();
     };
 
     loadNotes();
+
+    // Auto-sync when coming back online
+    const handleOnline = () => {
+      if (user && offlineReady && isSupabaseConfigured) {
+        loadNotes();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, offlineReady]);
 
   const createUserNote = async (input: CreateUserNoteInput) => {
@@ -502,6 +524,7 @@ export function useUserNotes() {
   return {
     userNotes,
     loading,
+    isSyncing,
     createUserNote,
     updateUserNote,
     deleteUserNote,
