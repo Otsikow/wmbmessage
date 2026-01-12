@@ -46,6 +46,8 @@ const defaultThemeResults: ThemeSearchResult[] = themeLibrary.map((entry) => ({
   matchedKeywords: [],
 }));
 
+const RESULTS_PER_PAGE = 50;
+
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("keyword");
@@ -63,6 +65,8 @@ const SearchPage = () => {
   const [sermonYear, setSermonYear] = useState("all");
   const [sermonLocation, setSermonLocation] = useState("all");
   const [sermonTheme, setSermonTheme] = useState("all");
+  const [bibleDisplayCount, setBibleDisplayCount] = useState(RESULTS_PER_PAGE);
+  const [sermonDisplayCount, setSermonDisplayCount] = useState(RESULTS_PER_PAGE);
   const { searchBible, searchWMBSermons, loading } = useBibleSearch();
   const navigate = useNavigate();
   const resultsRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +114,10 @@ const SearchPage = () => {
       setSearchQuery(query);
       const trimmed = query.trim();
 
+      // Reset pagination when new search
+      setBibleDisplayCount(RESULTS_PER_PAGE);
+      setSermonDisplayCount(RESULTS_PER_PAGE);
+
       if (mode === "theme") {
         setActiveTab("themes");
       } else if (mode === "verse") {
@@ -134,6 +142,7 @@ const SearchPage = () => {
         searchWMBSermons(query),
       ]);
 
+      console.log(`[SearchPage] Bible results: ${bibleData.length}, Sermon results: ${sermonData.length}`);
       setBibleResults(bibleData);
       setSermonResults(sermonData);
     },
@@ -196,6 +205,11 @@ const SearchPage = () => {
     });
   }, [bibleResults, bibleFilter, selectedBibleBook]);
 
+  // Paginated results for display
+  const paginatedBibleResults = useMemo(() => {
+    return filteredBibleResults.slice(0, bibleDisplayCount);
+  }, [filteredBibleResults, bibleDisplayCount]);
+
   const sermonYearOptions = useMemo(() => {
     const years = new Set<string>();
     sermonResults.forEach((result) => {
@@ -235,6 +249,11 @@ const SearchPage = () => {
       return matchesYear && matchesLocation && matchesTheme;
     });
   }, [sermonResults, sermonYear, sermonLocation, sermonTheme]);
+
+  // Paginated results for display
+  const paginatedSermonResults = useMemo(() => {
+    return filteredSermonResults.slice(0, sermonDisplayCount);
+  }, [filteredSermonResults, sermonDisplayCount]);
 
   const hasThemeQuery = searchQuery.trim().length > 0;
   const heroHasQuery = hasThemeQuery;
@@ -458,30 +477,56 @@ const SearchPage = () => {
                   </div>
                 </div>
 
-                {filteredBibleResults.length > 0 ? (
-                  filteredBibleResults.map((result, index) => (
-                    <Card
-                      key={`${result.book}-${result.chapter}-${result.verse}-${index}`}
-                      className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() =>
-                        handleResultClick(result.book, result.chapter, result.verse)
-                      }
-                    >
-                      <CardContent className="p-6 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">
-                              {result.book} {result.chapter}:{result.verse}
-                            </Badge>
-                            <Badge variant="outline">{result.testament}</Badge>
+                {/* Show total count info */}
+                {filteredBibleResults.length > 0 && (
+                  <div className="text-sm text-muted-foreground mb-4 p-3 bg-muted/30 rounded-lg">
+                    Showing {Math.min(bibleDisplayCount, filteredBibleResults.length)} of{" "}
+                    <strong>{filteredBibleResults.length}</strong> total results
+                    {bibleResults.length !== filteredBibleResults.length && (
+                      <span> ({bibleResults.length} total before filters)</span>
+                    )}
+                  </div>
+                )}
+
+                {paginatedBibleResults.length > 0 ? (
+                  <>
+                    {paginatedBibleResults.map((result, index) => (
+                      <Card
+                        key={`${result.book}-${result.chapter}-${result.verse}-${index}`}
+                        className="hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() =>
+                          handleResultClick(result.book, result.chapter, result.verse)
+                        }
+                      >
+                        <CardContent className="p-6 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary">
+                                {result.book} {result.chapter}:{result.verse}
+                              </Badge>
+                              <Badge variant="outline">{result.testament}</Badge>
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-foreground leading-relaxed text-left">
-                          {renderHighlightedText(result.text)}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))
+                          <p className="text-foreground leading-relaxed text-left">
+                            {renderHighlightedText(result.text)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    {/* Load More button */}
+                    {bibleDisplayCount < filteredBibleResults.length && (
+                      <div className="text-center py-6">
+                        <Button
+                          onClick={() => setBibleDisplayCount(prev => prev + RESULTS_PER_PAGE)}
+                          variant="outline"
+                          size="lg"
+                        >
+                          Load More ({filteredBibleResults.length - bibleDisplayCount} remaining)
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground">

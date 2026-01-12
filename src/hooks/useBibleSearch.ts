@@ -46,8 +46,9 @@ interface SupabaseBibleVerseRow {
   text: string;
 }
 
-const MAX_BIBLE_RESULTS = 1500;
-const MAX_SERMON_RESULTS = 500;
+// Remove artificial limits - return ALL matching results
+const MAX_BIBLE_RESULTS = 10000;
+const MAX_SERMON_RESULTS = 5000;
 
 export function useBibleSearch() {
   const [loading, setLoading] = useState(false);
@@ -64,19 +65,37 @@ export function useBibleSearch() {
       const normalizedQuery = query.trim();
       const searchTerm = normalizedQuery.toLowerCase();
       const variations = generateSearchVariations(searchTerm);
+      
+      // Create comprehensive search terms set
+      const searchTerms = new Set<string>([searchTerm, ...variations]);
 
-      // Strategy 1: query Supabase database using direct queries when configured
-      if (isSupabaseConfigured) {
+      // PRIORITY STRATEGY: Search cached KJV dataset first (complete Bible, ~31,000 verses)
+      // This is the most reliable source
+      const localResults = await searchLocalBibleVerses(query, variations, MAX_BIBLE_RESULTS);
+      if (localResults.length > 0) {
+        allResults.push(...localResults);
+        console.log(`[Search] Found ${localResults.length} results from local KJV dataset`);
+      }
+
+      // Strategy 2: Query Supabase database for any additional verses
+      if (isSupabaseConfigured && allResults.length < MAX_BIBLE_RESULTS) {
         try {
+          // Build OR conditions for all search variations
+          const orConditions = Array.from(searchTerms)
+            .slice(0, 5) // Limit to prevent query size issues
+            .map(term => `text.ilike.%${term}%`)
+            .join(',');
+          
           const { data, error: supabaseError } = await supabase
             .from('bible_verses')
             .select('*')
-            .or(`text.ilike.%${normalizedQuery}%,book.ilike.%${normalizedQuery}%`)
+            .or(orConditions)
             .limit(MAX_BIBLE_RESULTS);
 
           if (supabaseError) {
             console.warn('Supabase Bible search failed:', supabaseError);
-          } else if (Array.isArray(data)) {
+          } else if (Array.isArray(data) && data.length > 0) {
+            console.log(`[Search] Found ${data.length} results from Supabase`);
             data
               .map(normalizeSupabaseBibleVerseRow)
               .filter((row): row is SupabaseBibleVerseRow => row !== null)
@@ -95,94 +114,47 @@ export function useBibleSearch() {
         }
       }
 
-      // Strategy 2: Search cached KJV dataset bundled with the app
-      const localResults = await searchLocalBibleVerses(query, variations, MAX_BIBLE_RESULTS);
-      if (localResults.length > 0) {
-        allResults.push(...localResults);
-      }
-
-      if (allResults.length >= MAX_BIBLE_RESULTS) {
-        return deduplicateResults(allResults).slice(0, MAX_BIBLE_RESULTS);
-      }
-
-      // Strategy 3: Try getBible.net API (broad coverage)
-      try {
-        const searchResponse = await fetch(
-          `https://getbible.net/v2/kjv/search/${encodeURIComponent(searchTerm)}.json`,
-          { signal: AbortSignal.timeout(8000) }
-        );
-
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-
-          if (searchData && searchData.verses) {
-            for (const verseData of Object.values(searchData.verses) as BibleVerseData[]) {
-              if (verseData && verseData.text) {
-                allResults.push({
-                  book: verseData.book_name || '',
-                  chapter: verseData.chapter || 0,
-                  verse: verseData.verse || 0,
-                  text: verseData.text.replace(/<[^>]*>/g, '').trim(),
-                  testament: getTestament(verseData.book_name || ''),
-                });
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('getBible.net search failed:', err);
-      }
-
-      // Strategy 4: Try word variations and synonyms to improve results
-      for (const variant of variations) {
-        if (allResults.length >= MAX_BIBLE_RESULTS) break;
-
+      // Strategy 3: Try getBible.net API for supplementary results
+      if (allResults.length < 100) {
         try {
-          const response = await fetch(
-            `https://getbible.net/v2/kjv/search/${encodeURIComponent(variant)}.json`,
-            { signal: AbortSignal.timeout(5000) }
+          const searchResponse = await fetch(
+            `https://getbible.net/v2/kjv/search/${encodeURIComponent(searchTerm)}.json`,
+            { signal: AbortSignal.timeout(8000) }
           );
 
-          if (response.ok) {
-            const data = await response.json();
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
 
-            if (data && data.verses) {
-              for (const verseData of Object.values(data.verses) as BibleVerseData[]) {
+            if (searchData && searchData.verses) {
+              const apiResults = Object.values(searchData.verses) as BibleVerseData[];
+              console.log(`[Search] Found ${apiResults.length} results from getBible.net API`);
+              
+              for (const verseData of apiResults) {
                 if (verseData && verseData.text) {
-                  const newResult = {
+                  allResults.push({
                     book: verseData.book_name || '',
                     chapter: verseData.chapter || 0,
                     verse: verseData.verse || 0,
                     text: verseData.text.replace(/<[^>]*>/g, '').trim(),
                     testament: getTestament(verseData.book_name || ''),
-                  };
-
-                  const exists = allResults.some(
-                    (r) =>
-                      r.book === newResult.book &&
-                      r.chapter === newResult.chapter &&
-                      r.verse === newResult.verse
-                  );
-
-                  if (!exists) {
-                    allResults.push(newResult);
-                  }
+                  });
                 }
               }
             }
           }
         } catch (err) {
-          console.warn(`Variant search failed for ${variant}:`, err);
+          console.warn('getBible.net search failed:', err);
         }
       }
 
-      // Strategy 5: Fallback to bible-api.com for verse references
+      // Strategy 4: Fallback to sample verses for verse references
       if (allResults.length === 0) {
         const sampleResults = await searchSampleBibleVerses(normalizedQuery);
         if (sampleResults.length > 0) {
           allResults.push(...sampleResults);
         }
 
+        // Try bible-api.com for specific verse references
         if (allResults.length === 0) {
           try {
             const verseReferencePattern = /^(\d?\s?[A-Za-z]+)\s+(\d+)(?::(\d+))?(?:-(\d+))?$/;
@@ -226,12 +198,13 @@ export function useBibleSearch() {
       }
 
       const deduplicated = deduplicateResults(allResults);
+      console.log(`[Search] Total deduplicated results for "${query}": ${deduplicated.length}`);
 
       if (deduplicated.length === 0) {
         setError(`No results found for "${query}". Try different keywords or a specific verse reference.`);
       }
 
-      return deduplicated.slice(0, MAX_BIBLE_RESULTS);
+      return deduplicated;
     } catch (err) {
       console.error('Bible search error:', err);
       setError('Search failed. Please check your connection and try again.');
@@ -249,11 +222,13 @@ export function useBibleSearch() {
 
     try {
       const searchTerm = query.toLowerCase().trim();
+      const searchVariations = generateSearchVariations(searchTerm);
       
       // Search sermons and their paragraphs when Supabase is available
       let results: WMBSermonResult[] = [];
 
       if (isSupabaseConfigured) {
+        // Fetch ALL sermons and paragraphs - no limit
         const { data: sermonData, error: searchError } = await supabase
           .from('sermons')
           .select(`
@@ -265,7 +240,8 @@ export function useBibleSearch() {
               paragraph_number,
               content
             )
-          `);
+          `)
+          .order('date', { ascending: false });
 
         if (searchError) {
           console.error("Sermon search error:", searchError);
@@ -273,13 +249,25 @@ export function useBibleSearch() {
         }
 
         if (Array.isArray(sermonData)) {
+          // Create a set of all search terms including variations
+          const searchTerms = new Set<string>([searchTerm, ...searchVariations]);
+          
           sermonData.forEach((sermon: any) => {
             const paragraphs = sermon.sermon_paragraphs || [];
-            const titleMatches = sermon.title?.toLowerCase().includes(searchTerm);
-            const locationMatches = sermon.location?.toLowerCase().includes(searchTerm);
+            const titleLower = sermon.title?.toLowerCase() || '';
+            const locationLower = sermon.location?.toLowerCase() || '';
+            
             paragraphs.forEach((para: any) => {
-              const paragraphMatches = para.content?.toLowerCase().includes(searchTerm);
-              if (paragraphMatches || titleMatches || locationMatches) {
+              const contentLower = para.content?.toLowerCase() || '';
+              
+              // Check if ANY search term matches
+              const matches = Array.from(searchTerms).some(term => 
+                contentLower.includes(term) || 
+                titleLower.includes(term) || 
+                locationLower.includes(term)
+              );
+              
+              if (matches) {
                 const formattedDate = formatSermonDate(sermon.date);
 
                 results.push({
@@ -296,12 +284,19 @@ export function useBibleSearch() {
         }
       }
 
-      if (results.length === 0) {
-        const sampleResults = await searchSampleSermons(searchTerm);
-        results = sampleResults;
-      }
+      // Also search sample sermons as fallback/supplement
+      const sampleResults = await searchSampleSermons(searchTerm);
+      
+      // Deduplicate by sermon_id + paragraph
+      const seen = new Set<string>();
+      const allResults = [...results, ...sampleResults].filter(result => {
+        const key = `${result.sermon_id}-${result.paragraph}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-      return results.slice(0, MAX_SERMON_RESULTS);
+      return allResults.slice(0, MAX_SERMON_RESULTS);
     } catch (err) {
       console.error("Sermon search error:", err);
       setError("Failed to search sermons");
@@ -335,7 +330,7 @@ function getTestament(bookName: string): "OT" | "NT" {
 async function searchLocalBibleVerses(
   query: string,
   variations: string[],
-  limit = 200
+  limit = 10000
 ): Promise<BibleSearchResult[]> {
   const cleanedQuery = sanitizeSearchQuery(query).toLowerCase();
   if (!cleanedQuery) return [];
