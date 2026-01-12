@@ -428,8 +428,8 @@ export default function Reader() {
 
   // Swipe gesture support for mobile chapter navigation
   const swipeRef = useSwipe<HTMLDivElement>({
-    onSwipeLeft: goToNextChapter,
-    onSwipeRight: goToPreviousChapter,
+    onSwipeLeft: goToPreviousChapter,
+    onSwipeRight: goToNextChapter,
     minSwipeDistance: 50,
     maxSwipeTime: 500,
   });
