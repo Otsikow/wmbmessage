@@ -121,16 +121,6 @@ export default function CrossReferenceViewer({
     displayVerse
   );
 
-  useEffect(() => {
-    const trimmedQuery = initialSearchQuery.trim();
-    if (!trimmedQuery) return;
-    if (trimmedQuery === lastInitialQuery.current) return;
-
-    setSearchInput(initialSearchQuery);
-    lastInitialQuery.current = trimmedQuery;
-    void performSearch(trimmedQuery, { keepInput: true });
-  }, [initialSearchQuery, performSearch]);
-
   // Auto-switch to cross-references tab if viewing a specific verse with references
   useEffect(() => {
     if (crossRefTarget?.book && crossRefTarget?.chapter && crossRefTarget?.verse) {
@@ -223,6 +213,16 @@ export default function CrossReferenceViewer({
     },
     [searchBible, searchWMBSermons, performCrossReferenceSearch]
   );
+
+  useEffect(() => {
+    const trimmedQuery = initialSearchQuery.trim();
+    if (!trimmedQuery) return;
+    if (trimmedQuery === lastInitialQuery.current) return;
+
+    setSearchInput(initialSearchQuery);
+    lastInitialQuery.current = trimmedQuery;
+    void performSearch(trimmedQuery, { keepInput: true });
+  }, [initialSearchQuery, performSearch]);
 
   const handleSearch = async () => {
     await performSearch(searchInput);
