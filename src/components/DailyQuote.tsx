@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { format, differenceInCalendarDays, startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { CalendarDays, Quote, Share2, Copy, Check, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { appendShareAttribution, getBrandUrl } from "@/lib/share";
@@ -20,131 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import wmbPillarOfFire from "@/assets/wmb-pillar-of-fire.jpg";
-
-interface DailyReading {
-  verse: {
-    text: string;
-    reference: string;
-  };
-  message: {
-    text: string;
-    reference: string;
-  };
-}
-
-const dailyReadings: DailyReading[] = [
-  {
-    verse: {
-      text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
-      reference: "John 3:16",
-    },
-    message: {
-      text: "The greatest act of love was God giving Himself for us; when that love strikes your heart, it changes your whole being.",
-      reference: "William Branham — 1960-0417 \"Faith Is The Substance\"",
-    },
-  },
-  {
-    verse: {
-      text: "I can do all things through Christ which strengtheneth me.",
-      reference: "Philippians 4:13",
-    },
-    message: {
-      text: "If He ever called you to do a thing, He will make a way for it. Quit looking at your weakness and look at His promise.",
-      reference: "William Branham — 1956-0219 \"Being Led Of The Holy Spirit\"",
-    },
-  },
-  {
-    verse: {
-      text: "Trust in the LORD with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths.",
-      reference: "Proverbs 3:5-6",
-    },
-    message: {
-      text: "When you surrender your thinking to God, then He takes charge of the path ahead and leads every step you make.",
-      reference: "William Branham — 1957-0804 \"As I Was With Moses\"",
-    },
-  },
-  {
-    verse: {
-      text: "The LORD is my shepherd; I shall not want. He maketh me to lie down in green pastures: he leadeth me beside the still waters.",
-      reference: "Psalm 23:1-2",
-    },
-    message: {
-      text: "The Shepherd is leading you; just keep your eyes on Him. He knows the quiet waters and the green pastures your soul needs.",
-      reference: "William Branham — 1953-0217 \"Expectations\"",
-    },
-  },
-  {
-    verse: {
-      text: "But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.",
-      reference: "Isaiah 40:31",
-    },
-    message: {
-      text: "Waiting on God is not doing nothing; it's letting your faith take hold until you can rise above the storm like an eagle.",
-      reference: "William Branham — 1956-0101 \"Why Are People So Tossed About\"",
-    },
-  },
-  {
-    verse: {
-      text: "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
-      reference: "Romans 8:28",
-    },
-    message: {
-      text: "When you put God first, even the things you don't understand will fit together and show that His hand was guiding all along.",
-      reference: "William Branham — 1955-0806E \"A Man Running From The Presence Of The Lord\"",
-    },
-  },
-  {
-    verse: {
-      text: "It is of the LORD's mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness.",
-      reference: "Lamentations 3:22-23",
-    },
-    message: {
-      text: "Every sunrise is God reminding you that His mercy is fresh. Yesterday is gone; walk into today knowing His grace is enough.",
-      reference: "William Branham — 1964-0320 \"He Was To Pass This Way\"",
-    },
-  },
-  {
-    verse: {
-      text: "Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you.",
-      reference: "John 14:27",
-    },
-    message: {
-      text: "When Christ steps into the heart, He brings a peace the world never gave and can never take away from the believer.",
-      reference: "William Branham — 1959-1217 \"What Was The Holy Ghost Given For?\"",
-    },
-  },
-  {
-    verse: {
-      text: "Draw nigh to God, and he will draw nigh to you.",
-      reference: "James 4:8",
-    },
-    message: {
-      text: "If you will make the first step toward Him, God will make a thousand steps toward you. He longs for fellowship with His children.",
-      reference: "William Branham — 1955-1007 \"Expectations\"",
-    },
-  },
-  {
-    verse: {
-      text: "The joy of the LORD is your strength.",
-      reference: "Nehemiah 8:10",
-    },
-    message: {
-      text: "When you know He has redeemed you, joy wells up inside, and that joy becomes the very strength you need to keep going.",
-      reference: "William Branham — 1953-1201 \"God's Provided Way\"",
-    },
-  },
-];
-
-function getReadingForDate(date: Date): DailyReading {
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const dayIndex = differenceInCalendarDays(
-    startOfDay(date),
-    startOfDay(startOfYear)
-  );
-
-  const normalizedIndex = ((dayIndex % dailyReadings.length) + dailyReadings.length) % dailyReadings.length;
-  return dailyReadings[normalizedIndex];
-}
+import { getReadingForDate } from "@/data/dailyReadings";
 
 // Icons
 const FacebookIcon = ({ className }: { className?: string }) => (
@@ -152,7 +28,7 @@ const FacebookIcon = ({ className }: { className?: string }) => (
 );
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
-  <svg role="img" viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><title>WhatsApp</title><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+  <svg role="img" viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><title>WhatsApp</title><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
 );
 
 const TelegramIcon = ({ className }: { className?: string }) => (
