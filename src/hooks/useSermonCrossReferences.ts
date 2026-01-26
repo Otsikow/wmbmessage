@@ -29,16 +29,6 @@ interface SupabaseSermonCrossReferenceRow {
         date: string | null;
         location: string | null;
       }>;
-  sermon_paragraphs:
-    | null
-    | {
-        paragraph_number: number | null;
-        content: string | null;
-      }
-    | Array<{
-        paragraph_number: number | null;
-        content: string | null;
-      }>;
 }
 
 interface UseSermonCrossReferencesReturn {
@@ -103,21 +93,51 @@ export function useSermonCrossReferences(
 
       if (fetchError) throw fetchError;
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setSermonCrossReferences([]);
         setLoading(false);
         return;
       }
 
-      // Fetch Bible verse text for each reference
       const typedData = data as SupabaseSermonCrossReferenceRow[];
 
+      // Fetch paragraph contents separately
+      const paragraphsToFetch = typedData.map(item => ({
+        sermon_id: item.sermon_id,
+        paragraph_number: item.paragraph_number
+      }));
+
+      const paragraphMap = new Map<string, string>();
+
+      if (paragraphsToFetch.length > 0) {
+        // Chunk requests if too many references to avoid URL length limits
+        const chunkSize = 20;
+        for (let i = 0; i < paragraphsToFetch.length; i += chunkSize) {
+          const chunk = paragraphsToFetch.slice(i, i + chunkSize);
+          const orQuery = chunk
+            .map(p => `and(sermon_id.eq.${p.sermon_id},paragraph_number.eq.${p.paragraph_number})`)
+            .join(',');
+
+          const { data: paragraphsData, error: paraError } = await supabase
+            .from('sermon_paragraphs')
+            .select('sermon_id, paragraph_number, content')
+            .or(orQuery);
+
+          if (!paraError && paragraphsData) {
+            paragraphsData.forEach(p => {
+              paragraphMap.set(`${p.sermon_id}-${p.paragraph_number}`, p.content);
+            });
+          } else if (paraError) {
+            console.warn('Error fetching paragraph content:', paraError);
+          }
+        }
+      }
+
+      // Fetch Bible verse text for each reference
       const references = await Promise.all(
         typedData.map(async (item) => {
           const sermon = Array.isArray(item.sermons) ? item.sermons[0] : item.sermons;
-          const paragraph = Array.isArray(item.sermon_paragraphs)
-            ? item.sermon_paragraphs[0]
-            : item.sermon_paragraphs;
+          const paragraphContent = paragraphMap.get(`${item.sermon_id}-${item.paragraph_number}`) || '';
 
           let verseText =
             (await getVerseText(item.bible_book, item.bible_chapter, item.bible_verse)) || '';
@@ -157,8 +177,8 @@ export function useSermonCrossReferences(
                   })
                 : 'Unknown Date',
               sermon_location: sermon?.location || 'Unknown Location',
-              paragraph_number: paragraph?.paragraph_number || 0,
-              paragraph_content: paragraph?.content || '',
+              paragraph_number: item.paragraph_number,
+              paragraph_content: paragraphContent,
               reference_note: item.reference_note,
             },
           };
