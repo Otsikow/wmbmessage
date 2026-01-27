@@ -9,6 +9,7 @@ import { type CrossReferenceRecord } from "@/lib/crossReferenceSearch";
 import { useBibleData } from "@/hooks/useBibleData";
 import { useBibleSearch, BibleSearchResult, WMBSermonResult } from "@/hooks/useBibleSearch";
 import { useCrossReferences } from "@/hooks/useCrossReferences";
+import { useSermonCrossReferences, type SermonCrossReference } from "@/hooks/useSermonCrossReferences";
 import { useCrossReferenceSearch } from "@/hooks/useCrossReferenceSearch";
 import {
   Loader2,
@@ -121,6 +122,15 @@ export default function CrossReferenceViewer({
     displayVerse
   );
 
+  const {
+    sermonCrossReferences,
+    loading: sermonCrossRefsLoading
+  } = useSermonCrossReferences(
+    displayBook,
+    displayChapter,
+    displayVerse
+  );
+
   // Auto-switch to cross-references tab if viewing a specific verse with references
   useEffect(() => {
     if (crossRefTarget?.book && crossRefTarget?.chapter && crossRefTarget?.verse) {
@@ -129,7 +139,7 @@ export default function CrossReferenceViewer({
     }
 
     if (currentBook && currentChapter && currentVerse) {
-      if (crossReferences.length > 0 || userCrossReferences.length > 0) {
+      if (crossReferences.length > 0 || userCrossReferences.length > 0 || sermonCrossReferences.length > 0) {
         setActiveTab("cross-refs");
       }
     }
@@ -140,6 +150,7 @@ export default function CrossReferenceViewer({
     crossRefTarget,
     crossReferences.length,
     userCrossReferences.length,
+    sermonCrossReferences.length,
   ]);
 
   const performSearch = useCallback(
@@ -248,6 +259,7 @@ export default function CrossReferenceViewer({
   };
 
   const totalCrossRefs = crossReferences.length + userCrossReferences.length;
+  const totalAllCrossRefs = totalCrossRefs + sermonCrossReferences.length;
   const hasSearchResults =
     searchResults.length > 0 ||
     sermonResults.length > 0 ||
@@ -381,9 +393,9 @@ export default function CrossReferenceViewer({
           <TabsTrigger value="cross-refs" className="flex items-center gap-2">
             <BookMarked className="h-4 w-4" />
             Cross References
-            {totalCrossRefs > 0 && (
+            {totalAllCrossRefs > 0 && (
               <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
-                {totalCrossRefs}
+                {totalAllCrossRefs}
               </Badge>
             )}
           </TabsTrigger>
@@ -549,7 +561,7 @@ export default function CrossReferenceViewer({
 
         {/* Cross References Tab */}
         <TabsContent value="cross-refs" className="mt-4">
-          {crossRefsLoading ? (
+          {crossRefsLoading || sermonCrossRefsLoading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Loading cross-references...</p>
@@ -565,6 +577,27 @@ export default function CrossReferenceViewer({
                         {displayBook} {displayChapter}:{displayVerse}
                       </p>
                     </div>
+
+                    {/* William Branham Sermons */}
+                    {sermonCrossReferences.length > 0 && (
+                      <div className="space-y-4 mb-6">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <h4 className="font-semibold text-sm">William Branham Sermons</h4>
+                          <Badge variant="secondary" className="ml-auto">
+                            {sermonCrossReferences.length}
+                          </Badge>
+                        </div>
+                        <div className="space-y-3">
+                          {sermonCrossReferences.map((ref) => (
+                            <SermonReferenceDisplay
+                              key={ref.id}
+                              sermonRef={ref}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Public Cross References */}
                     {groupedCrossReferences.length > 0 && (
@@ -632,7 +665,7 @@ export default function CrossReferenceViewer({
                     )}
 
                     {/* No Cross References */}
-                    {totalCrossRefs === 0 && (
+                    {totalAllCrossRefs === 0 && (
                       <div className="flex flex-col items-center justify-center text-center py-16 space-y-3">
                         <BookMarked className="h-16 w-16 text-muted-foreground/30" />
                         <div className="space-y-1">
@@ -895,6 +928,33 @@ function CrossReferenceDisplay({ crossRef, onNavigate, isUserRef = false }: Cros
 }
 
 // Helper function to highlight search terms in text
+function SermonReferenceDisplay({ sermonRef }: { sermonRef: SermonCrossReference }) {
+  return (
+    <Card className="border-l-4 border-l-amber-600/50 hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">
+           {sermonRef.sermonReference.sermon_title}
+        </CardTitle>
+        <div className="flex gap-2 mt-2 flex-wrap">
+           <Badge variant="secondary" className="text-xs">{sermonRef.sermonReference.sermon_date}</Badge>
+           <Badge variant="outline" className="text-xs">{sermonRef.sermonReference.sermon_location}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-3">
+        <p className="text-sm leading-relaxed text-muted-foreground mb-1 break-words">
+          {sermonRef.sermonReference.paragraph_content}
+        </p>
+        <div className="flex justify-between items-center mt-2">
+            <p className="text-xs text-muted-foreground/70">Paragraph {sermonRef.sermonReference.paragraph_number}</p>
+            {sermonRef.sermonReference.reference_note && (
+                <span className="text-xs italic text-muted-foreground">Note: {sermonRef.sermonReference.reference_note}</span>
+            )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode {
   if (!searchTerm.trim()) return text;
 
