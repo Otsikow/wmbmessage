@@ -1,7 +1,7 @@
 import { Json } from "@/integrations/supabase/types";
 
 // Database-aligned status types
-export type MessageChurchStatus = "PENDING" | "PUBLISHED" | "REJECTED" | "ARCHIVED";
+export type MessageChurchStatus = "PENDING" | "PUBLISHED" | "REJECTED" | "ARCHIVED" | "BANNED";
 export type MessageChurchSubmissionStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 // Matches the database schema for message_churches table

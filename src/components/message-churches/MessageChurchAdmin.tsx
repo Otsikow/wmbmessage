@@ -125,6 +125,9 @@ export default function MessageChurchAdmin() {
     if (bulkAction === "archive") {
       updates.status = "ARCHIVED";
     }
+    if (bulkAction === "ban") {
+      updates.status = "BANNED";
+    }
     if (bulkAction === "verify") {
       updates.verified = true;
       updates.verified_by_admin_id = user?.id || null;
@@ -372,6 +375,8 @@ export default function MessageChurchAdmin() {
         return <Badge className="bg-emerald-600 text-white">Published</Badge>;
       case "ARCHIVED":
         return <Badge variant="secondary">Archived</Badge>;
+      case "BANNED":
+        return <Badge variant="destructive">Banned</Badge>;
       case "APPROVED":
         return <Badge className="bg-emerald-600 text-white">Approved</Badge>;
       case "REJECTED":
@@ -433,6 +438,7 @@ export default function MessageChurchAdmin() {
                 <SelectContent>
                   <SelectItem value="publish">Publish</SelectItem>
                   <SelectItem value="archive">Archive</SelectItem>
+                  <SelectItem value="ban">Ban</SelectItem>
                   <SelectItem value="verify">Verify</SelectItem>
                   <SelectItem value="unverify">Unverify</SelectItem>
                 </SelectContent>
@@ -740,6 +746,7 @@ export default function MessageChurchAdmin() {
                       <SelectItem value="PENDING">Pending</SelectItem>
                       <SelectItem value="PUBLISHED">Published</SelectItem>
                       <SelectItem value="ARCHIVED">Archived</SelectItem>
+                      <SelectItem value="BANNED">Banned</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
