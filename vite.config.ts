@@ -10,7 +10,9 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(), 
+    react({
+      jsxImportSource: undefined,
+    }), 
     mode === "development" && componentTagger()
   ].filter(Boolean),
   resolve: {
@@ -19,6 +21,8 @@ export default defineConfig(({ mode }) => ({
       // Force all React imports to use the same instance
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
     },
     dedupe: [
       "react",
@@ -38,7 +42,11 @@ export default defineConfig(({ mode }) => ({
     ],
     exclude: [],
     force: true,
+    esbuildOptions: {
+      jsx: "automatic",
+    },
   },
+  cacheDir: ".vite",
   build: {
     rollupOptions: {
       input: {
