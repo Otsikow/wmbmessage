@@ -32,6 +32,9 @@ import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
 import Downloads from "./pages/Downloads";
 import Share from "./pages/Share";
+import MessageChurchDirectory from "./pages/MessageChurchDirectory";
+import MessageChurchSubmission from "./pages/MessageChurchSubmission";
+import MessageChurchDetail from "./pages/MessageChurchDetail";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import About from "./pages/About";
@@ -192,6 +195,18 @@ function App() {
                                   <Route
                                     path="/share"
                                     element={withSectionBoundary("Share", <Share />)}
+                                  />
+                                  <Route
+                                    path="/message-churches"
+                                    element={withSectionBoundary("Message Churches", <MessageChurchDirectory />)}
+                                  />
+                                  <Route
+                                    path="/message-churches/submit"
+                                    element={withSectionBoundary("Submit Message Church", <MessageChurchSubmission />)}
+                                  />
+                                  <Route
+                                    path="/message-churches/:id"
+                                    element={withSectionBoundary("Message Church Details", <MessageChurchDetail />)}
                                   />
                                   <Route
                                     path="/help"
