@@ -21,23 +21,25 @@ export const PointsSummaryCard = ({ totalPoints, streak }: PointsSummaryCardProp
   return (
     <Card className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-secondary/5 to-transparent" aria-hidden />
-      <CardHeader className="relative">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Sparkles className="h-5 w-5 text-primary" /> Spiritual Growth Score
+      <CardHeader className="relative gap-2 px-4 py-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Sparkles className="h-4 w-4 text-primary sm:h-5 sm:w-5" /> Spiritual Growth Score
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground sm:text-sm">
           Earn +10 XP per day, +30 for streaks, +100 for each plan completion.
         </p>
       </CardHeader>
-      <CardContent className="relative space-y-3">
-        <div className="flex items-baseline justify-between">
-          <p className="text-3xl font-bold">{totalPoints.toLocaleString()} XP</p>
-          <p className="text-xs uppercase text-muted-foreground">Streak {streak} days</p>
+      <CardContent className="relative space-y-2 px-4 pb-4 sm:space-y-3 sm:px-6 sm:pb-6">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <p className="text-2xl font-bold sm:text-3xl">{totalPoints.toLocaleString()} XP</p>
+          <p className="text-[11px] uppercase text-muted-foreground sm:text-xs">
+            Streak {streak} days
+          </p>
         </div>
-        <div className="text-xs font-medium text-muted-foreground">
+        <div className="text-[11px] font-medium text-muted-foreground sm:text-xs">
           Next unlock at {nextMilestone} XP
         </div>
-        <Progress value={percent} className="h-2" />
+        <Progress value={percent} className="h-1.5 sm:h-2" />
       </CardContent>
     </Card>
   );
