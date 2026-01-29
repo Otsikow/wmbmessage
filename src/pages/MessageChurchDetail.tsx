@@ -16,6 +16,17 @@ export default function MessageChurchDetail() {
   const [church, setChurch] = useState<MessageChurch | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const buildAddress = (selectedChurch: MessageChurch) =>
+    [
+      selectedChurch.address_line_1,
+      selectedChurch.address_line_2,
+      selectedChurch.city,
+      selectedChurch.state_region,
+      selectedChurch.postal_code,
+      selectedChurch.country_name,
+    ]
+      .filter(Boolean)
+      .join(", ");
 
   useEffect(() => {
     const fetchChurch = async () => {
@@ -120,6 +131,18 @@ export default function MessageChurchDetail() {
                       </a>
                     </Button>
                   )}
+                  <Button variant="outline" asChild className="bg-white/80 shadow-sm">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        buildAddress(church),
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      View on Google Maps
+                    </a>
+                  </Button>
                 </div>
 
                 {(church.service_times || church.description) && (
