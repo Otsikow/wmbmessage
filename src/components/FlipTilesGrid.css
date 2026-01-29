@@ -22,6 +22,18 @@
   perspective: 1000px;
 }
 
+/* Mobile-first spacing to reduce side gutters */
+@media (max-width: 640px) {
+  .flip-tiles-container {
+    padding: 0 0.75rem;
+  }
+
+  .flip-tiles-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 /* Responsive grid adjustments */
 @media (min-width: 768px) {
   .flip-tiles-grid {
