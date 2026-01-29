@@ -174,7 +174,7 @@ export default function Header({
           </div>
         </div>
 
-        <PageBreadcrumbs />
+        <PageBreadcrumbs className="hidden sm:block" />
       </div>
     </header>
   );
