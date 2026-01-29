@@ -18,16 +18,23 @@ const DailyVerseCard = () => {
     if (!dailyContent || loading || error) return;
 
     recordActivity("daily-devotional", {
-      description: `${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}`,
+      description: `${dailyContent.verse_book} ${dailyContent.verse_chapter}:${dailyContent.verse_verse}`,
     });
   }, [dailyContent, error, loading, recordActivity]);
 
   const buildShareText = () => {
     if (!dailyContent) return "";
 
-    return appendShareAttribution(
-      `Daily Inspiration\n\n📖 ${dailyContent.bible_book} ${dailyContent.bible_chapter}:${dailyContent.bible_verse}\n"${dailyContent.bible_verse_text}"\n\n💬 ${dailyContent.sermon_paragraph?.sermon.title}\n"${dailyContent.sermon_paragraph?.content}"`
-    );
+    let text = `Daily Inspiration\n\n📖 ${dailyContent.verse_book} ${dailyContent.verse_chapter}:${dailyContent.verse_verse}\n"${dailyContent.verse_text}"`;
+    
+    if (dailyContent.quote_text) {
+      text += `\n\n💬 "${dailyContent.quote_text}"`;
+      if (dailyContent.quote_source) {
+        text += `\n— ${dailyContent.quote_source}`;
+      }
+    }
+
+    return appendShareAttribution(text);
   };
 
   const handleCopy = async () => {
@@ -151,39 +158,36 @@ const DailyVerseCard = () => {
               <Book className="h-5 w-5" />
             </span>
             <h3 className="font-semibold text-lg glass-heading">
-              {dailyContent.bible_book} {dailyContent.bible_chapter}:{dailyContent.bible_verse}
+              {dailyContent.verse_book} {dailyContent.verse_chapter}:{dailyContent.verse_verse}
             </h3>
           </div>
 
           <p className="reader-typography glass-body italic leading-relaxed">
-            "{dailyContent.bible_verse_text}"
+            "{dailyContent.verse_text}"
           </p>
         </div>
 
-        {/* Sermon Quote */}
-        {dailyContent.sermon_paragraph && (
+        {/* Quote */}
+        {dailyContent.quote_text && (
           <div className="space-y-3 p-4 rounded-[16px] bg-white/[0.04] backdrop-blur-sm border border-white/10">
             <div className="flex items-center gap-2">
               <span className="glass-icon text-primary">
                 <MessageSquare className="h-5 w-5" />
               </span>
               <h3 className="font-semibold text-lg glass-heading">
-                {dailyContent.sermon_paragraph.sermon.title}
+                Daily Quote
               </h3>
             </div>
 
-            <p className="text-sm glass-body">
-              {new Date(dailyContent.sermon_paragraph.sermon.date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}{" "}
-              • {dailyContent.sermon_paragraph.sermon.location}
+            <p className="reader-typography glass-body leading-relaxed">
+              "{dailyContent.quote_text}"
             </p>
 
-            <p className="reader-typography glass-body leading-relaxed">
-              {dailyContent.sermon_paragraph.content}
-            </p>
+            {dailyContent.quote_source && (
+              <p className="text-sm glass-body">
+                — {dailyContent.quote_source}
+              </p>
+            )}
           </div>
         )}
 
