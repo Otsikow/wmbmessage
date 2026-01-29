@@ -100,31 +100,31 @@ export default function MessageChurchDetail() {
                       Message Now on WhatsApp
                     </a>
                   </Button>
-                  {church.contact_email && (
+                  {church.email && (
                     <Button variant="outline" asChild>
-                      <a href={`mailto:${church.contact_email}`}>Email</a>
+                      <a href={`mailto:${church.email}`}>Email</a>
                     </Button>
                   )}
-                  {church.website_url && (
+                  {church.website && (
                     <Button variant="outline" asChild>
-                      <a href={church.website_url} target="_blank" rel="noreferrer">
+                      <a href={church.website} target="_blank" rel="noreferrer">
                         Visit Website
                       </a>
                     </Button>
                   )}
                 </div>
 
-                {church.services_schedule_text && (
+                {church.service_times && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Service Schedule</p>
-                    <p className="text-base text-foreground">{church.services_schedule_text}</p>
+                    <p className="text-base text-foreground">{church.service_times}</p>
                   </div>
                 )}
 
-                {church.notes_public && (
+                {church.description && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Notes</p>
-                    <p className="text-base text-foreground">{church.notes_public}</p>
+                    <p className="text-base text-foreground">{church.description}</p>
                   </div>
                 )}
 
