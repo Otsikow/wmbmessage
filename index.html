@@ -42,6 +42,28 @@
     
     <!-- Prevent zoom on input focus (iOS) -->
     <meta name="format-detection" content="telephone=no" />
+
+    <!-- Clear stale caches before loading app -->
+    <script>
+      (function() {
+        // Unregister any service workers immediately
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+              registrations[i].unregister();
+            }
+          });
+        }
+        // Clear all caches
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (var i = 0; i < names.length; i++) {
+              caches.delete(names[i]);
+            }
+          });
+        }
+      })();
+    </script>
   </head>
 
   <body>
