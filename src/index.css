@@ -368,6 +368,13 @@
 
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -375,12 +382,38 @@
     font-size: 1rem;
     font-family: var(--app-font-family, system-ui);
     min-height: 100vh;
+    min-height: 100dvh;
     padding-bottom: 0;
+    overscroll-behavior-y: contain;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   @media (max-width: 768px) {
     body {
       padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* Prevent pull-to-refresh on mobile when at top */
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Better touch targets on mobile */
+  @media (max-width: 768px) {
+    button,
+    a,
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    input,
+    textarea,
+    select {
+      font-size: 16px !important; /* Prevent zoom on iOS */
     }
   }
 
