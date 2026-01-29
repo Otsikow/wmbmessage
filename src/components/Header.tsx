@@ -38,7 +38,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass">
+    <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass animate-nav-slide-up">
       <div className="container flex flex-col gap-1 px-3 py-2 md:gap-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3">
