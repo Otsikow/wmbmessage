@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Component, ErrorInfo, ReactNode } from "react";
 import { ErrorFallback } from "./ErrorFallback";
 
