@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   Search,
-  MessageSquare,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import RecentBibleVerses from "@/components/RecentBibleVerses";
@@ -98,13 +98,13 @@ export default function Hero() {
                 </Button>
               </Link>
 
-              <Link to="/wmb-sermons" className="w-full">
+              <Link to="/message-churches" className="w-full">
                 <Button 
                   size="lg" 
                   className="w-full h-12 sm:h-14 glass glass-neon-secondary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <MessageSquare className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
-                  <span className="truncate">WMB Sermons</span>
+                  <MapPin className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
+                  <span className="truncate">Browse Churches</span>
                 </Button>
               </Link>
             </div>
