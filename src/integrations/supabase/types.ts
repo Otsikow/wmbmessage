@@ -161,6 +161,117 @@ export type Database = {
         }
         Relationships: []
       }
+      message_church_submissions: {
+        Row: {
+          admin_notes: string | null
+          affirmation_checkbox: boolean
+          created_at: string
+          id: string
+          status: string
+          submitted_church_payload: Json
+          submitter_email: string | null
+          submitter_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          affirmation_checkbox?: boolean
+          created_at?: string
+          id?: string
+          status?: string
+          submitted_church_payload: Json
+          submitter_email?: string | null
+          submitter_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          affirmation_checkbox?: boolean
+          created_at?: string
+          id?: string
+          status?: string
+          submitted_church_payload?: Json
+          submitter_email?: string | null
+          submitter_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      message_churches: {
+        Row: {
+          address_line_1: string
+          address_line_2: string | null
+          church_name: string
+          city: string
+          country_code: string
+          country_name: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          message_affiliation: string
+          pastor_or_contact_name: string
+          pastor_title: string | null
+          postal_code: string | null
+          service_times: string | null
+          state_region: string | null
+          status: string
+          updated_at: string
+          verified: boolean
+          verified_by_admin_id: string | null
+          website: string | null
+          whatsapp_number: string
+        }
+        Insert: {
+          address_line_1: string
+          address_line_2?: string | null
+          church_name: string
+          city: string
+          country_code: string
+          country_name: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          message_affiliation?: string
+          pastor_or_contact_name: string
+          pastor_title?: string | null
+          postal_code?: string | null
+          service_times?: string | null
+          state_region?: string | null
+          status?: string
+          updated_at?: string
+          verified?: boolean
+          verified_by_admin_id?: string | null
+          website?: string | null
+          whatsapp_number: string
+        }
+        Update: {
+          address_line_1?: string
+          address_line_2?: string | null
+          church_name?: string
+          city?: string
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          message_affiliation?: string
+          pastor_or_contact_name?: string
+          pastor_title?: string | null
+          postal_code?: string | null
+          service_times?: string | null
+          state_region?: string | null
+          status?: string
+          updated_at?: string
+          verified?: boolean
+          verified_by_admin_id?: string | null
+          website?: string | null
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null
@@ -440,143 +551,6 @@ export type Database = {
         }
         Relationships: []
       }
-      message_churches: {
-        Row: {
-          address_line_1: string
-          address_line_2: string | null
-          city: string
-          contact_email: string | null
-          contact_phone: string | null
-          country_code: string
-          country_name: string
-          created_at: string
-          id: string
-          latitude: number | null
-          longitude: number | null
-          message_affiliation: string
-          notes_public: string | null
-          pastor_or_contact_name: string
-          pastor_title: string | null
-          postal_code: string | null
-          services_schedule_text: string | null
-          state_region: string | null
-          status: Database["public"]["Enums"]["message_church_status"]
-          updated_at: string
-          verified: boolean
-          verified_at: string | null
-          verified_by_admin_id: string | null
-          website_url: string | null
-          whatsapp_number: string
-          church_name: string
-        }
-        Insert: {
-          address_line_1: string
-          address_line_2?: string | null
-          city: string
-          contact_email?: string | null
-          contact_phone?: string | null
-          country_code: string
-          country_name: string
-          created_at?: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          message_affiliation?: string
-          notes_public?: string | null
-          pastor_or_contact_name: string
-          pastor_title?: string | null
-          postal_code?: string | null
-          services_schedule_text?: string | null
-          state_region?: string | null
-          status?: Database["public"]["Enums"]["message_church_status"]
-          updated_at?: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by_admin_id?: string | null
-          website_url?: string | null
-          whatsapp_number: string
-          church_name: string
-        }
-        Update: {
-          address_line_1?: string
-          address_line_2?: string | null
-          city?: string
-          contact_email?: string | null
-          contact_phone?: string | null
-          country_code?: string
-          country_name?: string
-          created_at?: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          message_affiliation?: string
-          notes_public?: string | null
-          pastor_or_contact_name?: string
-          pastor_title?: string | null
-          postal_code?: string | null
-          services_schedule_text?: string | null
-          state_region?: string | null
-          status?: Database["public"]["Enums"]["message_church_status"]
-          updated_at?: string
-          verified?: boolean
-          verified_at?: string | null
-          verified_by_admin_id?: string | null
-          website_url?: string | null
-          whatsapp_number?: string
-          church_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_churches_verified_by_admin_id_fkey"
-            columns: ["verified_by_admin_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      message_church_submissions: {
-        Row: {
-          admin_notes: string | null
-          affirmation_checkbox: boolean
-          created_at: string
-          id: string
-          rejection_reason: string | null
-          status: Database["public"]["Enums"]["message_church_submission_status"]
-          submitted_church_payload: Json
-          submitter_email: string | null
-          submitter_name: string | null
-          submitter_whatsapp: string | null
-          updated_at: string
-        }
-        Insert: {
-          admin_notes?: string | null
-          affirmation_checkbox: boolean
-          created_at?: string
-          id?: string
-          rejection_reason?: string | null
-          status?: Database["public"]["Enums"]["message_church_submission_status"]
-          submitted_church_payload: Json
-          submitter_email?: string | null
-          submitter_name?: string | null
-          submitter_whatsapp?: string | null
-          updated_at?: string
-        }
-        Update: {
-          admin_notes?: string | null
-          affirmation_checkbox?: boolean
-          created_at?: string
-          id?: string
-          rejection_reason?: string | null
-          status?: Database["public"]["Enums"]["message_church_submission_status"]
-          submitted_church_payload?: Json
-          submitter_email?: string | null
-          submitter_name?: string | null
-          submitter_whatsapp?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_notes: {
         Row: {
           content: string
@@ -694,8 +668,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      message_church_status: "DRAFT" | "PUBLISHED" | "ARCHIVED"
-      message_church_submission_status: "PENDING" | "APPROVED" | "REJECTED" | "NEEDS_REVIEW"
     }
     CompositeTypes: {
       [_ in never]: never

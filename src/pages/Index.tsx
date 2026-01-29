@@ -7,6 +7,7 @@ import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
 import SectionErrorBoundary from "@/components/SectionErrorBoundary";
 import { ReadingPlanWidget } from "@/components/reading-plans/ReadingPlanWidget";
+import MessageChurchesPromo from "@/components/MessageChurchesPromo";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { Loader2 } from "lucide-react";
@@ -47,6 +48,14 @@ const Index = () => {
       <main className="space-y-6">
         <SectionErrorBoundary section="Hero" description="The hero content is temporarily unavailable.">
           <Hero />
+        </SectionErrorBoundary>
+
+        {/* Message Churches Directory - Prominent CTA */}
+        <SectionErrorBoundary
+          section="Message Churches"
+          description="The churches directory promo could not load."
+        >
+          <MessageChurchesPromo />
         </SectionErrorBoundary>
 
         <SectionErrorBoundary

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageChurch, MessageChurchSubmission, MessageChurchSubmissionPayload } from "@/types/messageChurches";
+import { MessageChurch, MessageChurchSubmission, MessageChurchSubmissionPayload, parseSubmissionPayload } from "@/types/messageChurches";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageCircle, Pencil, Plus, RefreshCw } from "lucide-react";
 
 const MESSAGE_AFFILIATION = "Message of the Hour";
-
 const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/i;
 
 type ChurchFormState = {
@@ -36,11 +35,10 @@ type ChurchFormState = {
   country_code: string;
   country_name: string;
   whatsapp_number: string;
-  contact_email?: string;
-  contact_phone?: string;
-  website_url?: string;
-  services_schedule_text?: string;
-  notes_public?: string;
+  email?: string;
+  website?: string;
+  service_times?: string;
+  description?: string;
   status: MessageChurch["status"];
   verified: boolean;
 };
@@ -57,12 +55,11 @@ const emptyChurchForm: ChurchFormState = {
   country_code: "",
   country_name: "",
   whatsapp_number: "",
-  contact_email: "",
-  contact_phone: "",
-  website_url: "",
-  services_schedule_text: "",
-  notes_public: "",
-  status: "DRAFT",
+  email: "",
+  website: "",
+  service_times: "",
+  description: "",
+  status: "PENDING",
   verified: false,
 };
 
@@ -84,7 +81,6 @@ export default function MessageChurchAdmin() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [needsReviewDialogOpen, setNeedsReviewDialogOpen] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -122,7 +118,6 @@ export default function MessageChurchAdmin() {
     if (!bulkAction || !selectedChurchIds.length) return;
 
     const updates: Partial<MessageChurch> = {};
-    const now = new Date().toISOString();
 
     if (bulkAction === "publish") {
       updates.status = "PUBLISHED";
@@ -132,12 +127,10 @@ export default function MessageChurchAdmin() {
     }
     if (bulkAction === "verify") {
       updates.verified = true;
-      updates.verified_at = now;
       updates.verified_by_admin_id = user?.id || null;
     }
     if (bulkAction === "unverify") {
       updates.verified = false;
-      updates.verified_at = null;
       updates.verified_by_admin_id = null;
     }
 
@@ -178,11 +171,10 @@ export default function MessageChurchAdmin() {
       country_code: church.country_code,
       country_name: church.country_name,
       whatsapp_number: church.whatsapp_number,
-      contact_email: church.contact_email || "",
-      contact_phone: church.contact_phone || "",
-      website_url: church.website_url || "",
-      services_schedule_text: church.services_schedule_text || "",
-      notes_public: church.notes_public || "",
+      email: church.email || "",
+      website: church.website || "",
+      service_times: church.service_times || "",
+      description: church.description || "",
       status: church.status,
       verified: church.verified,
     });
@@ -214,12 +206,8 @@ export default function MessageChurchAdmin() {
       return "WhatsApp number must be in E.164 format with country code.";
     }
 
-    if (churchForm.contact_email && !emailRegex.test(churchForm.contact_email)) {
+    if (churchForm.email && !emailRegex.test(churchForm.email)) {
       return "Please enter a valid contact email.";
-    }
-
-    if (churchForm.contact_phone && !isValidE164(normalizePhoneNumber(churchForm.contact_phone))) {
-      return "Contact phone must be in E.164 format.";
     }
 
     return null;
@@ -233,10 +221,6 @@ export default function MessageChurchAdmin() {
     }
 
     const normalizedWhatsapp = normalizePhoneNumber(churchForm.whatsapp_number);
-    const normalizedContactPhone = churchForm.contact_phone
-      ? normalizePhoneNumber(churchForm.contact_phone)
-      : null;
-    const now = new Date().toISOString();
 
     const payload = {
       church_name: churchForm.church_name.trim(),
@@ -251,14 +235,12 @@ export default function MessageChurchAdmin() {
       country_code: churchForm.country_code,
       country_name: churchForm.country_name,
       whatsapp_number: normalizedWhatsapp,
-      contact_email: churchForm.contact_email?.trim() || null,
-      contact_phone: normalizedContactPhone,
-      website_url: churchForm.website_url?.trim() || null,
-      services_schedule_text: churchForm.services_schedule_text?.trim() || null,
-      notes_public: churchForm.notes_public?.trim() || null,
+      email: churchForm.email?.trim() || null,
+      website: churchForm.website?.trim() || null,
+      service_times: churchForm.service_times?.trim() || null,
+      description: churchForm.description?.trim() || null,
       status: churchForm.status,
       verified: churchForm.verified,
-      verified_at: churchForm.verified ? now : null,
       verified_by_admin_id: churchForm.verified ? user?.id || null : null,
     };
 
@@ -284,7 +266,11 @@ export default function MessageChurchAdmin() {
   };
 
   const openReviewDialog = (submission: MessageChurchSubmission) => {
-    const payload = submission.submitted_church_payload as MessageChurchSubmissionPayload;
+    const payload = parseSubmissionPayload(submission.submitted_church_payload);
+    if (!payload) {
+      setErrorMessage("Invalid submission payload.");
+      return;
+    }
     setReviewSubmission(submission);
     setReviewPayload({
       ...payload,
@@ -304,7 +290,6 @@ export default function MessageChurchAdmin() {
     }
 
     try {
-      const now = new Date().toISOString();
       const { error: churchError } = await supabase.from("message_churches").insert({
         church_name: reviewPayload.church_name,
         message_affiliation: MESSAGE_AFFILIATION,
@@ -317,17 +302,13 @@ export default function MessageChurchAdmin() {
         postal_code: reviewPayload.postal_code || null,
         country_code: reviewPayload.country_code,
         country_name: reviewPayload.country_name,
-        latitude: reviewPayload.latitude || null,
-        longitude: reviewPayload.longitude || null,
         whatsapp_number: normalizedWhatsapp,
-        contact_email: reviewPayload.contact_email || null,
-        contact_phone: reviewPayload.contact_phone ? normalizePhoneNumber(reviewPayload.contact_phone) : null,
-        website_url: reviewPayload.website_url || null,
-        services_schedule_text: reviewPayload.services_schedule_text || null,
-        notes_public: reviewPayload.notes_public || null,
+        email: reviewPayload.email || null,
+        website: reviewPayload.website || null,
+        service_times: reviewPayload.service_times || null,
+        description: reviewPayload.description || null,
         status: "PUBLISHED",
         verified: true,
-        verified_at: now,
         verified_by_admin_id: user?.id || null,
       });
 
@@ -370,8 +351,7 @@ export default function MessageChurchAdmin() {
         .from("message_church_submissions")
         .update({
           status: "REJECTED",
-          rejection_reason: rejectionReason.trim(),
-          admin_notes: reviewNotes || null,
+          admin_notes: `Rejection reason: ${rejectionReason.trim()}`,
         })
         .eq("id", reviewSubmission.id);
 
@@ -386,48 +366,16 @@ export default function MessageChurchAdmin() {
     }
   };
 
-  const openNeedsReviewDialog = (submission: MessageChurchSubmission) => {
-    setReviewSubmission(submission);
-    setReviewNotes(submission.admin_notes || "");
-    setNeedsReviewDialogOpen(true);
-  };
-
-  const handleNeedsReview = async () => {
-    if (!reviewSubmission) return;
-    try {
-      const { error } = await supabase
-        .from("message_church_submissions")
-        .update({
-          status: "NEEDS_REVIEW",
-          admin_notes: reviewNotes || null,
-        })
-        .eq("id", reviewSubmission.id);
-
-      if (error) throw error;
-      setNeedsReviewDialogOpen(false);
-      setReviewSubmission(null);
-      setReviewNotes("");
-      fetchAll();
-    } catch (error) {
-      console.error("Error marking submission for review:", error);
-      setErrorMessage("Unable to update submission status.");
-    }
-  };
-
-  const renderStatusBadge = (status: MessageChurch["status"] | MessageChurchSubmission["status"]) => {
+  const renderStatusBadge = (status: string) => {
     switch (status) {
       case "PUBLISHED":
         return <Badge className="bg-emerald-600 text-white">Published</Badge>;
       case "ARCHIVED":
         return <Badge variant="secondary">Archived</Badge>;
-      case "DRAFT":
-        return <Badge variant="outline">Draft</Badge>;
       case "APPROVED":
         return <Badge className="bg-emerald-600 text-white">Approved</Badge>;
       case "REJECTED":
         return <Badge variant="destructive">Rejected</Badge>;
-      case "NEEDS_REVIEW":
-        return <Badge className="bg-amber-500 text-white">Needs Review</Badge>;
       case "PENDING":
       default:
         return <Badge variant="outline">Pending</Badge>;
@@ -437,7 +385,7 @@ export default function MessageChurchAdmin() {
   const submissionRows = useMemo(() => {
     return submissions.map((submission) => ({
       ...submission,
-      payload: submission.submitted_church_payload as MessageChurchSubmissionPayload,
+      payload: parseSubmissionPayload(submission.submitted_church_payload),
     }));
   }, [submissions]);
 
@@ -472,474 +420,428 @@ export default function MessageChurchAdmin() {
 
         <Tabs defaultValue="churches" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="churches">Churches</TabsTrigger>
-            <TabsTrigger value="submissions">Submissions</TabsTrigger>
+            <TabsTrigger value="churches">Churches ({churches.length})</TabsTrigger>
+            <TabsTrigger value="submissions">Submissions ({submissions.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="churches" className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <Select value={bulkAction} onValueChange={setBulkAction}>
-                <SelectTrigger className="w-52">
-                  <SelectValue placeholder="Bulk action" />
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Bulk action..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="publish">Publish selected</SelectItem>
-                  <SelectItem value="archive">Archive selected</SelectItem>
-                  <SelectItem value="verify">Mark verified</SelectItem>
-                  <SelectItem value="unverify">Mark unverified</SelectItem>
+                  <SelectItem value="publish">Publish</SelectItem>
+                  <SelectItem value="archive">Archive</SelectItem>
+                  <SelectItem value="verify">Verify</SelectItem>
+                  <SelectItem value="unverify">Unverify</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={handleBulkApply} disabled={!bulkAction || !selectedChurchIds.length}>
-                Apply
+              <Button
+                variant="outline"
+                disabled={!bulkAction || selectedChurchIds.length === 0}
+                onClick={handleBulkApply}
+              >
+                Apply to {selectedChurchIds.length} selected
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {selectedChurchIds.length} selected
-              </span>
             </div>
 
-            <div className="border border-border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10"></TableHead>
-                    <TableHead>Church</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Verified</TableHead>
-                    <TableHead>WhatsApp</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
+            {loading ? (
+              <p className="text-muted-foreground text-center py-8">Loading churches...</p>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        Loading churches...
-                      </TableCell>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={
+                            churches.length > 0 && selectedChurchIds.length === churches.length
+                          }
+                          onCheckedChange={(checked) =>
+                            setSelectedChurchIds(checked ? churches.map((c) => c.id) : [])
+                          }
+                        />
+                      </TableHead>
+                      <TableHead>Church Name</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Verified</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    churches.map((church) => (
+                  </TableHeader>
+                  <TableBody>
+                    {churches.map((church) => (
                       <TableRow key={church.id}>
                         <TableCell>
                           <Checkbox
                             checked={selectedChurchIds.includes(church.id)}
-                            onCheckedChange={(checked) => handleSelectChurch(church.id, checked === true)}
+                            onCheckedChange={(checked) =>
+                              handleSelectChurch(church.id, checked === true)
+                            }
                           />
                         </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{church.church_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {church.pastor_or_contact_name}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {church.city}, {church.country_name}
-                        </TableCell>
+                        <TableCell className="font-medium">{church.church_name}</TableCell>
+                        <TableCell>{church.city}</TableCell>
+                        <TableCell>{church.country_name}</TableCell>
                         <TableCell>{renderStatusBadge(church.status)}</TableCell>
                         <TableCell>
                           {church.verified ? (
-                            <Badge className="bg-emerald-600 text-white">Verified</Badge>
+                            <Badge className="bg-emerald-600 text-white">✓</Badge>
                           ) : (
-                            <Badge variant="outline">Unverified</Badge>
+                            <Badge variant="outline">—</Badge>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={formatWhatsAppLink(church.whatsapp_number)} target="_blank" rel="noreferrer">
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Test
-                            </a>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(church)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(church)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" asChild>
+                              <a
+                                href={formatWhatsAppLink(church.whatsapp_number)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                    {churches.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No churches yet. Add one to get started.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="submissions" className="space-y-4">
-            <div className="border border-border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Church</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>WhatsApp</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
+            {loading ? (
+              <p className="text-muted-foreground text-center py-8">Loading submissions...</p>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        Loading submissions...
-                      </TableCell>
+                      <TableHead>Church Name</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    submissionRows.map((submission) => (
-                      <TableRow key={submission.id}>
+                  </TableHeader>
+                  <TableBody>
+                    {submissionRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="font-medium">
+                          {row.payload?.church_name || "Unknown"}
+                        </TableCell>
+                        <TableCell>{row.payload?.city || "—"}</TableCell>
+                        <TableCell>{row.payload?.country_name || "—"}</TableCell>
+                        <TableCell>{renderStatusBadge(row.status)}</TableCell>
                         <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{submission.payload?.church_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {submission.payload?.pastor_or_contact_name}
-                            </div>
-                          </div>
+                          {new Date(row.created_at).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {submission.payload?.city}, {submission.payload?.country_name}
-                        </TableCell>
-                        <TableCell>{renderStatusBadge(submission.status)}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a
-                              href={formatWhatsAppLink(submission.payload?.whatsapp_number || "")}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Test
-                            </a>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <Button size="sm" onClick={() => openReviewDialog(submission)}>
-                              Review & Approve
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => openNeedsReviewDialog(submission)}>
-                              Needs Review
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => openRejectionDialog(submission)}>
-                              Reject
-                            </Button>
+                          <div className="flex gap-2">
+                            {row.status === "PENDING" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openReviewDialog(row)}
+                                >
+                                  Review
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => openRejectionDialog(row)}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            {row.status !== "PENDING" && (
+                              <span className="text-xs text-muted-foreground">Processed</span>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                    {submissions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                          No submissions yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
-      </CardContent>
 
-      <Dialog open={churchDialogOpen} onOpenChange={setChurchDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {churchDialogMode === "create" ? "Add Message Church" : "Edit Message Church"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label>Message affiliation</Label>
-              <Input value={MESSAGE_AFFILIATION} disabled />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Church name *</Label>
-              <Input
-                value={churchForm.church_name}
-                onChange={(event) => handleChurchFormChange("church_name", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Pastor / Contact *</Label>
-              <Input
-                value={churchForm.pastor_or_contact_name}
-                onChange={(event) => handleChurchFormChange("pastor_or_contact_name", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Pastor title</Label>
-              <Input
-                value={churchForm.pastor_title || ""}
-                onChange={(event) => handleChurchFormChange("pastor_title", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Address line 1 *</Label>
-              <Input
-                value={churchForm.address_line_1}
-                onChange={(event) => handleChurchFormChange("address_line_1", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Address line 2</Label>
-              <Input
-                value={churchForm.address_line_2 || ""}
-                onChange={(event) => handleChurchFormChange("address_line_2", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>City *</Label>
-              <Input value={churchForm.city} onChange={(event) => handleChurchFormChange("city", event.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>State / Region</Label>
-              <Input
-                value={churchForm.state_region || ""}
-                onChange={(event) => handleChurchFormChange("state_region", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Postal code</Label>
-              <Input
-                value={churchForm.postal_code || ""}
-                onChange={(event) => handleChurchFormChange("postal_code", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Country *</Label>
-              <Select value={churchForm.country_code} onValueChange={handleChurchCountryChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>WhatsApp *</Label>
-              <Input
-                value={churchForm.whatsapp_number}
-                onChange={(event) => handleChurchFormChange("whatsapp_number", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                value={churchForm.contact_email || ""}
-                onChange={(event) => handleChurchFormChange("contact_email", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input
-                value={churchForm.contact_phone || ""}
-                onChange={(event) => handleChurchFormChange("contact_phone", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input
-                value={churchForm.website_url || ""}
-                onChange={(event) => handleChurchFormChange("website_url", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Service schedule</Label>
-              <Textarea
-                value={churchForm.services_schedule_text || ""}
-                onChange={(event) => handleChurchFormChange("services_schedule_text", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Public notes</Label>
-              <Textarea
-                value={churchForm.notes_public || ""}
-                onChange={(event) => handleChurchFormChange("notes_public", event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={churchForm.status}
-                onValueChange={(value) => handleChurchFormChange("status", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="PUBLISHED">Published</SelectItem>
-                  <SelectItem value="ARCHIVED">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Verified</Label>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={churchForm.verified}
-                  onCheckedChange={(checked) => handleChurchFormChange("verified", checked)}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {churchForm.verified ? "Verified" : "Not verified"}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setChurchDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveChurch}>
-              {churchDialogMode === "create" ? "Create" : "Save changes"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Review & Approve Submission</DialogTitle>
-          </DialogHeader>
-          {reviewPayload && (
-            <div className="space-y-4">
+        {/* Church Create/Edit Dialog */}
+        <Dialog open={churchDialogOpen} onOpenChange={setChurchDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {churchDialogMode === "create" ? "Add Church" : "Edit Church"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
               <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="church_name">Church name *</Label>
+                  <Input
+                    id="church_name"
+                    value={churchForm.church_name}
+                    onChange={(e) => handleChurchFormChange("church_name", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pastor_or_contact_name">Pastor / Contact *</Label>
+                  <Input
+                    id="pastor_or_contact_name"
+                    value={churchForm.pastor_or_contact_name}
+                    onChange={(e) => handleChurchFormChange("pastor_or_contact_name", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pastor_title">Title</Label>
+                  <Input
+                    id="pastor_title"
+                    value={churchForm.pastor_title || ""}
+                    onChange={(e) => handleChurchFormChange("pastor_title", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp_number">WhatsApp (E.164) *</Label>
+                  <Input
+                    id="whatsapp_number"
+                    value={churchForm.whatsapp_number}
+                    onChange={(e) => handleChurchFormChange("whatsapp_number", e.target.value)}
+                    placeholder="+233XXXXXXXXX"
+                  />
+                </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Church name</Label>
+                  <Label htmlFor="address_line_1">Address line 1 *</Label>
                   <Input
-                    value={reviewPayload.church_name}
-                    onChange={(event) =>
-                      setReviewPayload({ ...reviewPayload, church_name: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Pastor / Contact</Label>
-                  <Input
-                    value={reviewPayload.pastor_or_contact_name}
-                    onChange={(event) =>
-                      setReviewPayload({
-                        ...reviewPayload,
-                        pastor_or_contact_name: event.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>WhatsApp</Label>
-                  <Input
-                    value={reviewPayload.whatsapp_number}
-                    onChange={(event) =>
-                      setReviewPayload({ ...reviewPayload, whatsapp_number: event.target.value })
-                    }
+                    id="address_line_1"
+                    value={churchForm.address_line_1}
+                    onChange={(e) => handleChurchFormChange("address_line_1", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Address line 1</Label>
+                  <Label htmlFor="address_line_2">Address line 2</Label>
                   <Input
-                    value={reviewPayload.address_line_1}
-                    onChange={(event) =>
-                      setReviewPayload({ ...reviewPayload, address_line_1: event.target.value })
-                    }
+                    id="address_line_2"
+                    value={churchForm.address_line_2 || ""}
+                    onChange={(e) => handleChurchFormChange("address_line_2", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Input
-                    value={reviewPayload.city}
-                    onChange={(event) => setReviewPayload({ ...reviewPayload, city: event.target.value })}
+                    id="city"
+                    value={churchForm.city}
+                    onChange={(e) => handleChurchFormChange("city", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Country</Label>
-                  <Select
-                    value={reviewPayload.country_code}
-                    onValueChange={(value) => {
-                      const selected = countries.find((country) => country.code === value);
-                      setReviewPayload({
-                        ...reviewPayload,
-                        country_code: value,
-                        country_name: selected?.name || reviewPayload.country_name,
-                      });
-                    }}
-                  >
+                  <Label htmlFor="state_region">State / Region</Label>
+                  <Input
+                    id="state_region"
+                    value={churchForm.state_region || ""}
+                    onChange={(e) => handleChurchFormChange("state_region", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postal_code">Postal code</Label>
+                  <Input
+                    id="postal_code"
+                    value={churchForm.postal_code || ""}
+                    onChange={(e) => handleChurchFormChange("postal_code", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country *</Label>
+                  <Select value={churchForm.country_code} onValueChange={handleChurchCountryChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select" />
+                      <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          {country.name}
+                      {countries.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    value={churchForm.email || ""}
+                    onChange={(e) => handleChurchFormChange("email", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    value={churchForm.website || ""}
+                    onChange={(e) => handleChurchFormChange("website", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="service_times">Service times</Label>
+                  <Textarea
+                    id="service_times"
+                    value={churchForm.service_times || ""}
+                    onChange={(e) => handleChurchFormChange("service_times", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={churchForm.description || ""}
+                    onChange={(e) => handleChurchFormChange("description", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={churchForm.status}
+                    onValueChange={(v) => handleChurchFormChange("status", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="PUBLISHED">Published</SelectItem>
+                      <SelectItem value="ARCHIVED">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    id="verified"
+                    checked={churchForm.verified}
+                    onCheckedChange={(v) => handleChurchFormChange("verified", v)}
+                  />
+                  <Label htmlFor="verified">Verified</Label>
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>Admin notes</Label>
-                <Textarea value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setChurchDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleApproveSubmission}>Approve & Publish</Button>
+                <Button onClick={handleSaveChurch}>
+                  {churchDialogMode === "create" ? "Create Church" : "Save Changes"}
+                </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={needsReviewDialogOpen} onOpenChange={setNeedsReviewDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Mark as Needs Review</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Admin notes</Label>
-              <Textarea value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setNeedsReviewDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleNeedsReview}>Update</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        {/* Review Dialog */}
+        <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Review Submission</DialogTitle>
+            </DialogHeader>
+            {reviewPayload && (
+              <div className="space-y-4 py-4">
+                <div className="grid gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Church: </span>
+                    <span className="font-medium">{reviewPayload.church_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Pastor: </span>
+                    <span>{reviewPayload.pastor_or_contact_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Location: </span>
+                    <span>
+                      {reviewPayload.city}, {reviewPayload.country_name}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">WhatsApp: </span>
+                    <span>{reviewPayload.whatsapp_number}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reviewNotes">Admin notes</Label>
+                  <Textarea
+                    id="reviewNotes"
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder="Optional notes..."
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleApproveSubmission}>
+                    Approve & Publish
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Submission</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Rejection reason *</Label>
-              <Textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} />
+        {/* Rejection Dialog */}
+        <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reject Submission</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="rejectionReason">Rejection reason *</Label>
+                <Textarea
+                  id="rejectionReason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Explain why this submission is being rejected..."
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setRejectionDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleRejectSubmission}>
+                  Reject Submission
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Admin notes</Label>
-              <Textarea value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setRejectionDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleRejectSubmission}>
-                Reject
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
     </Card>
   );
 }

@@ -18,7 +18,6 @@ import { isValidE164, normalizePhoneNumber } from "@/utils/phone";
 import { CheckCircle2 } from "lucide-react";
 
 const MESSAGE_AFFILIATION = "Message of the Hour";
-
 const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/i;
 
 export default function MessageChurchSubmission() {
@@ -41,11 +40,10 @@ export default function MessageChurchSubmission() {
     country_code: "",
     country_name: "",
     whatsapp_number: "",
-    contact_email: "",
-    contact_phone: "",
-    website_url: "",
-    services_schedule_text: "",
-    notes_public: "",
+    email: "",
+    website: "",
+    service_times: "",
+    description: "",
   });
 
   const updateField = (field: keyof MessageChurchSubmissionPayload, value: string) => {
@@ -64,8 +62,7 @@ export default function MessageChurchSubmission() {
   const isStepFourValid = () => {
     const normalizedWhatsapp = normalizePhoneNumber(formData.whatsapp_number);
     if (!isValidE164(normalizedWhatsapp)) return false;
-    if (formData.contact_email && !emailRegex.test(formData.contact_email)) return false;
-    if (formData.contact_phone && !isValidE164(normalizePhoneNumber(formData.contact_phone))) return false;
+    if (formData.email && !emailRegex.test(formData.email)) return false;
     return true;
   };
 
@@ -107,7 +104,6 @@ export default function MessageChurchSubmission() {
   const handleSubmit = async () => {
     setErrorMessage(null);
     const normalizedWhatsapp = normalizePhoneNumber(formData.whatsapp_number);
-    const normalizedPhone = formData.contact_phone ? normalizePhoneNumber(formData.contact_phone) : "";
 
     if (!affirmation) {
       setErrorMessage("You must confirm this is a Message Church aligned with the Message of the Hour.");
@@ -119,13 +115,8 @@ export default function MessageChurchSubmission() {
       return;
     }
 
-    if (formData.contact_email && !emailRegex.test(formData.contact_email)) {
+    if (formData.email && !emailRegex.test(formData.email)) {
       setErrorMessage("Please enter a valid email address.");
-      return;
-    }
-
-    if (formData.contact_phone && !isValidE164(normalizedPhone)) {
-      setErrorMessage("Contact phone must include country code and follow E.164 format.");
       return;
     }
 
@@ -135,15 +126,14 @@ export default function MessageChurchSubmission() {
       ...formData,
       message_affiliation: MESSAGE_AFFILIATION,
       whatsapp_number: normalizedWhatsapp,
-      contact_phone: normalizedPhone || undefined,
       pastor_title: formData.pastor_title || undefined,
       address_line_2: formData.address_line_2 || undefined,
       state_region: formData.state_region || undefined,
       postal_code: formData.postal_code || undefined,
-      contact_email: formData.contact_email || undefined,
-      website_url: formData.website_url || undefined,
-      services_schedule_text: formData.services_schedule_text || undefined,
-      notes_public: formData.notes_public || undefined,
+      email: formData.email || undefined,
+      website: formData.website || undefined,
+      service_times: formData.service_times || undefined,
+      description: formData.description || undefined,
       country_name: selectedCountry?.name || formData.country_name,
     };
 
@@ -167,7 +157,7 @@ export default function MessageChurchSubmission() {
       const duplicatesFound =
         duplicateWhatsapp.data || duplicateNameCity.data || submissionWhatsapp.data;
 
-      const status = duplicatesFound ? "NEEDS_REVIEW" : "PENDING";
+      const status = duplicatesFound ? "PENDING" : "PENDING";
       const adminNotes = duplicatesFound
         ? "Potential duplicate detected (matching name/city/country or WhatsApp)."
         : null;
@@ -196,11 +186,11 @@ export default function MessageChurchSubmission() {
         <Header showBackButton />
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-2xl mx-auto">
-            <Card className="border-emerald-200 bg-emerald-50">
+            <Card className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20">
               <CardContent className="py-10 text-center space-y-4">
                 <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
                 <h2 className="text-2xl font-semibold">Submission received</h2>
-                <p className="text-emerald-700">
+                <p className="text-emerald-700 dark:text-emerald-400">
                   Thank you. Your Message Church has been submitted for verification.
                 </p>
                 <Button asChild>
@@ -394,26 +384,17 @@ export default function MessageChurchSubmission() {
                     <Label htmlFor="email">Contact email</Label>
                     <Input
                       id="email"
-                      value={formData.contact_email || ""}
-                      onChange={(event) => updateField("contact_email", event.target.value)}
+                      value={formData.email || ""}
+                      onChange={(event) => updateField("email", event.target.value)}
                       placeholder="name@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Contact phone (optional)</Label>
-                    <Input
-                      id="phone"
-                      value={formData.contact_phone || ""}
-                      onChange={(event) => updateField("contact_phone", event.target.value)}
-                      placeholder="+233XXXXXXXXX"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
-                      value={formData.website_url || ""}
-                      onChange={(event) => updateField("website_url", event.target.value)}
+                      value={formData.website || ""}
+                      onChange={(event) => updateField("website", event.target.value)}
                       placeholder="https://"
                     />
                   </div>
@@ -421,17 +402,17 @@ export default function MessageChurchSubmission() {
                     <Label htmlFor="services">Service schedule</Label>
                     <Textarea
                       id="services"
-                      value={formData.services_schedule_text || ""}
-                      onChange={(event) => updateField("services_schedule_text", event.target.value)}
+                      value={formData.service_times || ""}
+                      onChange={(event) => updateField("service_times", event.target.value)}
                       placeholder="e.g. Sunday 10:00 AM, Wednesday 7:00 PM"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="notes">Public notes</Label>
+                    <Label htmlFor="notes">Description / Notes</Label>
                     <Textarea
                       id="notes"
-                      value={formData.notes_public || ""}
-                      onChange={(event) => updateField("notes_public", event.target.value)}
+                      value={formData.description || ""}
+                      onChange={(event) => updateField("description", event.target.value)}
                       placeholder="Short doctrinal or service note"
                     />
                   </div>
@@ -439,60 +420,83 @@ export default function MessageChurchSubmission() {
               )}
 
               {step === 5 && (
-                <div className="space-y-4">
-                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-                    <h3 className="text-lg font-semibold">Review details</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Please confirm the information below is accurate before submitting.
-                    </p>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-4 text-sm">
+                  <h3 className="font-medium text-base">Review your submission</h3>
+                  <div className="grid gap-2 md:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase text-muted-foreground">Church name</p>
+                      <p className="text-muted-foreground">Church name</p>
                       <p className="font-medium">{formData.church_name}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase text-muted-foreground">Pastor / Contact</p>
+                      <p className="text-muted-foreground">Pastor / Contact</p>
                       <p className="font-medium">
                         {formData.pastor_title ? `${formData.pastor_title} ` : ""}
                         {formData.pastor_or_contact_name}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs uppercase text-muted-foreground">City / Country</p>
+                    <div className="md:col-span-2">
+                      <p className="text-muted-foreground">Address</p>
                       <p className="font-medium">
-                        {formData.city}, {selectedCountry?.name || formData.country_name}
+                        {formData.address_line_1}
+                        {formData.address_line_2 ? `, ${formData.address_line_2}` : ""},{" "}
+                        {formData.city}
+                        {formData.state_region ? `, ${formData.state_region}` : ""}
+                        {formData.postal_code ? ` ${formData.postal_code}` : ""},{" "}
+                        {selectedCountry?.name || formData.country_name}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase text-muted-foreground">WhatsApp</p>
-                      <p className="font-medium">{normalizePhoneNumber(formData.whatsapp_number)}</p>
+                      <p className="text-muted-foreground">WhatsApp</p>
+                      <p className="font-medium">{formData.whatsapp_number}</p>
                     </div>
+                    {formData.email && (
+                      <div>
+                        <p className="text-muted-foreground">Email</p>
+                        <p className="font-medium">{formData.email}</p>
+                      </div>
+                    )}
+                    {formData.website && (
+                      <div>
+                        <p className="text-muted-foreground">Website</p>
+                        <p className="font-medium">{formData.website}</p>
+                      </div>
+                    )}
+                    {formData.service_times && (
+                      <div className="md:col-span-2">
+                        <p className="text-muted-foreground">Service schedule</p>
+                        <p className="font-medium">{formData.service_times}</p>
+                      </div>
+                    )}
+                    {formData.description && (
+                      <div className="md:col-span-2">
+                        <p className="text-muted-foreground">Description</p>
+                        <p className="font-medium">{formData.description}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              <div className="flex flex-wrap justify-between gap-3">
-                <Button variant="ghost" asChild>
-                  <Link to="/message-churches">Cancel</Link>
-                </Button>
-                <div className="flex gap-2">
-                  {step > 1 && (
-                    <Button variant="outline" onClick={handlePrevious}>
-                      Back
-                    </Button>
-                  )}
-                  {step < 5 && (
-                    <Button onClick={handleNext} disabled={!stepIsValid()}>
-                      Continue
-                    </Button>
-                  )}
-                  {step === 5 && (
-                    <Button onClick={handleSubmit} disabled={loading}>
-                      {loading ? "Submitting..." : "Submit for Verification"}
-                    </Button>
-                  )}
-                </div>
+              <div className="flex flex-wrap justify-between gap-3 pt-4">
+                {step > 1 && (
+                  <Button variant="outline" onClick={handlePrevious}>
+                    Previous
+                  </Button>
+                )}
+                {step < 5 && (
+                  <Button onClick={handleNext} disabled={!stepIsValid()} className="ml-auto">
+                    Next
+                  </Button>
+                )}
+                {step === 5 && (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {loading ? "Submitting..." : "Submit Church"}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
