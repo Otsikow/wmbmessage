@@ -19,10 +19,10 @@ export default function Navigation() {
   if (hideNav) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
       {/* Glass navigation bar with premium styling */}
-      <div className="mx-2 mb-2 rounded-glass glass glass-elevated border border-white/10 dark:border-white/5 shadow-depth">
-        <div className="flex items-center justify-around h-16 px-1">
+      <div className="glass glass-elevated border-t border-white/10 dark:border-white/5">
+        <div className="flex items-center justify-around h-14 px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
