@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageChurch } from "@/types/messageChurches";
 import { countries } from "@/data/countries";
 import MessageChurchCard from "@/components/message-churches/MessageChurchCard";
-import { Search, ShieldCheck } from "lucide-react";
+import { MapPinned, Search, ShieldCheck } from "lucide-react";
 
 const verifiedOnlyDefault = true;
 
@@ -23,6 +23,7 @@ export default function MessageChurchDirectory() {
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(verifiedOnlyDefault);
+  const [selectedChurchId, setSelectedChurchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -70,6 +71,40 @@ export default function MessageChurchDirectory() {
   useEffect(() => {
     fetchChurches();
   }, [searchTerm, countryFilter, cityFilter, verifiedOnly]);
+
+  useEffect(() => {
+    if (!churches.length) {
+      setSelectedChurchId(null);
+      return;
+    }
+    if (!selectedChurchId || !churches.some((church) => church.id === selectedChurchId)) {
+      setSelectedChurchId(churches[0]?.id ?? null);
+    }
+  }, [churches, selectedChurchId]);
+
+  const selectedChurch = useMemo(
+    () => churches.find((church) => church.id === selectedChurchId) ?? null,
+    [churches, selectedChurchId],
+  );
+
+  const buildAddress = (church: MessageChurch) =>
+    [
+      church.address_line_1,
+      church.address_line_2,
+      church.city,
+      church.state_region,
+      church.postal_code,
+      church.country_name,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+  const mapEmbedUrl = selectedChurch
+    ? `https://www.google.com/maps?q=${encodeURIComponent(buildAddress(selectedChurch))}&output=embed`
+    : "";
+  const mapLinkUrl = selectedChurch
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(buildAddress(selectedChurch))}`
+    : "";
 
   const countryOptions = useMemo(() => [{ code: "all", name: "All countries" }, ...countries], []);
 
@@ -140,6 +175,76 @@ export default function MessageChurchDirectory() {
                   <Badge variant="secondary">{churches.length} results</Badge>
                   <span>WhatsApp is the primary contact channel for every listing.</span>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 bg-card/80">
+              <CardHeader className="space-y-2">
+                <div className="flex items-center gap-2 text-lg font-semibold">
+                  <MapPinned className="h-5 w-5 text-emerald-600" />
+                  Map view
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Choose a church to preview its location on the map and open directions.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {churches.length ? (
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                    <div className="space-y-3">
+                      <Select
+                        value={selectedChurchId ?? ""}
+                        onValueChange={(value) => setSelectedChurchId(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a church" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {churches.map((church) => (
+                            <SelectItem key={church.id} value={church.id}>
+                              {church.church_name} · {church.city}, {church.country_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedChurch && (
+                        <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-4 text-sm">
+                          <p className="font-semibold">{selectedChurch.church_name}</p>
+                          <p className="text-muted-foreground">{buildAddress(selectedChurch)}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary">{selectedChurch.city}</Badge>
+                            <Badge variant="secondary">{selectedChurch.country_name}</Badge>
+                          </div>
+                          <Button asChild size="sm" className="w-full">
+                            <a href={mapLinkUrl} target="_blank" rel="noreferrer">
+                              Open in Google Maps
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-h-[320px] overflow-hidden rounded-lg border border-border/60 bg-muted">
+                      {selectedChurch ? (
+                        <iframe
+                          title={`Map for ${selectedChurch.church_name}`}
+                          src={mapEmbedUrl}
+                          className="h-full min-h-[320px] w-full"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          Select a church to view its map.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
+                    Map view will appear once churches are available.
+                  </div>
+                )}
               </CardContent>
             </Card>
 
