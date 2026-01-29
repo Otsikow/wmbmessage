@@ -115,13 +115,13 @@ export default function MessageChurchDirectory() {
         <section className="px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-6xl mx-auto space-y-8">
             <Card className="border-border/60 bg-card/80">
-              <CardHeader className="space-y-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-2">
+              <CardHeader className="space-y-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-3">
                     <CardTitle className="text-2xl sm:text-3xl font-semibold">
                       Global Message Churches Directory
                     </CardTitle>
-                    <p className="text-muted-foreground">
+                    <p className="max-w-xl text-muted-foreground leading-relaxed">
                       Verified Message of the Hour churches worldwide. Submit a church for review to help the body stay connected.
                     </p>
                   </div>
