@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as React from "react";
 import { AlertTriangle, Home, RotateCw, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,8 +35,8 @@ export function ErrorFallback({
   className,
   minimal = false,
 }: ErrorFallbackProps) {
-  const [isCopied, setIsCopied] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCopied, setIsCopied] = React.useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
 
   const handleReload = () => {
     window.location.reload();

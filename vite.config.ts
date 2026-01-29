@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => ({
       "react/jsx-dev-runtime",
     ],
     exclude: [],
+    force: true,
   },
   build: {
     rollupOptions: {
