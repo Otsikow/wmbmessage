@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -13,19 +13,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { countries } from "@/data/countries";
-import { MessageChurchSubmissionPayload } from "@/types/messageChurches";
+import { MessageChurchSubmissionPayload, parseSubmissionPayload } from "@/types/messageChurches";
 import { isValidE164, normalizePhoneNumber } from "@/utils/phone";
 import { CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MESSAGE_AFFILIATION = "Message of the Hour";
 const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/i;
 
 export default function MessageChurchSubmission() {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [affirmation, setAffirmation] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loadingSubmission, setLoadingSubmission] = useState(false);
+  const [existingSubmissionId, setExistingSubmissionId] = useState<string | null>(null);
+  const [existingSubmissionStatus, setExistingSubmissionStatus] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<MessageChurchSubmissionPayload>({
     church_name: "",
@@ -45,6 +50,61 @@ export default function MessageChurchSubmission() {
     service_times: "",
     description: "",
   });
+
+  useEffect(() => {
+    if (!user) {
+      setExistingSubmissionId(null);
+      setExistingSubmissionStatus(null);
+      return;
+    }
+
+    const fetchExistingSubmission = async () => {
+      setLoadingSubmission(true);
+      try {
+        const { data, error } = await supabase
+          .from("message_church_submissions")
+          .select("id, status, submitted_church_payload")
+          .eq("submitter_user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          const payload = parseSubmissionPayload(data.submitted_church_payload);
+          if (payload) {
+            setFormData({
+              church_name: payload.church_name || "",
+              message_affiliation: payload.message_affiliation || MESSAGE_AFFILIATION,
+              pastor_or_contact_name: payload.pastor_or_contact_name || "",
+              pastor_title: payload.pastor_title || "",
+              address_line_1: payload.address_line_1 || "",
+              address_line_2: payload.address_line_2 || "",
+              city: payload.city || "",
+              state_region: payload.state_region || "",
+              postal_code: payload.postal_code || "",
+              country_code: payload.country_code || "",
+              country_name: payload.country_name || "",
+              whatsapp_number: payload.whatsapp_number || "",
+              email: payload.email || "",
+              website: payload.website || "",
+              service_times: payload.service_times || "",
+              description: payload.description || "",
+            });
+            setExistingSubmissionId(data.id);
+            setExistingSubmissionStatus(data.status || null);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching existing submission:", error);
+      } finally {
+        setLoadingSubmission(false);
+      }
+    };
+
+    fetchExistingSubmission();
+  }, [user]);
 
   const updateField = (field: keyof MessageChurchSubmissionPayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -157,19 +217,37 @@ export default function MessageChurchSubmission() {
       const duplicatesFound =
         duplicateWhatsapp.data || duplicateNameCity.data || submissionWhatsapp.data;
 
-      const status = duplicatesFound ? "PENDING" : "PENDING";
+      const status = "PENDING";
       const adminNotes = duplicatesFound
         ? "Potential duplicate detected (matching name/city/country or WhatsApp)."
         : null;
 
-      const { error } = await supabase.from("message_church_submissions").insert({
-        submitted_church_payload: payload,
-        affirmation_checkbox: true,
-        status,
-        admin_notes: adminNotes,
-      });
+      if (existingSubmissionId) {
+        const { error } = await supabase
+          .from("message_church_submissions")
+          .update({
+            submitted_church_payload: payload,
+            affirmation_checkbox: true,
+            status,
+            admin_notes: adminNotes,
+            submitter_user_id: user?.id || null,
+            submitter_email: user?.email || null,
+          })
+          .eq("id", existingSubmissionId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("message_church_submissions").insert({
+          submitted_church_payload: payload,
+          affirmation_checkbox: true,
+          status,
+          admin_notes: adminNotes,
+          submitter_user_id: user?.id || null,
+          submitter_email: user?.email || null,
+        });
+
+        if (error) throw error;
+      }
 
       setSubmitted(true);
     } catch (error) {
@@ -189,7 +267,9 @@ export default function MessageChurchSubmission() {
             <Card className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20">
               <CardContent className="py-10 text-center space-y-4">
                 <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
-                <h2 className="text-2xl font-semibold">Submission received</h2>
+                <h2 className="text-2xl font-semibold">
+                  {existingSubmissionId ? "Submission updated" : "Submission received"}
+                </h2>
                 <p className="text-emerald-700 dark:text-emerald-400">
                   Thank you. Your Message Church has been submitted for verification.
                 </p>
@@ -215,19 +295,33 @@ export default function MessageChurchSubmission() {
         <div className="max-w-4xl mx-auto space-y-6">
           <Card className="border-border/60 bg-card/80">
             <CardHeader>
-              <CardTitle>Submit a Message Church</CardTitle>
+              <CardTitle>
+                {existingSubmissionId ? "Update your Message Church" : "Submit a Message Church"}
+              </CardTitle>
               <CardDescription>
                 Please provide accurate details. All submissions are reviewed before they appear publicly.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {user && (
+                <Alert>
+                  <AlertTitle>Signed-in submission</AlertTitle>
+                  <AlertDescription>
+                    {loadingSubmission
+                      ? "Loading your latest submission..."
+                      : existingSubmissionId
+                        ? `You can update your submission anytime. Current status: ${existingSubmissionStatus ?? "PENDING"}. Updates will return to review.`
+                        : "Submit your church details now, and you'll be able to edit them later from this page."}
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 {[
                   "Confirmation",
                   "Church Details",
                   "Location",
                   "Contact",
-                  "Review & Submit",
+                  existingSubmissionId ? "Review & Update" : "Review & Submit",
                 ].map((label, index) => (
                   <span
                     key={label}
@@ -421,7 +515,9 @@ export default function MessageChurchSubmission() {
 
               {step === 5 && (
                 <div className="space-y-4 text-sm">
-                  <h3 className="font-medium text-base">Review your submission</h3>
+                  <h3 className="font-medium text-base">
+                    {existingSubmissionId ? "Review your updates" : "Review your submission"}
+                  </h3>
                   <div className="grid gap-2 md:grid-cols-2">
                     <div>
                       <p className="text-muted-foreground">Church name</p>
@@ -494,7 +590,11 @@ export default function MessageChurchSubmission() {
                     disabled={loading}
                     className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
-                    {loading ? "Submitting..." : "Submit Church"}
+                    {loading
+                      ? "Submitting..."
+                      : existingSubmissionId
+                        ? "Save Updates"
+                        : "Submit Church"}
                   </Button>
                 )}
               </div>
