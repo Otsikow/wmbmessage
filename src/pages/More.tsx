@@ -36,6 +36,12 @@ export default function More() {
       ],
     },
     {
+      title: "Community",
+      items: [
+        { icon: MessageSquare, label: "Message Churches Directory", path: "/message-churches" },
+      ],
+    },
+    {
       title: "Account & Support",
       items: [
         { icon: Settings, label: "Settings", path: "/settings" },
