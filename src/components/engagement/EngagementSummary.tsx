@@ -64,7 +64,7 @@ export function EngagementSummary() {
         </Badge>
       </CardHeader>
       <CardContent glass className="space-y-4 sm:space-y-6">
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4">
           <div className="rounded-[12px] sm:rounded-[16px] border border-white/10 bg-white/[0.04] backdrop-blur-sm p-2 sm:p-4">
             <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm glass-body">
               <span className="glass-icon text-primary">
@@ -125,22 +125,24 @@ export function EngagementSummary() {
 
         <div>
           <p className="mb-2 text-xs sm:text-sm font-medium glass-body">Past week activity</p>
-          <div className="grid grid-cols-7 gap-1 sm:gap-3">
-            {heatmap.map((day) => (
-              <div key={day.iso} className="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs">
-                <span className="glass-body">{day.label.slice(0, 2)}</span>
-                <div
-                  className={`h-6 w-6 sm:h-8 sm:w-8 rounded-[8px] sm:rounded-[10px] border transition-all ${
-                    day.isActive
-                      ? "border-primary/40 bg-primary/20 text-primary backdrop-blur-sm"
-                      : "border-white/10 bg-white/[0.04] backdrop-blur-sm glass-body"
-                  } flex items-center justify-center font-semibold text-xs sm:text-sm`}
-                  title={day.isActive ? `Read on ${day.display}` : `No activity on ${day.display}`}
-                >
-                  {day.isActive ? "★" : "–"}
+          <div className="overflow-x-auto pb-1">
+            <div className="grid min-w-[14rem] grid-cols-7 gap-1 sm:gap-3">
+              {heatmap.map((day) => (
+                <div key={day.iso} className="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs">
+                  <span className="glass-body">{day.label.slice(0, 2)}</span>
+                  <div
+                    className={`h-6 w-6 sm:h-8 sm:w-8 rounded-[8px] sm:rounded-[10px] border transition-all ${
+                      day.isActive
+                        ? "border-primary/40 bg-primary/20 text-primary backdrop-blur-sm"
+                        : "border-white/10 bg-white/[0.04] backdrop-blur-sm glass-body"
+                    } flex items-center justify-center font-semibold text-xs sm:text-sm`}
+                    title={day.isActive ? `Read on ${day.display}` : `No activity on ${day.display}`}
+                  >
+                    {day.isActive ? "★" : "–"}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </CardContent>
