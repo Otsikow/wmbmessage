@@ -39,19 +39,19 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass">
-      <div className="container flex flex-col gap-2 px-4 py-3">
+      <div className="container flex flex-col gap-1 px-3 py-2 md:gap-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3">
             {showBackButton ? (
               <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" />
             ) : null}
-            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-2 md:space-x-3 group">
+            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-1.5 md:space-x-3 group">
               <img 
                 src={logoImage} 
                 alt="MessageGuide Logo" 
-                className="h-10 md:h-12 w-auto transition-transform duration-300 group-hover:scale-105" 
+                className="h-8 md:h-12 w-auto transition-transform duration-300 group-hover:scale-105" 
               />
-              <span className="text-lg md:text-xl font-bold text-gradient-blue-purple">
+              <span className="text-base md:text-xl font-bold text-gradient-blue-purple">
                 MessageGuide
               </span>
             </Link>
