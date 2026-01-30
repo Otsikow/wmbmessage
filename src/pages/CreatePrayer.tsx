@@ -69,21 +69,21 @@ export default function CreatePrayer() {
     <div className="min-h-screen bg-background pb-24 md:pb-8">
       <div className="w-full py-6 sm:py-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <BackButton fallbackPath="/prayer-board" />
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Submit a prayer request</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Share the need clearly so the community can support you well.
               </p>
             </div>
           </div>
 
           <Card className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Prayer request details</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Requests are reviewed to keep the board safe and supportive.
                 </p>
               </div>
@@ -156,7 +156,10 @@ export default function CreatePrayer() {
               </div>
               <div className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
                 {PRIVACY_LEVELS.map((level) => (
-                  <div key={level.value} className="flex items-center justify-between py-1">
+                  <div
+                    key={level.value}
+                    className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <span className="font-medium text-foreground">{level.value}</span>
                     <span>{level.description}</span>
                   </div>
