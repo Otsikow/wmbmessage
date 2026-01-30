@@ -49,53 +49,68 @@ const featuredSermons = [
 
 const FeaturedSermons = () => {
   const renderCard = (sermon: (typeof featuredSermons)[number]) => (
-    <Card variant="glass" className="h-full group">
-      <CardHeader className="space-y-3">
-        <div className="flex items-center gap-3 text-sm glass-body">
-          <span className="glass-icon text-primary">
-            <Sparkles className="h-4 w-4" />
+    <Card
+      variant="glass"
+      hoverable
+      className="group h-full overflow-hidden border-white/15 bg-white/[0.08] shadow-glass-subtle"
+    >
+      <CardHeader className="space-y-4 border-b border-white/10">
+        <div className="flex items-center justify-between gap-3 text-sm glass-body">
+          <div className="flex items-center gap-3">
+            <span className="glass-icon text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span className="font-medium tracking-wide text-xs uppercase text-foreground/70">
+              {sermon.series}
+            </span>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/70">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {sermon.date}
           </span>
-          <span>{sermon.series}</span>
         </div>
 
         <CardTitle className="text-2xl font-semibold tracking-tight leading-tight glass-heading">
           {sermon.title}
         </CardTitle>
 
-        <CardDescription glass className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+        <CardDescription
+          glass
+          className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide sm:hidden"
+        >
           <CalendarDays className="h-3.5 w-3.5" />
           {sermon.date}
         </CardDescription>
       </CardHeader>
 
-      <CardContent glass className="space-y-5">
-        <p className="text-sm leading-relaxed glass-body">{sermon.excerpt}</p>
+      <CardContent glass className="flex h-full flex-col gap-5 pt-5">
+        <p className="text-sm leading-relaxed glass-body text-pretty">{sermon.excerpt}</p>
 
         <div className="flex flex-wrap gap-2">
           {sermon.tags.map((tag) => (
             <Badge
               key={tag}
               variant="secondary"
-              className="bg-primary/20 text-primary border border-primary/30 backdrop-blur-sm"
+              className="rounded-full border border-primary/30 bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary"
             >
               {tag}
             </Badge>
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-2">
+        <div className="mt-auto space-y-4 border-t border-white/10 pt-4">
           <div className="flex items-center gap-2 text-sm glass-body">
             <span className="glass-icon text-secondary">
               <Headphones className="h-4 w-4" />
             </span>
-            <span>Listen or read in MessageGuide</span>
+            <span className="text-pretty">Listen or read in MessageGuide</span>
           </div>
 
           <Button
             asChild
             size="sm"
             variant="outline"
-            className="shadow-none border-white/20 hover:border-white/30 hover:bg-white/10"
+            className="w-full shadow-none border-white/25 hover:border-white/40 hover:bg-white/10 sm:w-auto"
           >
             <Link to="/wmb-sermons" aria-label={`Open ${sermon.title} sermon`}>
               View Sermon
