@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import DailyQuote from "@/components/DailyQuote";
 import RecentBibleVerses from "@/components/RecentBibleVerses";
-import FlipTilesGrid from "@/components/FlipTilesGrid";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import logoImage from "@/assets/logo-hero.png";
 
@@ -128,10 +127,6 @@ export default function Hero() {
             <RecentBibleVerses />
           </div>
 
-          {/* 3D Flip Tiles Grid - Feature Cards */}
-          <div className="w-full max-w-7xl mx-auto">
-            <FlipTilesGrid autoPlay={true} triggerOnScroll={false} />
-          </div>
         </div>
       </div>
     </section>
