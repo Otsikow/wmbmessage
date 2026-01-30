@@ -80,6 +80,7 @@ export default function Admin() {
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const refreshIntervalMs = 30000;
 
   useEffect(() => {
     if (!user) {
@@ -92,10 +93,20 @@ export default function Admin() {
       return;
     }
 
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     if (isAdmin) {
       fetchData();
       fetchStats();
+      intervalId = setInterval(() => {
+        fetchData();
+        fetchStats();
+      }, refreshIntervalMs);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchData = async () => {
@@ -153,6 +164,15 @@ export default function Admin() {
     { total: 0, byRole: {} as Record<string, number> },
   );
 
+  const now = Date.now();
+  const newUsersLastDay = profiles.filter(
+    (profile) => now - new Date(profile.created_at).getTime() <= 86400000,
+  ).length;
+  const newUsersLastWeek = profiles.filter(
+    (profile) => now - new Date(profile.created_at).getTime() <= 604800000,
+  ).length;
+  const latestUser = profiles[0];
+
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -169,7 +189,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <Header showBackButton />
-      <main className="container mx-auto max-w-6xl px-4 py-8 space-y-6">
+      <main className="container mx-auto max-w-6xl px-4 py-8 space-y-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Shield className="h-8 w-8" />
@@ -177,6 +197,9 @@ export default function Admin() {
           </h1>
           <p className="text-muted-foreground mt-2">
             Manage users, content, moderation, and events
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Live metrics refresh every {Math.floor(refreshIntervalMs / 1000)} seconds.
           </p>
         </div>
 
@@ -229,9 +252,9 @@ export default function Admin() {
           </div>
 
           <TabsContent value="overview">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
                   <CardDescription>Total verses stored</CardDescription>
                 </CardHeader>
@@ -240,7 +263,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Sermons</CardTitle>
                   <CardDescription>William Branham sermons</CardDescription>
                 </CardHeader>
@@ -249,7 +272,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Cross References</CardTitle>
                   <CardDescription>Connections built</CardDescription>
                 </CardHeader>
@@ -258,7 +281,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                   <CardDescription>Registered accounts</CardDescription>
                 </CardHeader>
@@ -268,9 +291,9 @@ export default function Admin() {
               </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">System Status</CardTitle>
                   <CardDescription>Supabase connectivity</CardDescription>
                 </CardHeader>
@@ -293,7 +316,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
+                <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">User Roles</CardTitle>
                   <CardDescription>Role distribution snapshot</CardDescription>
                 </CardHeader>
@@ -309,6 +332,33 @@ export default function Admin() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Users</span>
                     <span className="font-medium">{roleSummary.byRole.user || 0}</span>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-sm font-medium">Live Activity</CardTitle>
+                  <CardDescription>Recent account activity</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">New users (24h)</span>
+                    <span className="font-medium">{newUsersLastDay}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">New users (7d)</span>
+                    <span className="font-medium">{newUsersLastWeek}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground">Latest signup</p>
+                    <p className="font-medium">
+                      {latestUser?.full_name || latestUser?.email || "No recent signups"}
+                    </p>
+                    {latestUser?.created_at && (
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(latestUser.created_at).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
