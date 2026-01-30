@@ -94,6 +94,7 @@ export default function Admin() {
     }
 
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
     if (isAdmin) {
       fetchData();
@@ -102,10 +103,52 @@ export default function Admin() {
         fetchData();
         fetchStats();
       }, refreshIntervalMs);
+
+      channel = supabase
+        .channel("admin-dashboard-realtime")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "profiles" },
+          () => {
+            fetchData();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "user_roles" },
+          () => {
+            fetchData();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "bible_verses" },
+          () => {
+            fetchStats();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "sermons" },
+          () => {
+            fetchStats();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "cross_references" },
+          () => {
+            fetchStats();
+          },
+        )
+        .subscribe();
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user, isAdmin, roleLoading, navigate]);
 
@@ -252,7 +295,7 @@ export default function Admin() {
           </div>
 
           <TabsContent value="overview">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
@@ -291,7 +334,7 @@ export default function Admin() {
               </Card>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">System Status</CardTitle>
