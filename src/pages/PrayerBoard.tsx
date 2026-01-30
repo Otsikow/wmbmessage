@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
@@ -6,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -21,24 +21,6 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-
-const categories = [
-  "Personal",
-  "Family",
-  "Health",
-  "Financial",
-  "Immigration / Visa",
-  "Church / Ministry",
-  "Thanksgiving",
-  "Urgent",
-];
-
-const privacyLevels = [
-  { value: "Public", description: "Visible to everyone" },
-  { value: "Group-only", description: "Visible to your group" },
-  { value: "Anonymous public", description: "Public without your name" },
-  { value: "Private", description: "Admin & prayer team only" },
-];
 
 const statusOptions = ["Ongoing", "Answered", "Converted to testimony"];
 
@@ -115,12 +97,6 @@ const getPrivacyStyle = (visibility: string) => {
 export default function PrayerBoard() {
   const [requests, setRequests] = useState(initialRequests);
   const [prayedToday, setPrayedToday] = useState(false);
-  const [submission, setSubmission] = useState({
-    title: "",
-    description: "",
-    category: "",
-    visibility: "",
-  });
   const [encouragements, setEncouragements] = useState<Record<string, string>>({});
   const [testimonies, setTestimonies] = useState<
     Record<string, { title: string; story: string }>
@@ -130,8 +106,6 @@ export default function PrayerBoard() {
     answeredUpdates: true,
     newRequests: true,
   });
-
-  const remainingDescription = 500 - submission.description.length;
 
   const handlePrayed = (id: string) => {
     setRequests((prev) =>
@@ -167,29 +141,6 @@ export default function PrayerBoard() {
     }));
   };
 
-  const handleSubmissionChange = (field: string, value: string) => {
-    setSubmission((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!submission.title || !submission.description || !submission.category || !submission.visibility) return;
-
-    const newRequest = {
-      id: `req-${Date.now()}`,
-      title: submission.title,
-      description: submission.description,
-      category: submission.category,
-      visibility: submission.visibility,
-      status: "Ongoing",
-      prayerCount: 0,
-      isOwner: true,
-    };
-
-    setRequests((prev) => [newRequest, ...prev]);
-    setSubmission({ title: "", description: "", category: "", visibility: "" });
-  };
-
   const ownedRequests = useMemo(() => requests.filter((request) => request.isOwner), [requests]);
 
   return (
@@ -206,95 +157,170 @@ export default function PrayerBoard() {
               </p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-              <Card className="border-border/60 bg-card/80">
-                <CardHeader className="space-y-2">
-                  <CardTitle className="text-2xl">Submit a prayer request</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Keep your request short and clear. Descriptions are capped at 500 characters.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <form className="space-y-4" onSubmit={handleSubmit}>
-                    <div className="space-y-2">
-                      <Label htmlFor="prayer-title">Title</Label>
-                      <Input
-                        id="prayer-title"
-                        value={submission.title}
-                        onChange={(event) => handleSubmissionChange("title", event.target.value)}
-                        placeholder="Short title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="prayer-description">Description</Label>
-                        <span className={`text-xs ${remainingDescription < 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                          {remainingDescription} characters left
-                        </span>
-                      </div>
-                      <Textarea
-                        id="prayer-description"
-                        value={submission.description}
-                        maxLength={500}
-                        onChange={(event) => handleSubmissionChange("description", event.target.value)}
-                        placeholder="Share the need in a few sentences"
-                        rows={4}
-                      />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Prayer category</Label>
-                        <Select
-                          value={submission.category}
-                          onValueChange={(value) => handleSubmissionChange("category", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Privacy level</Label>
-                        <Select
-                          value={submission.visibility}
-                          onValueChange={(value) => handleSubmissionChange("visibility", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select visibility" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {privacyLevels.map((level) => (
-                              <SelectItem key={level.value} value={level.value}>
-                                {level.value}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
-                      {privacyLevels.map((level) => (
-                        <div key={level.value} className="flex items-center justify-between py-1">
-                          <span className="font-medium text-foreground">{level.value}</span>
-                          <span>{level.description}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <Button type="submit" className="w-full">
-                      Submit request
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold">Prayer board feed</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Recent requests with prayer counts and encouragement.
+                    </p>
+                  </div>
+                  <Badge variant="outline">{requests.length} active requests</Badge>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {requests.map((request) => {
+                    const encouragement = encouragements[request.id] ?? "";
+                    const remainingEncouragement = 180 - encouragement.length;
+                    const testimony = testimonies[request.id] ?? { title: "", story: "" };
+
+                    return (
+                      <Card key={request.id} className="border-border/60 bg-card/80">
+                        <CardHeader className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">{request.category}</Badge>
+                            <Badge className={`border ${getPrivacyStyle(request.visibility)}`}>
+                              {request.visibility}
+                            </Badge>
+                            {request.status !== "Ongoing" && (
+                              <Badge variant="outline">{request.status}</Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-xl">{request.title}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{request.description}</p>
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                            <span>{request.prayerCount} prayers</span>
+                            {request.visibility === "Private" && (
+                              <span className="flex items-center gap-1">
+                                <Lock className="h-3.5 w-3.5" />
+                                Admin & prayer team only
+                              </span>
+                            )}
+                            {request.visibility === "Group-only" && (
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5" />
+                                Shared with your group
+                              </span>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex flex-wrap gap-3">
+                            <Button onClick={() => handlePrayed(request.id)}>I prayed 🙏</Button>
+                            <Button variant="outline">Send encouragement 💬</Button>
+                          </div>
+
+                          <div className="rounded-lg border border-border p-3 space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium">Encouragement (max 180 characters)</span>
+                              <span className={`${remainingEncouragement < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                                {remainingEncouragement} left
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {encouragementTemplates.map((template) => (
+                                <Button
+                                  key={template}
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleTemplateClick(request.id, template)}
+                                >
+                                  {template}
+                                </Button>
+                              ))}
+                            </div>
+                            <Textarea
+                              value={encouragement}
+                              maxLength={180}
+                              onChange={(event) => handleEncouragementChange(request.id, event.target.value)}
+                              placeholder="Share a short encouragement without advice, preaching, or debate."
+                              rows={3}
+                            />
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>No advice, no preaching, no debates.</span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={!encouragement || encouragement.length > 180}
+                                onClick={() => handleEncouragementChange(request.id, "")}
+                              >
+                                Send encouragement
+                              </Button>
+                            </div>
+                          </div>
+
+                          {request.isOwner && (
+                            <div className="rounded-lg border border-border p-3 space-y-3">
+                              <p className="text-sm font-medium">Update your prayer status</p>
+                              <Select
+                                value={request.status}
+                                onValueChange={(value) => handleStatusChange(request.id, value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {statusOptions.map((status) => (
+                                    <SelectItem key={status} value={status}>
+                                      {status}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {request.status === "Converted to testimony" && (
+                                <div className="space-y-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Share a testimony to celebrate answered prayer.
+                                  </p>
+                                  <Input
+                                    value={testimony.title}
+                                    onChange={(event) =>
+                                      handleTestimonyChange(request.id, "title", event.target.value)
+                                    }
+                                    placeholder="Testimony title"
+                                  />
+                                  <Textarea
+                                    value={testimony.story}
+                                    onChange={(event) =>
+                                      handleTestimonyChange(request.id, "story", event.target.value)
+                                    }
+                                    placeholder="Short testimony (what God has done)"
+                                    rows={3}
+                                  />
+                                  <Button type="button" size="sm">
+                                    Link testimony
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="space-y-6">
+                <Card className="border-border/60 bg-card/80">
+                  <CardHeader className="space-y-2">
+                    <CardTitle className="text-xl">Submit a prayer request</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Send a new request through the dedicated prayer submission form.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button asChild className="w-full">
+                      <Link to="/prayer-board/create">Create a prayer request</Link>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Requests are reviewed to keep the board safe, focused, and supportive.
+                    </p>
+                  </CardContent>
+                </Card>
+
                 <Card className="border-border/60 bg-card/80">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -392,149 +418,6 @@ export default function PrayerBoard() {
             </div>
 
             <Separator />
-
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold">Prayer board feed</h2>
-                  <p className="text-sm text-muted-foreground">Recent requests with prayer counts and encouragement.</p>
-                </div>
-                <Badge variant="outline">{requests.length} active requests</Badge>
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                {requests.map((request) => {
-                  const encouragement = encouragements[request.id] ?? "";
-                  const remainingEncouragement = 180 - encouragement.length;
-                  const testimony = testimonies[request.id] ?? { title: "", story: "" };
-
-                  return (
-                    <Card key={request.id} className="border-border/60 bg-card/80">
-                      <CardHeader className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary">{request.category}</Badge>
-                          <Badge className={`border ${getPrivacyStyle(request.visibility)}`}>
-                            {request.visibility}
-                          </Badge>
-                          {request.status !== "Ongoing" && (
-                            <Badge variant="outline">{request.status}</Badge>
-                          )}
-                        </div>
-                        <CardTitle className="text-xl">{request.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{request.description}</p>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                          <span>{request.prayerCount} prayers</span>
-                          {request.visibility === "Private" && (
-                            <span className="flex items-center gap-1">
-                              <Lock className="h-3.5 w-3.5" />
-                              Admin & prayer team only
-                            </span>
-                          )}
-                          {request.visibility === "Group-only" && (
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3.5 w-3.5" />
-                              Shared with your group
-                            </span>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex flex-wrap gap-3">
-                          <Button onClick={() => handlePrayed(request.id)}>I prayed 🙏</Button>
-                          <Button variant="outline">Send encouragement 💬</Button>
-                        </div>
-
-                        <div className="rounded-lg border border-border p-3 space-y-3">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium">Encouragement (max 180 characters)</span>
-                            <span className={`${remainingEncouragement < 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                              {remainingEncouragement} left
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {encouragementTemplates.map((template) => (
-                              <Button
-                                key={template}
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleTemplateClick(request.id, template)}
-                              >
-                                {template}
-                              </Button>
-                            ))}
-                          </div>
-                          <Textarea
-                            value={encouragement}
-                            maxLength={180}
-                            onChange={(event) => handleEncouragementChange(request.id, event.target.value)}
-                            placeholder="Share a short encouragement without advice, preaching, or debate."
-                            rows={3}
-                          />
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>No advice, no preaching, no debates.</span>
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={!encouragement || encouragement.length > 180}
-                              onClick={() => handleEncouragementChange(request.id, "")}
-                            >
-                              Send encouragement
-                            </Button>
-                          </div>
-                        </div>
-
-                        {request.isOwner && (
-                          <div className="rounded-lg border border-border p-3 space-y-3">
-                            <p className="text-sm font-medium">Update your prayer status</p>
-                            <Select
-                              value={request.status}
-                              onValueChange={(value) => handleStatusChange(request.id, value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {statusOptions.map((status) => (
-                                  <SelectItem key={status} value={status}>
-                                    {status}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {request.status === "Converted to testimony" && (
-                              <div className="space-y-3">
-                                <p className="text-xs text-muted-foreground">
-                                  Share a testimony to celebrate answered prayer.
-                                </p>
-                                <Input
-                                  value={testimony.title}
-                                  onChange={(event) =>
-                                    handleTestimonyChange(request.id, "title", event.target.value)
-                                  }
-                                  placeholder="Testimony title"
-                                />
-                                <Textarea
-                                  value={testimony.story}
-                                  onChange={(event) =>
-                                    handleTestimonyChange(request.id, "story", event.target.value)
-                                  }
-                                  placeholder="Short testimony (what God has done)"
-                                  rows={3}
-                                />
-                                <Button type="button" size="sm">
-                                  Link testimony
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
 
             <Separator />
 
