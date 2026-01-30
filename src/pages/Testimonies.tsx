@@ -27,12 +27,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { commentTemplates, testimonies } from "@/data/testimonies";
+import { useToast } from "@/hooks/use-toast";
 import { TestimonyCategory, TestimonyIdentity, testimonyCategoryLabels } from "@/types/testimonies";
 
 export default function Testimonies() {
+  const { toast } = useToast();
   const [identityPreference, setIdentityPreference] = useState<TestimonyIdentity>("full_name");
   const [format, setFormat] = useState<"text" | "audio">("text");
   const [commentDraft, setCommentDraft] = useState("");
+  const [category, setCategory] = useState<TestimonyCategory>("healing");
+  const [happenedAt, setHappenedAt] = useState("");
+  const [beforeStory, setBeforeStory] = useState("");
+  const [changeStory, setChangeStory] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [consentToShare, setConsentToShare] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<"idle" | "submitted">("idle");
 
   const remainingCharacters = 180 - commentDraft.length;
   const categoryOptions = useMemo(
@@ -42,6 +52,66 @@ export default function Testimonies() {
       ),
     [],
   );
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!category) {
+      toast({ title: "Select a testimony category.", description: "Choose the best fit before submitting." });
+      return;
+    }
+
+    if (!happenedAt) {
+      toast({ title: "Add a date.", description: "Tell us when the testimony happened." });
+      return;
+    }
+
+    if (!beforeStory.trim() || !changeStory.trim()) {
+      toast({
+        title: "Complete the required prompts.",
+        description: "Please share what the situation was and how it changed.",
+      });
+      return;
+    }
+
+    if (format === "audio" && !transcript.trim()) {
+      toast({
+        title: "Add a transcript.",
+        description: "Audio testimonies need a transcript before submission.",
+      });
+      return;
+    }
+
+    if (identityPreference !== "anonymous" && !displayName.trim()) {
+      toast({
+        title: "Add a display name.",
+        description: "Tell us the name you want shown publicly.",
+      });
+      return;
+    }
+
+    if (!consentToShare) {
+      toast({
+        title: "Consent required.",
+        description: "Please confirm that your testimony can be shared publicly.",
+      });
+      return;
+    }
+
+    setSubmissionStatus("submitted");
+    toast({
+      title: "Testimony submitted.",
+      description: "Thank you! Your testimony is now pending admin review.",
+    });
+  };
+
+  const isSubmitDisabled =
+    !happenedAt ||
+    !beforeStory.trim() ||
+    !changeStory.trim() ||
+    !consentToShare ||
+    (format === "audio" && !transcript.trim()) ||
+    (identityPreference !== "anonymous" && !displayName.trim());
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -98,160 +168,184 @@ export default function Testimonies() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Tabs value={format} onValueChange={(value) => setFormat(value as "text" | "audio")}>
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="text" className="gap-2">
-                  <FileText className="h-4 w-4" />
-                  Text testimony
-                </TabsTrigger>
-                <TabsTrigger value="audio" className="gap-2">
-                  <FileAudio className="h-4 w-4" />
-                  Audio testimony
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="text" className="mt-4 space-y-4">
-                <div className="rounded-lg border border-dashed border-border p-4 bg-background">
-                  <p className="text-sm text-muted-foreground">
-                    Write your testimony in a clear, short paragraph. The structured prompts below will guide
-                    you.
-                  </p>
-                </div>
-              </TabsContent>
-              <TabsContent value="audio" className="mt-4 space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="border-dashed">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Mic className="h-4 w-4" />
-                        Record in-app
-                      </CardTitle>
-                      <CardDescription>Max 3 minutes. Use a quiet space.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button type="button" variant="secondary" className="w-full gap-2">
-                        <Headphones className="h-4 w-4" />
-                        Start recording
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-dashed">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Upload className="h-4 w-4" />
-                        Upload audio
-                      </CardTitle>
-                      <CardDescription>MP3, M4A, WAV up to 3 minutes.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Input type="file" accept="audio/*" />
-                      <p className="text-xs text-muted-foreground">
-                        Audio will be auto-transcribed. Review and edit before submitting.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <Tabs value={format} onValueChange={(value) => setFormat(value as "text" | "audio")}>
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="text" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Text testimony
+                  </TabsTrigger>
+                  <TabsTrigger value="audio" className="gap-2">
+                    <FileAudio className="h-4 w-4" />
+                    Audio testimony
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="text" className="mt-4 space-y-4">
+                  <div className="rounded-lg border border-dashed border-border p-4 bg-background">
+                    <p className="text-sm text-muted-foreground">
+                      Write your testimony in a clear, short paragraph. The structured prompts below will guide
+                      you.
+                    </p>
+                  </div>
+                </TabsContent>
+                <TabsContent value="audio" className="mt-4 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Card className="border-dashed">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Mic className="h-4 w-4" />
+                          Record in-app
+                        </CardTitle>
+                        <CardDescription>Max 3 minutes. Use a quiet space.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button type="button" variant="secondary" className="w-full gap-2">
+                          <Headphones className="h-4 w-4" />
+                          Start recording
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-dashed">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          Upload audio
+                        </CardTitle>
+                        <CardDescription>MP3, M4A, WAV up to 3 minutes.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <Input type="file" accept="audio/*" />
+                        <p className="text-xs text-muted-foreground">
+                          Audio will be auto-transcribed. Review and edit before submitting.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="transcript">Transcript (auto-generated)</Label>
+                    <Textarea
+                      id="transcript"
+                      placeholder="Edit the transcript before submitting."
+                      className="min-h-[120px]"
+                      value={transcript}
+                      onChange={(event) => setTranscript(event.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Ensure the transcript matches your recording and removes sensitive details if needed.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="transcript">Transcript (auto-generated)</Label>
-                  <Textarea
-                    id="transcript"
-                    placeholder="Edit the transcript before submitting."
-                    className="min-h-[120px]"
-                  />
+                  <Label htmlFor="category">Testimony category *</Label>
+                  <Select value={category} onValueChange={(value) => setCategory(value as TestimonyCategory)}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map((categoryOption) => (
+                        <SelectItem key={categoryOption.value} value={categoryOption.value}>
+                          {categoryOption.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    Ensure the transcript matches your recording and removes sensitive details if needed.
+                    “Other” categories are reviewed manually before publishing.
                   </p>
                 </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="category">Testimony category *</Label>
-                <Select defaultValue="healing">
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  “Other” categories are reviewed manually before publishing.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="happenedAt">When did this happen? *</Label>
-                <Input id="happenedAt" type="date" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="before">What was the situation before? *</Label>
-              <Textarea
-                id="before"
-                placeholder="Describe the need, struggle, or situation."
-                className="min-h-[120px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="change">What changed? *</Label>
-              <Textarea
-                id="change"
-                placeholder="Share the turning point and outcome."
-                className="min-h-[120px]"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label>Identity & privacy</Label>
-              <RadioGroup
-                value={identityPreference}
-                onValueChange={(value) => setIdentityPreference(value as TestimonyIdentity)}
-                className="grid gap-3 sm:grid-cols-3"
-              >
-                <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
-                  <RadioGroupItem value="full_name" />
-                  <span className="text-sm font-medium">Full name</span>
-                </label>
-                <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
-                  <RadioGroupItem value="first_name" />
-                  <span className="text-sm font-medium">First name only</span>
-                </label>
-                <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
-                  <RadioGroupItem value="anonymous" />
-                  <span className="text-sm font-medium">Anonymous</span>
-                </label>
-              </RadioGroup>
-              {identityPreference !== "anonymous" && (
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Display name</Label>
-                  <Input id="displayName" placeholder="Enter the name to show publicly" />
+                  <Label htmlFor="happenedAt">When did this happen? *</Label>
+                  <Input
+                    id="happenedAt"
+                    type="date"
+                    value={happenedAt}
+                    onChange={(event) => setHappenedAt(event.target.value)}
+                  />
                 </div>
-              )}
-              <div className="flex items-start gap-2">
-                <Checkbox id="consent" />
-                <Label htmlFor="consent" className="text-sm leading-relaxed">
-                  I permit this testimony to be shared publicly.
-                </Label>
               </div>
-            </div>
 
-            <div className="rounded-lg border border-dashed border-border p-4 bg-muted/40 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-medium">Submission status</p>
-                <p className="text-sm text-muted-foreground">
-                  All testimonies are saved as <strong>pending</strong> until an admin approves them.
-                </p>
+              <div className="space-y-2">
+                <Label htmlFor="before">What was the situation before? *</Label>
+                <Textarea
+                  id="before"
+                  placeholder="Describe the need, struggle, or situation."
+                  className="min-h-[120px]"
+                  value={beforeStory}
+                  onChange={(event) => setBeforeStory(event.target.value)}
+                />
               </div>
-              <Button type="button" className="gap-2" variant="default">
-                Submit testimony
-              </Button>
-            </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="change">What changed? *</Label>
+                <Textarea
+                  id="change"
+                  placeholder="Share the turning point and outcome."
+                  className="min-h-[120px]"
+                  value={changeStory}
+                  onChange={(event) => setChangeStory(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label>Identity & privacy</Label>
+                <RadioGroup
+                  value={identityPreference}
+                  onValueChange={(value) => setIdentityPreference(value as TestimonyIdentity)}
+                  className="grid gap-3 sm:grid-cols-3"
+                >
+                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
+                    <RadioGroupItem value="full_name" />
+                    <span className="text-sm font-medium">Full name</span>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
+                    <RadioGroupItem value="first_name" />
+                    <span className="text-sm font-medium">First name only</span>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
+                    <RadioGroupItem value="anonymous" />
+                    <span className="text-sm font-medium">Anonymous</span>
+                  </label>
+                </RadioGroup>
+                {identityPreference !== "anonymous" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">Display name</Label>
+                    <Input
+                      id="displayName"
+                      placeholder="Enter the name to show publicly"
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.target.value)}
+                    />
+                  </div>
+                )}
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="consent"
+                    checked={consentToShare}
+                    onCheckedChange={(checked) => setConsentToShare(checked === true)}
+                  />
+                  <Label htmlFor="consent" className="text-sm leading-relaxed">
+                    I permit this testimony to be shared publicly.
+                  </Label>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-dashed border-border p-4 bg-muted/40 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-medium">Submission status</p>
+                  <p className="text-sm text-muted-foreground">
+                    {submissionStatus === "submitted"
+                      ? "Thanks! Your testimony is pending admin review before it is published."
+                      : "All testimonies are saved as pending until an admin approves them."}
+                  </p>
+                </div>
+                <Button type="submit" className="gap-2" variant="default" disabled={isSubmitDisabled}>
+                  Submit testimony
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
