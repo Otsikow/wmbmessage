@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Users, Shield, Database, Book, MessageSquare, Link2, Building2 } from 'lucide-react';
+import { Loader2, Users, Shield, Database, Book, MessageSquare, Link2, Building2, CalendarCheck } from 'lucide-react';
 import Header from '@/components/Header';
 import BibleManager from '@/components/BibleManager';
 import SermonManager from '@/components/SermonManager';
@@ -15,6 +15,7 @@ import CrossRefManager from '@/components/CrossRefManager';
 import ReadingPlanAdmin from '@/components/ReadingPlanAdmin';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import MessageChurchAdmin from '@/components/message-churches/MessageChurchAdmin';
+import AdminEventsDashboard from '@/components/admin/AdminEventsDashboard';
 
 interface Profile {
   id: string;
@@ -144,7 +145,7 @@ export default function Admin() {
 
           <Tabs defaultValue="overview" className="space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-7 md:gap-0">
+              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-8 md:gap-0">
                 <TabsTrigger value="overview" className="w-full whitespace-nowrap">
                   Overview
                 </TabsTrigger>
@@ -171,6 +172,10 @@ export default function Admin() {
                 <TabsTrigger value="message-churches" className="w-full whitespace-nowrap">
                 <Building2 className="h-4 w-4 mr-2" />
                 Message Churches
+                </TabsTrigger>
+                <TabsTrigger value="events" className="w-full whitespace-nowrap">
+                <CalendarCheck className="h-4 w-4 mr-2" />
+                Events
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -332,6 +337,10 @@ export default function Admin() {
 
             <TabsContent value="message-churches">
               <MessageChurchAdmin />
+            </TabsContent>
+
+            <TabsContent value="events">
+              <AdminEventsDashboard />
             </TabsContent>
           </Tabs>
         </div>
