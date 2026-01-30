@@ -1,14 +1,27 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { TestimonyCategory, testimonyCategoryLabels } from '@/types/testimonies';
 import { MessageSquareText, ShieldCheck, Flag, Archive, Pencil, CheckCircle2, XCircle } from 'lucide-react';
 
 type ModerationRole = 'admin' | 'moderator' | 'user';
 
 interface AdminModerationDashboardProps {
   role: ModerationRole;
+}
+
+interface PendingTestimony {
+  id: string;
+  displayName: string;
+  category: TestimonyCategory;
+  excerpt: string;
+  createdAt: string;
 }
 
 const reviewQueue = {
@@ -105,10 +118,114 @@ const categoryActivity = [
 ];
 
 export default function AdminModerationDashboard({ role }: AdminModerationDashboardProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const isAdmin = role === 'admin';
   const actionDisabledText = isAdmin
     ? 'Admin access granted.'
     : 'Admin only action. Escalate if needed.';
+  const testimonyActionDisabledText = isAdmin
+    ? 'Admin access granted.'
+    : 'Only admins can approve or reject testimonies.';
+  const [pendingTestimonies, setPendingTestimonies] = useState<PendingTestimony[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
+  const [pendingError, setPendingError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const pendingCountLabel = pendingLoading ? '—' : pendingTestimonies.length.toString();
+  const pendingSubLabel = pendingLoading
+    ? 'Refreshing review queue...'
+    : pendingTestimonies.length === 0
+      ? 'No testimonies awaiting review'
+      : `${pendingTestimonies.length} awaiting review`;
+
+  const formatExcerpt = (text: string) => (text.length > 140 ? `${text.slice(0, 137).trim()}...` : text);
+
+  const formatSubmittedAt = (value: string) =>
+    new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+  const resolveDisplayName = (identity: string | null, name: string | null) => {
+    if (identity === 'anonymous') return 'Anonymous';
+    return name?.trim() || 'Unnamed submitter';
+  };
+
+  const fetchPendingTestimonies = async () => {
+    if (!isAdmin) {
+      setPendingTestimonies([]);
+      setPendingLoading(false);
+      return;
+    }
+
+    setPendingLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('testimonies')
+        .select('id, display_name, identity_preference, category, excerpt, change_summary, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped = (data ?? []).map((item) => ({
+        id: item.id,
+        displayName: resolveDisplayName(item.identity_preference, item.display_name),
+        category: item.category as TestimonyCategory,
+        excerpt: formatExcerpt(item.excerpt?.trim() || item.change_summary?.trim() || 'No summary provided.'),
+        createdAt: item.created_at,
+      }));
+
+      setPendingTestimonies(mapped);
+      setPendingError(null);
+    } catch (error) {
+      console.error('Unable to load pending testimonies', error);
+      setPendingError('Unable to load pending testimonies. Please check your connection.');
+      setPendingTestimonies([]);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const updateTestimonyStatus = async (id: string, status: 'approved' | 'rejected' | 'archived') => {
+    if (!isAdmin) {
+      toast({
+        title: 'Admin access required.',
+        description: 'Only admins can update testimony status.',
+      });
+      return;
+    }
+
+    setUpdatingId(id);
+    try {
+      const payload: Record<string, string | null> = { status };
+      if (status === 'approved') {
+        payload.approved_at = new Date().toISOString();
+        payload.approved_by = user?.id ?? null;
+      }
+
+      const { error } = await supabase.from('testimonies').update(payload).eq('id', id);
+      if (error) throw error;
+
+      setPendingTestimonies((prev) => prev.filter((item) => item.id !== id));
+      toast({
+        title: `Testimony ${status}.`,
+        description: 'The review queue has been updated.',
+      });
+    } catch (error) {
+      console.error('Unable to update testimony status', error);
+      toast({
+        title: 'Unable to update testimony.',
+        description: 'Please try again or check your permissions.',
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingTestimonies();
+  }, [isAdmin]);
+
+  const testimonyCards = useMemo(() => pendingTestimonies, [pendingTestimonies]);
 
   return (
     <div className="space-y-6">
@@ -119,8 +236,8 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
             <MessageSquareText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">4 awaiting edits</p>
+            <div className="text-2xl font-bold">{pendingCountLabel}</div>
+            <p className="text-xs text-muted-foreground">{pendingSubLabel}</p>
           </CardContent>
         </Card>
         <Card>
@@ -162,40 +279,73 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
             <CardDescription>Review and publish fresh stories of faith.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {reviewQueue.testimonies.map((item) => (
-              <div key={item.id} className="rounded-lg border border-muted p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.submittedAt} · {item.category}</p>
-                  </div>
-                  <Badge variant="secondary">{item.id}</Badge>
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">{item.excerpt}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button size="sm">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="secondary">
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <MessageSquareText className="mr-2 h-4 w-4" />
-                    Comment
-                  </Button>
-                  <Button size="sm" variant="destructive">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Reject
-                  </Button>
-                  <Button size="sm" variant="ghost" disabled={!isAdmin} title={actionDisabledText}>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Archive
-                  </Button>
-                </div>
+            {pendingError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                {pendingError}
               </div>
-            ))}
+            )}
+            {!pendingLoading && testimonyCards.length === 0 && !pendingError && (
+              <div className="rounded-lg border border-dashed border-muted p-6 text-center text-sm text-muted-foreground">
+                No testimonies are waiting for review. Check back soon.
+              </div>
+            )}
+            {testimonyCards.map((item) => {
+              const isUpdating = updatingId === item.id;
+              const isTestimonyActionDisabled = !isAdmin || isUpdating;
+              return (
+                <div key={item.id} className="rounded-lg border border-muted p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">{item.displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatSubmittedAt(item.createdAt)} · {testimonyCategoryLabels[item.category]}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{item.id}</Badge>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">{item.excerpt}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      disabled={isTestimonyActionDisabled}
+                      title={testimonyActionDisabledText}
+                      onClick={() => updateTestimonyStatus(item.id, 'approved')}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="secondary" disabled={isTestimonyActionDisabled} title={testimonyActionDisabledText}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={isTestimonyActionDisabled} title={testimonyActionDisabledText}>
+                      <MessageSquareText className="mr-2 h-4 w-4" />
+                      Comment
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={isTestimonyActionDisabled}
+                      title={testimonyActionDisabledText}
+                      onClick={() => updateTestimonyStatus(item.id, 'rejected')}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={isTestimonyActionDisabled}
+                      title={testimonyActionDisabledText}
+                      onClick={() => updateTestimonyStatus(item.id, 'archived')}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Archive
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -338,7 +488,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
             <div className="rounded-md border border-muted p-3 text-sm text-muted-foreground">
               {isAdmin
                 ? 'Admins can approve, reject, edit, archive, delete, and lock threads.'
-                : 'Moderators can approve, reject, edit, comment, and hide threads. Admin approval is required for deletions and locks.'}
+                : 'Moderators can review queues, leave notes, and hide threads. Admin approval is required for testimony decisions, deletions, and locks.'}
             </div>
           </CardContent>
         </Card>
