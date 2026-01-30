@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Users, Shield, Database, Book, MessageSquare, Link2, Building2 } from 'lucide-react';
+import { Loader2, Users, Shield, Database, Book, MessageSquare, Link2, Building2, Gavel } from 'lucide-react';
 import Header from '@/components/Header';
 import BibleManager from '@/components/BibleManager';
 import SermonManager from '@/components/SermonManager';
@@ -15,6 +15,7 @@ import CrossRefManager from '@/components/CrossRefManager';
 import ReadingPlanAdmin from '@/components/ReadingPlanAdmin';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import MessageChurchAdmin from '@/components/message-churches/MessageChurchAdmin';
+import AdminModerationDashboard from '@/components/moderation/AdminModerationDashboard';
 
 interface Profile {
   id: string;
@@ -30,7 +31,7 @@ interface UserRole {
 
 export default function Admin() {
   const { user } = useAuth();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isAdmin, role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -144,9 +145,13 @@ export default function Admin() {
 
           <Tabs defaultValue="overview" className="space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-7 md:gap-0">
+              <TabsList className="w-full min-w-max gap-2 bg-muted/60 p-1 md:grid md:grid-cols-8 md:gap-0">
                 <TabsTrigger value="overview" className="w-full whitespace-nowrap">
                   Overview
+                </TabsTrigger>
+                <TabsTrigger value="moderation" className="w-full whitespace-nowrap">
+                  <Gavel className="h-4 w-4 mr-2" />
+                  Moderation
                 </TabsTrigger>
                 <TabsTrigger value="bible" className="w-full whitespace-nowrap">
                 <Book className="h-4 w-4 mr-2" />
@@ -269,6 +274,10 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="moderation" className="space-y-6">
+              <AdminModerationDashboard role={role} />
             </TabsContent>
 
             <TabsContent value="bible">
