@@ -34,6 +34,7 @@ import WMBSermons from "./pages/WMBSermons";
 import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
 import Events from "./pages/Events";
+import CreateEvent from "./pages/CreateEvent";
 import Downloads from "./pages/Downloads";
 import Share from "./pages/Share";
 import MessageChurchDirectory from "./pages/MessageChurchDirectory";
@@ -203,6 +204,10 @@ function App() {
                                   <Route
                                     path="/events"
                                     element={withSectionBoundary("Events", <Events />)}
+                                  />
+                                  <Route
+                                    path="/events/create"
+                                    element={withSectionBoundary("Create Event", <CreateEvent />)}
                                   />
                                   <Route
                                     path="/downloads"
