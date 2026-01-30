@@ -134,7 +134,7 @@ export default function RetentionNotificationPreferences() {
               <Switch
                 checked={preferences.channels.push}
                 onCheckedChange={(checked) =>
-                  updatePreferences({ channels: { push: checked } })
+                  updatePreferences({ channels: { ...preferences.channels, push: checked } })
                 }
                 disabled={!preferences.enabled}
               />
@@ -152,7 +152,7 @@ export default function RetentionNotificationPreferences() {
               <Switch
                 checked={preferences.channels.email}
                 onCheckedChange={(checked) =>
-                  updatePreferences({ channels: { email: checked } })
+                  updatePreferences({ channels: { ...preferences.channels, email: checked } })
                 }
                 disabled={!preferences.enabled}
               />
@@ -207,7 +207,7 @@ export default function RetentionNotificationPreferences() {
                     checked={preferences.triggers[trigger.key]}
                     onCheckedChange={(checked) =>
                       updatePreferences({
-                        triggers: { [trigger.key]: checked },
+                        triggers: { ...preferences.triggers, [trigger.key]: checked },
                       })
                     }
                     disabled={!preferences.enabled}

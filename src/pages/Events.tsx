@@ -128,7 +128,27 @@ export default function Events() {
   const [selectedId, setSelectedId] = useState(initialEvents[0]?.id ?? "");
   const [commentDraft, setCommentDraft] = useState("");
 
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<{
+    title: string;
+    type: (typeof EVENT_TYPES)[number];
+    shortDescription: string;
+    fullDescription: string;
+    startAt: string;
+    endAt: string;
+    timeZone: string;
+    address: string;
+    city: string;
+    country: string;
+    mapsLink: string;
+    format: (typeof EVENT_FORMATS)[number];
+    registrationLink: string;
+    entryType: (typeof ENTRY_TYPES)[number];
+    contactName: string;
+    contactInfo: string;
+    visibility: (typeof VISIBILITY_OPTIONS)[number];
+    regionCity: string;
+    regionCountry: string;
+  }>({
     title: "",
     type: EVENT_TYPES[0],
     shortDescription: "",

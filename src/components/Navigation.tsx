@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Search, BookOpen, MapPin } from "lucide-react";
+import { Home, Book, Search, HeartHandshake, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/bible", icon: Book, label: "Bible" },
   { path: "/search", icon: Search, label: "Search" },
-  { path: "/messages", icon: BookOpen, label: "Messages" },
-  { path: "/message-churches", icon: MapPin, label: "Churches" },
+  { path: "/prayer-board", icon: HeartHandshake, label: "Prayer" },
+  { path: "/more", icon: MoreHorizontal, label: "More" },
 ];
 
 export default function Navigation() {
