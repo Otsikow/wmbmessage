@@ -27,11 +27,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { commentTemplates, testimonies } from "@/data/testimonies";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { TestimonyCategory, TestimonyIdentity, testimonyCategoryLabels } from "@/types/testimonies";
 
 export default function Testimonies() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [identityPreference, setIdentityPreference] = useState<TestimonyIdentity>("full_name");
   const [format, setFormat] = useState<"text" | "audio">("text");
   const [commentDraft, setCommentDraft] = useState("");
@@ -43,6 +46,7 @@ export default function Testimonies() {
   const [displayName, setDisplayName] = useState("");
   const [consentToShare, setConsentToShare] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<"idle" | "submitted">("idle");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const remainingCharacters = 180 - commentDraft.length;
   const categoryOptions = useMemo(
@@ -53,7 +57,7 @@ export default function Testimonies() {
     [],
   );
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!category) {
@@ -98,11 +102,39 @@ export default function Testimonies() {
       return;
     }
 
-    setSubmissionStatus("submitted");
-    toast({
-      title: "Testimony submitted.",
-      description: "Thank you! Your testimony is now pending admin review.",
-    });
+    setIsSubmitting(true);
+    try {
+      const trimmedChange = changeStory.trim();
+      const excerpt = trimmedChange.length > 140 ? `${trimmedChange.slice(0, 137).trim()}...` : trimmedChange;
+
+      const { error } = await supabase.from("testimonies").insert({
+        user_id: user?.id ?? null,
+        category,
+        situation_before: beforeStory.trim(),
+        change_summary: trimmedChange,
+        happened_at: happenedAt,
+        identity_preference: identityPreference,
+        display_name: identityPreference === "anonymous" ? null : displayName.trim(),
+        consent_public: true,
+        excerpt,
+      });
+
+      if (error) throw error;
+
+      setSubmissionStatus("submitted");
+      toast({
+        title: "Testimony submitted.",
+        description: "Thank you! Your testimony is now pending admin review.",
+      });
+    } catch (error) {
+      console.error("Unable to submit testimony", error);
+      toast({
+        title: "Unable to submit testimony.",
+        description: "Please try again in a moment.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isSubmitDisabled =
@@ -111,7 +143,8 @@ export default function Testimonies() {
     !changeStory.trim() ||
     !consentToShare ||
     (format === "audio" && !transcript.trim()) ||
-    (identityPreference !== "anonymous" && !displayName.trim());
+    (identityPreference !== "anonymous" && !displayName.trim()) ||
+    isSubmitting;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -336,13 +369,15 @@ export default function Testimonies() {
                 <div>
                   <p className="font-medium">Submission status</p>
                   <p className="text-sm text-muted-foreground">
-                    {submissionStatus === "submitted"
+                    {isSubmitting
+                      ? "Submitting your testimony..."
+                      : submissionStatus === "submitted"
                       ? "Thanks! Your testimony is pending admin review before it is published."
                       : "All testimonies are saved as pending until an admin approves them."}
                   </p>
                 </div>
                 <Button type="submit" className="gap-2" variant="default" disabled={isSubmitDisabled}>
-                  Submit testimony
+                  {isSubmitting ? "Submitting..." : "Submit testimony"}
                 </Button>
               </div>
             </form>
