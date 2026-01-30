@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Plus, Loader2, Filter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import BackButton from "@/components/BackButton";
 
 export default function Notes() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     userNotes,
     loading,
@@ -83,7 +84,7 @@ export default function Notes() {
     await deleteUserNote(id);
   };
 
-  const handleNewNote = () => {
+  const handleNewNote = useCallback(() => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -94,7 +95,15 @@ export default function Notes() {
     }
     setSelectedNote(null);
     setIsEditorOpen(true);
-  };
+  }, [navigate, toast, user]);
+
+  useEffect(() => {
+    const state = location.state as { openEditor?: boolean } | null;
+    if (state?.openEditor) {
+      handleNewNote();
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [handleNewNote, location.pathname, location.state, navigate]);
 
   const handleSyncNotes = async () => {
     if (!user) {

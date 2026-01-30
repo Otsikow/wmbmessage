@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type MouseEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -13,6 +21,7 @@ import {
   FileJson,
   Search,
   Pencil,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -112,6 +121,7 @@ interface LibraryTabProps<T extends LibraryDisplayItem = LibraryDisplayItem>
   extends Omit<LibrarySectionProps<T>, "title"> {
   label: string;
   emptyMessage: string;
+  action?: ReactNode;
 }
 
 export default function Library() {
@@ -322,6 +332,10 @@ export default function Library() {
     },
     [updateUserNote]
   );
+
+  const handleCreateNote = useCallback(() => {
+    navigate("/notes", { state: { openEditor: true } });
+  }, [navigate]);
 
   /* ------------------------- DELETE HANDLER ------------------------- */
   const handleDelete = async () => {
@@ -535,6 +549,12 @@ export default function Library() {
             items={sortedNotes}
             loading={notesLoading}
             emptyMessage="Create your first study note to get started."
+            action={
+              <Button size="sm" onClick={handleCreateNote}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Note
+              </Button>
+            }
             onNavigate={() => navigate("/notes")}
             sectionType="note"
             onUpdateNote={handleNoteEdit}
@@ -949,9 +969,11 @@ function LibraryTab<T extends LibraryDisplayItem = LibraryDisplayItem>({
   onUpdateHighlight,
   onUpdateNote,
   emptyMessage,
+  action,
 }: LibraryTabProps<T>) {
   return (
     <TabsContent value={label.toLowerCase()} className="space-y-3">
+      {action ? <div className="flex justify-end">{action}</div> : null}
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
