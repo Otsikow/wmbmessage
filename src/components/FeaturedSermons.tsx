@@ -134,7 +134,7 @@ const FeaturedSermons = () => {
             <Button
               asChild
               variant="secondary"
-              className="glass glass-neon-secondary hover:scale-105 transition-transform duration-300"
+              className="bg-primary text-primary-foreground hover:bg-primary-hover hover:scale-105 transition-transform duration-300 font-medium shadow-md"
             >
               <Link to="/wmb-sermons">Browse All Sermons</Link>
             </Button>
