@@ -45,6 +45,7 @@ import CrossReferences from "./pages/CrossReferences";
 import ReadingPlans from "./pages/ReadingPlans";
 import ReadingPlanDetail from "./pages/ReadingPlanDetail";
 import ReadingSession from "./pages/ReadingSession";
+import PrayerBoard from "./pages/PrayerBoard";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -221,6 +222,10 @@ function App() {
                                   <Route
                                     path="/about"
                                     element={withSectionBoundary("About", <About />)}
+                                  />
+                                  <Route
+                                    path="/prayer-board"
+                                    element={withSectionBoundary("Prayer Board", <PrayerBoard />)}
                                   />
 
                                   {/* Auth Routes */}
