@@ -11,6 +11,7 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
 import { EngagementProvider } from "@/contexts/EngagementContext";
 import { ReadingPlanProvider } from "@/contexts/ReadingPlanContext";
+import { RetentionNotificationProvider } from "@/contexts/RetentionNotificationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
@@ -31,6 +32,7 @@ import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
 import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
+import Events from "./pages/Events";
 import Downloads from "./pages/Downloads";
 import Share from "./pages/Share";
 import MessageChurchDirectory from "./pages/MessageChurchDirectory";
@@ -45,6 +47,7 @@ import CrossReferences from "./pages/CrossReferences";
 import ReadingPlans from "./pages/ReadingPlans";
 import ReadingPlanDetail from "./pages/ReadingPlanDetail";
 import ReadingSession from "./pages/ReadingSession";
+import PrayerBoard from "./pages/PrayerBoard";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -100,19 +103,24 @@ function App() {
                     >
                       <EngagementProvider>
                         <ContextProviderBoundary
-                          contextName="Reading plans"
-                          description="Reading plan progress is unavailable right now."
+                          contextName="Prayer notifications"
+                          description="Prayer notifications are unavailable right now."
                         >
-                          <ReadingPlanProvider>
-                            <BrowserRouter>
-                              <TooltipProvider>
-                                <Toaster />
-                                <Sonner />
-                                <OfflineIndicator />
-                                <GlobalLoadingOverlay />
-                                <RouteTransitionIndicator />
-                                <RouteErrorBoundary>
-                                  <Routes>
+                          <RetentionNotificationProvider>
+                            <ContextProviderBoundary
+                              contextName="Reading plans"
+                              description="Reading plan progress is unavailable right now."
+                            >
+                              <ReadingPlanProvider>
+                                <BrowserRouter>
+                                  <TooltipProvider>
+                                    <Toaster />
+                                    <Sonner />
+                                    <OfflineIndicator />
+                                    <GlobalLoadingOverlay />
+                                    <RouteTransitionIndicator />
+                                    <RouteErrorBoundary>
+                                      <Routes>
                                   {/* Home Page */}
                                   <Route
                                     path="/"
@@ -191,6 +199,10 @@ function App() {
                                     element={withSectionBoundary("Calendar", <Calendar />)}
                                   />
                                   <Route
+                                    path="/events"
+                                    element={withSectionBoundary("Events", <Events />)}
+                                  />
+                                  <Route
                                     path="/downloads"
                                     element={withSectionBoundary("Downloads", <Downloads />)}
                                   />
@@ -221,6 +233,10 @@ function App() {
                                   <Route
                                     path="/about"
                                     element={withSectionBoundary("About", <About />)}
+                                  />
+                                  <Route
+                                    path="/prayer-board"
+                                    element={withSectionBoundary("Prayer Board", <PrayerBoard />)}
                                   />
 
                                   {/* Auth Routes */}
@@ -300,11 +316,13 @@ function App() {
                                       path="*"
                                       element={withSectionBoundary("Not found", <NotFound />)}
                                     />
-                                  </Routes>
-                                </RouteErrorBoundary>
-                              </TooltipProvider>
-                            </BrowserRouter>
-                          </ReadingPlanProvider>
+                                      </Routes>
+                                    </RouteErrorBoundary>
+                                  </TooltipProvider>
+                                </BrowserRouter>
+                              </ReadingPlanProvider>
+                            </ContextProviderBoundary>
+                          </RetentionNotificationProvider>
                         </ContextProviderBoundary>
                       </EngagementProvider>
                     </ContextProviderBoundary>
