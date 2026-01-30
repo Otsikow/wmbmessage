@@ -147,11 +147,11 @@ export default function PrayerBoard() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header showBackButton />
       <main className="flex-1">
-        <section className="px-4 sm:px-6 lg:px-10 py-8">
+        <section className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-10">
           <div className="max-w-6xl mx-auto space-y-8">
-            <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl font-semibold">Prayer Board</h1>
-              <p className="text-muted-foreground max-w-3xl">
+            <div className="space-y-3">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold">Prayer Board</h1>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-3xl">
                 Share prayer needs, lift one another daily, and build a quiet rhythm of encouragement. Every request is
                 cared for with clear privacy controls and a focus on emotional safety.
               </p>
@@ -159,17 +159,17 @@ export default function PrayerBoard() {
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold">Prayer board feed</h2>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl sm:text-3xl font-semibold">Prayer board feed</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       Recent requests with prayer counts and encouragement.
                     </p>
                   </div>
                   <Badge variant="outline">{requests.length} active requests</Badge>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                   {requests.map((request) => {
                     const encouragement = encouragements[request.id] ?? "";
                     const remainingEncouragement = 180 - encouragement.length;
@@ -187,8 +187,8 @@ export default function PrayerBoard() {
                               <Badge variant="outline">{request.status}</Badge>
                             )}
                           </div>
-                          <CardTitle className="text-xl">{request.title}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{request.description}</p>
+                          <CardTitle className="text-xl sm:text-2xl">{request.title}</CardTitle>
+                          <p className="text-sm sm:text-base text-muted-foreground">{request.description}</p>
                           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                             <span>{request.prayerCount} prayers</span>
                             {request.visibility === "Private" && (
@@ -206,9 +206,13 @@ export default function PrayerBoard() {
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="flex flex-wrap gap-3">
-                            <Button onClick={() => handlePrayed(request.id)}>I prayed 🙏</Button>
-                            <Button variant="outline">Send encouragement 💬</Button>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                            <Button className="w-full sm:w-auto" onClick={() => handlePrayed(request.id)}>
+                              I prayed 🙏
+                            </Button>
+                            <Button className="w-full sm:w-auto" variant="outline">
+                              Send encouragement 💬
+                            </Button>
                           </div>
 
                           <div className="rounded-lg border border-border p-3 space-y-3">
@@ -225,6 +229,7 @@ export default function PrayerBoard() {
                                   type="button"
                                   variant="secondary"
                                   size="sm"
+                                  className="whitespace-normal text-left"
                                   onClick={() => handleTemplateClick(request.id, template)}
                                 >
                                   {template}
@@ -238,11 +243,12 @@ export default function PrayerBoard() {
                               placeholder="Share a short encouragement without advice, preaching, or debate."
                               rows={3}
                             />
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                               <span>No advice, no preaching, no debates.</span>
                               <Button
                                 type="button"
                                 size="sm"
+                                className="w-full sm:w-auto"
                                 disabled={!encouragement || encouragement.length > 180}
                                 onClick={() => handleEncouragementChange(request.id, "")}
                               >
@@ -289,7 +295,7 @@ export default function PrayerBoard() {
                                     placeholder="Short testimony (what God has done)"
                                     rows={3}
                                   />
-                                  <Button type="button" size="sm">
+                                  <Button type="button" size="sm" className="w-full sm:w-auto">
                                     Link testimony
                                   </Button>
                                 </div>
@@ -307,7 +313,7 @@ export default function PrayerBoard() {
                 <Card className="border-border/60 bg-card/80">
                   <CardHeader className="space-y-2">
                     <CardTitle className="text-xl">Submit a prayer request</CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       Send a new request through the dedicated prayer submission form.
                     </p>
                   </CardHeader>
@@ -327,12 +333,12 @@ export default function PrayerBoard() {
                       <HeartHandshake className="h-5 w-5 text-rose-500" />
                       Daily engagement
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       A gentle reminder to pray for at least one request today.
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-1">
                         <p className="font-medium">
                           {prayedToday ? "You prayed today" : "Pray for at least one request"}
@@ -372,7 +378,10 @@ export default function PrayerBoard() {
                             },
                           ] as const
                         ).map((item) => (
-                          <div key={item.key} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+                          <div
+                            key={item.key}
+                            className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                          >
                             <div>
                               <p className="text-sm font-medium">{item.label}</p>
                               <p className="text-xs text-muted-foreground">{item.description}</p>
@@ -428,7 +437,7 @@ export default function PrayerBoard() {
                     <MessageCircleHeart className="h-5 w-5 text-rose-500" />
                     Encouragement guidelines
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Keep responses short, gentle, and supportive. No advice, no preaching, no debates.
                   </p>
                 </CardHeader>
@@ -451,7 +460,7 @@ export default function PrayerBoard() {
               <Card className="border-border/60 bg-card/80">
                 <CardHeader>
                   <CardTitle className="text-xl">Moderation & safety</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Admins ensure requests remain safe and focused on prayer.
                   </p>
                 </CardHeader>
@@ -470,7 +479,7 @@ export default function PrayerBoard() {
               <Card className="border-border/60 bg-card/80">
                 <CardHeader>
                   <CardTitle className="text-xl">Your active requests</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Track status updates and testimonies in one place.
                   </p>
                 </CardHeader>
@@ -478,7 +487,7 @@ export default function PrayerBoard() {
                   <div className="grid gap-4 md:grid-cols-2">
                     {ownedRequests.map((request) => (
                       <div key={request.id} className="rounded-lg border border-border p-4 space-y-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="font-medium">{request.title}</p>
                           <Badge variant="outline">{request.status}</Badge>
                         </div>
