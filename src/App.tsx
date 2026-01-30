@@ -11,6 +11,7 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
 import { EngagementProvider } from "@/contexts/EngagementContext";
 import { ReadingPlanProvider } from "@/contexts/ReadingPlanContext";
+import { RetentionNotificationProvider } from "@/contexts/RetentionNotificationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
@@ -99,19 +100,24 @@ function App() {
                     >
                       <EngagementProvider>
                         <ContextProviderBoundary
-                          contextName="Reading plans"
-                          description="Reading plan progress is unavailable right now."
+                          contextName="Prayer notifications"
+                          description="Prayer notifications are unavailable right now."
                         >
-                          <ReadingPlanProvider>
-                            <BrowserRouter>
-                              <TooltipProvider>
-                                <Toaster />
-                                <Sonner />
-                                <OfflineIndicator />
-                                <GlobalLoadingOverlay />
-                                <RouteTransitionIndicator />
-                                <RouteErrorBoundary>
-                                  <Routes>
+                          <RetentionNotificationProvider>
+                            <ContextProviderBoundary
+                              contextName="Reading plans"
+                              description="Reading plan progress is unavailable right now."
+                            >
+                              <ReadingPlanProvider>
+                                <BrowserRouter>
+                                  <TooltipProvider>
+                                    <Toaster />
+                                    <Sonner />
+                                    <OfflineIndicator />
+                                    <GlobalLoadingOverlay />
+                                    <RouteTransitionIndicator />
+                                    <RouteErrorBoundary>
+                                      <Routes>
                                   {/* Home Page */}
                                   <Route
                                     path="/"
@@ -295,11 +301,13 @@ function App() {
                                       path="*"
                                       element={withSectionBoundary("Not found", <NotFound />)}
                                     />
-                                  </Routes>
-                                </RouteErrorBoundary>
-                              </TooltipProvider>
-                            </BrowserRouter>
-                          </ReadingPlanProvider>
+                                      </Routes>
+                                    </RouteErrorBoundary>
+                                  </TooltipProvider>
+                                </BrowserRouter>
+                              </ReadingPlanProvider>
+                            </ContextProviderBoundary>
+                          </RetentionNotificationProvider>
                         </ContextProviderBoundary>
                       </EngagementProvider>
                     </ContextProviderBoundary>

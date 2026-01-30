@@ -53,6 +53,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
 import EngagementPrompt from "@/components/engagement/EngagementPrompt";
+import RetentionNotificationPreferences from "@/components/retention/RetentionNotificationPreferences";
 import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 
 interface AccountSettingsState {
@@ -738,6 +739,8 @@ export default function Profile() {
                   ))}
                 </CardContent>
               </Card>
+
+              <RetentionNotificationPreferences />
             </TabsContent>
 
             <TabsContent value="preferences" className="space-y-6">
