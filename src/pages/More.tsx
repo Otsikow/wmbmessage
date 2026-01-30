@@ -6,6 +6,7 @@ import {
   Download,
   Share2,
   Calendar,
+  CalendarDays,
   MessageSquare,
   FileText,
   Library as LibraryIcon,
@@ -39,6 +40,7 @@ export default function More() {
     {
       title: "Community",
       items: [
+        { icon: CalendarDays, label: "Events", path: "/events" },
         {
           icon: MessageSquare,
           label: "Message Churches Directory",
