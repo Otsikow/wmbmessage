@@ -79,6 +79,7 @@ export default function Admin() {
     crossRefs: 0,
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -110,6 +111,7 @@ export default function Admin() {
       setProfiles(profilesRes.data || []);
       setUserRoles(rolesRes.data || []);
       setErrorMessage(null);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error(error);
       setErrorMessage("Unable to load admin data. Please check Supabase.");
@@ -131,6 +133,7 @@ export default function Admin() {
         sermons: sermons.count || 0,
         crossRefs: crossRefs.count || 0,
       });
+      setLastUpdated(new Date());
     } catch (error) {
       console.error(error);
       setErrorMessage("Unable to load statistics.");
@@ -139,6 +142,16 @@ export default function Admin() {
 
   const getUserRole = (userId: string) =>
     userRoles.find((r) => r.user_id === userId)?.role || "user";
+
+  const roleSummary = profiles.reduce(
+    (acc, profile) => {
+      const role = getUserRole(profile.id);
+      acc.total += 1;
+      acc.byRole[role] = (acc.byRole[role] || 0) + 1;
+      return acc;
+    },
+    { total: 0, byRole: {} as Record<string, number> },
+  );
 
   if (roleLoading || loading) {
     return (
@@ -175,7 +188,7 @@ export default function Admin() {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-8 gap-1">
+          <TabsList className="grid grid-cols-2 md:grid-cols-9 gap-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="moderation">
               <Gavel className="h-4 w-4 mr-2" />
@@ -187,10 +200,97 @@ export default function Admin() {
             <TabsTrigger value="plans"><Book className="h-4 w-4 mr-2" />Plans</TabsTrigger>
             <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" />Users</TabsTrigger>
             <TabsTrigger value="events"><CalendarCheck className="h-4 w-4 mr-2" />Events</TabsTrigger>
+            <TabsTrigger value="message-churches">
+              <Building2 className="h-4 w-4 mr-2" />
+              Churches
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            {/* Overview cards omitted for brevity – unchanged logic */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
+                  <CardDescription>Total verses stored</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-semibold">{stats.bibleVerses}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Sermons</CardTitle>
+                  <CardDescription>William Branham sermons</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-semibold">{stats.sermons}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Cross References</CardTitle>
+                  <CardDescription>Connections built</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-semibold">{stats.crossRefs}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardDescription>Registered accounts</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-semibold">{roleSummary.total}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">System Status</CardTitle>
+                  <CardDescription>Supabase connectivity</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Badge
+                    className={
+                      errorMessage ? "bg-amber-500 text-white" : "bg-emerald-600 text-white"
+                    }
+                  >
+                    {errorMessage ? "Needs attention" : "Operational"}
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    {errorMessage || "All admin data sources are responding normally."}
+                  </p>
+                  {lastUpdated && (
+                    <p className="text-xs text-muted-foreground">
+                      Last updated {lastUpdated.toLocaleString()}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">User Roles</CardTitle>
+                  <CardDescription>Role distribution snapshot</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Admins</span>
+                    <span className="font-medium">{roleSummary.byRole.admin || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Moderators</span>
+                    <span className="font-medium">{roleSummary.byRole.moderator || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Users</span>
+                    <span className="font-medium">{roleSummary.byRole.user || 0}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="moderation">
@@ -203,7 +303,49 @@ export default function Admin() {
           <TabsContent value="plans"><ReadingPlanAdmin /></TabsContent>
 
           <TabsContent value="users">
-            {/* User table unchanged – safe */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Users</CardTitle>
+                <CardDescription>All registered accounts and assigned roles.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {profiles.map((profile) => (
+                        <TableRow key={profile.id}>
+                          <TableCell className="font-medium">
+                            {profile.full_name || "—"}
+                          </TableCell>
+                          <TableCell>{profile.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{getUserRole(profile.id)}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(profile.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {profiles.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                            No users found.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="events">
