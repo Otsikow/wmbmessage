@@ -65,6 +65,7 @@ interface AccountSettingsState {
 }
 
 const RESEND_TIMEOUT_SECONDS = 60;
+const AVATAR_BUCKET = "user-uploads";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -125,7 +126,7 @@ export default function Profile() {
               setAvatarUrl(data.avatar_url);
             } else {
               const { data: publicUrlData } = supabase.storage
-                .from("avatars")
+                .from(AVATAR_BUCKET)
                 .getPublicUrl(data.avatar_url);
               setAvatarUrl(publicUrlData?.publicUrl ?? null);
             }
@@ -233,12 +234,12 @@ export default function Profile() {
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from(AVATAR_BUCKET)
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: publicUrlData } = supabase.storage
-        .from("avatars")
+        .from(AVATAR_BUCKET)
         .getPublicUrl(filePath);
       const publicUrl = publicUrlData?.publicUrl ?? null;
 
@@ -276,7 +277,7 @@ export default function Profile() {
     try {
       if (avatarPath && !avatarPath.startsWith("http")) {
         const { error: removeError } = await supabase.storage
-          .from("avatars")
+          .from(AVATAR_BUCKET)
           .remove([avatarPath]);
         if (removeError) throw removeError;
       }
