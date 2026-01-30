@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -22,7 +23,8 @@ export type EngagementActivity =
   | "sermon-reading"
   | "daily-devotional"
   | "note-created"
-  | "library-explore";
+  | "library-explore"
+  | "daily-check-in";
 
 interface ActivityLogEntry {
   date: string; // ISO date representation (YYYY-MM-DD)
@@ -67,6 +69,7 @@ const ACTIVITY_POINTS: Record<EngagementActivity, number> = {
   "daily-devotional": 8,
   "note-created": 6,
   "library-explore": 5,
+  "daily-check-in": 0,
 };
 
 const DEFAULT_STATS: EngagementStats = {
@@ -285,6 +288,17 @@ export function EngagementProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  useEffect(() => {
+    if (hasActivityToday) {
+      return;
+    }
+
+    recordActivity("daily-check-in", {
+      description: "Daily check-in",
+      pointsOverride: 0,
+    });
+  }, [hasActivityToday, recordActivity]);
 
   const nextMilestone = useMemo(
     () => calculateNextMilestone(stats),
