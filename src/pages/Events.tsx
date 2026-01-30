@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, MapPin, Share2, Lock, Unlock, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ interface EventRecord {
   discussionLocked: boolean;
   engagement?: "Interested" | "Going" | null;
   comments: string[];
+  imageUrl?: string;
 }
 
 const initialEvents: EventRecord[] = [
@@ -85,6 +86,8 @@ const initialEvents: EventRecord[] = [
     discussionLocked: false,
     engagement: null,
     comments: ["Looking forward to it!", "Will there be childcare?"],
+    imageUrl:
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1600&q=80",
   },
   {
     id: "event-2",
@@ -111,6 +114,8 @@ const initialEvents: EventRecord[] = [
     discussionLocked: true,
     engagement: "Going",
     comments: ["Excited for the youth to attend!"],
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80",
   },
 ];
 
@@ -148,6 +153,7 @@ export default function Events() {
     visibility: (typeof VISIBILITY_OPTIONS)[number];
     regionCity: string;
     regionCountry: string;
+    imageDataUrl: string;
   }>({
     title: "",
     type: EVENT_TYPES[0],
@@ -168,7 +174,10 @@ export default function Events() {
     visibility: VISIBILITY_OPTIONS[0],
     regionCity: "",
     regionCountry: "",
+    imageDataUrl: "",
   });
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedId) ?? events[0],
@@ -176,6 +185,30 @@ export default function Events() {
   );
 
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const buildMapsLink = (address: string, city: string, country: string) => {
+    const query = encodeURIComponent(`${address}, ${city}, ${country}`);
+    return `https://maps.google.com/?q=${query}`;
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setFormState((prev) => ({ ...prev, imageDataUrl: "" }));
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setFormState((prev) => ({ ...prev, imageDataUrl: result }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCreateEvent = () => {
     if (!formState.title.trim()) {
@@ -211,7 +244,9 @@ export default function Events() {
       address: formState.address.trim(),
       city: formState.city.trim(),
       country: formState.country.trim(),
-      mapsLink: formState.mapsLink.trim() || undefined,
+      mapsLink:
+        formState.mapsLink.trim() ||
+        buildMapsLink(formState.address.trim(), formState.city.trim(), formState.country.trim()),
       format: formState.format,
       registrationLink: formState.registrationLink.trim() || undefined,
       entryType: formState.entryType,
@@ -224,6 +259,7 @@ export default function Events() {
       discussionLocked: false,
       engagement: null,
       comments: [],
+      imageUrl: formState.imageDataUrl || undefined,
     };
 
     setEvents((prev) => [newEvent, ...prev]);
@@ -248,7 +284,11 @@ export default function Events() {
       visibility: VISIBILITY_OPTIONS[0],
       regionCity: "",
       regionCountry: "",
+      imageDataUrl: "",
     });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     toast.success("Event submitted for admin approval.");
   };
 
@@ -376,6 +416,28 @@ export default function Events() {
                     placeholder="Optional details for attendees"
                     rows={4}
                   />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="event-image">Event image</Label>
+                  <Input
+                    id="event-image"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload a banner image to make the event page feel more vibrant.
+                  </p>
+                  {formState.imageDataUrl && (
+                    <div className="mt-2 overflow-hidden rounded-lg border border-border/60">
+                      <img
+                        src={formState.imageDataUrl}
+                        alt="Event preview"
+                        className="h-40 w-full object-cover"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="start-date">Start date & time *</Label>
@@ -629,6 +691,36 @@ export default function Events() {
                       <span>
                         {selectedEvent.address}, {selectedEvent.city}, {selectedEvent.country}
                       </span>
+                      {selectedEvent.mapsLink && (
+                        <Button
+                          asChild
+                          variant="link"
+                          size="sm"
+                          className="px-0 text-primary"
+                        >
+                          <a href={selectedEvent.mapsLink} target="_blank" rel="noreferrer">
+                            Open in Google Maps
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/40">
+                      {selectedEvent.imageUrl ? (
+                        <img
+                          src={selectedEvent.imageUrl}
+                          alt={`${selectedEvent.title} banner`}
+                          className="h-48 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-48 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-muted">
+                          <div className="text-center">
+                            <p className="text-sm font-semibold">Add an event image</p>
+                            <p className="text-xs text-muted-foreground">
+                              Upload a banner to highlight the experience.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">{selectedEvent.shortDescription}</p>
                     {selectedEvent.fullDescription && (
