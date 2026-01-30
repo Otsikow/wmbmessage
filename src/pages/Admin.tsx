@@ -188,7 +188,7 @@ export default function Admin() {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-9 gap-1">
+          <TabsList className="relative z-10 grid grid-cols-2 md:grid-cols-9 gap-1 bg-muted">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="moderation">
               <Gavel className="h-4 w-4 mr-2" />
