@@ -50,6 +50,7 @@ import ReadingPlans from "./pages/ReadingPlans";
 import ReadingPlanDetail from "./pages/ReadingPlanDetail";
 import ReadingSession from "./pages/ReadingSession";
 import PrayerBoard from "./pages/PrayerBoard";
+import CreatePrayer from "./pages/CreatePrayer";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -244,6 +245,10 @@ function App() {
                                   <Route
                                     path="/prayer-board"
                                     element={withSectionBoundary("Prayer Board", <PrayerBoard />)}
+                                  />
+                                  <Route
+                                    path="/prayer-board/create"
+                                    element={withSectionBoundary("Create Prayer", <CreatePrayer />)}
                                   />
 
                                   {/* Auth Routes */}
