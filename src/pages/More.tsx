@@ -10,6 +10,7 @@ import {
   FileText,
   Library as LibraryIcon,
   Target,
+  HeartHandshake,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
@@ -39,6 +40,7 @@ export default function More() {
       title: "Community",
       items: [
         { icon: MessageSquare, label: "Message Churches Directory", path: "/message-churches" },
+        { icon: HeartHandshake, label: "Prayer Board", path: "/prayer-board" },
       ],
     },
     {
