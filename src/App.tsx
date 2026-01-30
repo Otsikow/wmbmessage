@@ -36,6 +36,7 @@ import Share from "./pages/Share";
 import MessageChurchDirectory from "./pages/MessageChurchDirectory";
 import MessageChurchSubmission from "./pages/MessageChurchSubmission";
 import MessageChurchDetail from "./pages/MessageChurchDetail";
+import Testimonies from "./pages/Testimonies";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import About from "./pages/About";
@@ -209,6 +210,10 @@ function App() {
                                   <Route
                                     path="/message-churches/:id"
                                     element={withSectionBoundary("Message Church Details", <MessageChurchDetail />)}
+                                  />
+                                  <Route
+                                    path="/testimonies"
+                                    element={withSectionBoundary("Testimonies", <Testimonies />)}
                                   />
                                   <Route
                                     path="/help"
