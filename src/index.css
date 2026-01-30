@@ -32,7 +32,7 @@
     --primary-hover: 215 80% 30%;
 
     --secondary: 35 55% 52%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 25 30% 15%;
     --secondary-hover: 35 60% 47%;
 
     --muted: 215 15% 95%;
@@ -81,7 +81,7 @@
     --primary-hover: 24 70% 40%;
 
     --secondary: 32 65% 54%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 24 35% 18%;
     --secondary-hover: 32 65% 47%;
 
     --muted: 30 35% 88%;
@@ -122,7 +122,7 @@
     --primary-hover: 205 80% 40%;
 
     --secondary: 195 70% 50%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 215 30% 18%;
     --secondary-hover: 195 70% 45%;
 
     --muted: 210 30% 90%;
@@ -163,7 +163,7 @@
     --primary-hover: 220 100% 28%;
 
     --secondary: 35 100% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 30 35% 12%;
     --secondary-hover: 35 100% 38%;
 
     --muted: 0 0% 92%;
@@ -212,7 +212,7 @@
 
     /* Golden secondary for accents */
     --secondary: 40 70% 55%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 25 30% 12%;
     --secondary-hover: 40 70% 48%;
 
     --muted: 0 0% 15%;
@@ -254,7 +254,7 @@
     --primary-hover: 217 91% 50%;
 
     --secondary: 40 70% 55%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 215 30% 15%;
     --secondary-hover: 40 70% 48%;
 
     --muted: 25 20% 18%;
@@ -295,7 +295,7 @@
     --primary-hover: 217 91% 50%;
 
     --secondary: 40 70% 55%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 215 30% 15%;
     --secondary-hover: 40 70% 48%;
 
     --muted: 215 18% 18%;
