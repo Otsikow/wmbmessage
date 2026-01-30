@@ -6,12 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Plus, Trash2, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import { useCalendar } from "@/contexts/CalendarContext";
 import BackButton from "@/components/BackButton";
+import { Link } from "react-router-dom";
 
 export default function Calendar() {
   const { events, addEvent, deleteEvent } = useCalendar();
@@ -23,6 +24,17 @@ export default function Calendar() {
     description: "",
     date: new Date(),
   });
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const attendedEvents = [...events]
+    .filter((event) => event.date < todayStart)
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 3);
+  const upcomingEvents = [...events]
+    .filter((event) => event.date >= todayStart)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 3);
 
   const handleAddEvent = () => {
     if (!newEvent.title.trim()) {
@@ -174,6 +186,77 @@ export default function Calendar() {
               )}
             </div>
           </div>
+
+          <section className="mt-8 sm:mt-10 space-y-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-semibold">Post-Event Engagement Loop</h2>
+              <p className="text-sm text-muted-foreground">
+                Keep momentum going after gatherings with testimonies, prayer, and meaningful follow-ups.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="p-4 sm:p-6 space-y-4 border-border/60">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">After your event</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Prompt testimonies and prayer requests while the experience is fresh.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild>
+                    <Link to="/testimonies">Share a testimony</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/prayer-board">Request prayer</Link>
+                  </Button>
+                </div>
+                <div className="rounded-lg border border-dashed border-border/70 bg-muted/30 p-4 text-sm text-muted-foreground">
+                  Encourage attendees to invite friends and share internally with their teams or groups.
+                </div>
+              </Card>
+
+              <Card className="p-4 sm:p-6 space-y-4 border-border/60">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Highlights</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Surface the moments people attended and what’s coming up nearby.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold">Events you attended</p>
+                    {attendedEvents.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No past events yet.</p>
+                    ) : (
+                      <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+                        {attendedEvents.map((event) => (
+                          <li key={event.id} className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-foreground">{event.title}</span>
+                            <span>{format(event.date, "PPP")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Upcoming events near you</p>
+                    {upcomingEvents.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No upcoming events scheduled.</p>
+                    ) : (
+                      <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+                        {upcomingEvents.map((event) => (
+                          <li key={event.id} className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-foreground">{event.title}</span>
+                            <span>{format(event.date, "PPP")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
       <Navigation />
