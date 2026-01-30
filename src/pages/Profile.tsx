@@ -25,9 +25,7 @@ import {
   Upload,
   Trash2,
   Settings as SettingsIcon,
-  Bell,
   Calendar,
-  Megaphone,
   CheckCircle2,
   Clock,
   RefreshCcw,
@@ -36,6 +34,9 @@ import {
   Type,
   BookOpen,
   RotateCcw,
+  MessageCircle,
+  MailCheck,
+  BellRing,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { getFriendlyErrorMessage } from "@/lib/errorHandling";
@@ -56,9 +57,10 @@ import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
 
 interface AccountSettingsState {
+  whatsappNotifications: boolean;
   emailNotifications: boolean;
-  weeklySummary: boolean;
-  productUpdates: boolean;
+  eventDigestEmail: boolean;
+  eventReminderEmail: boolean;
 }
 
 const RESEND_TIMEOUT_SECONDS = 60;
@@ -85,9 +87,10 @@ export default function Profile() {
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [accountSettings, setAccountSettings] = useState<AccountSettingsState>({
+    whatsappNotifications: true,
     emailNotifications: false,
-    weeklySummary: false,
-    productUpdates: false,
+    eventDigestEmail: false,
+    eventReminderEmail: false,
   });
   const [updatingSetting, setUpdatingSetting] =
     useState<keyof AccountSettingsState | null>(null);
@@ -147,18 +150,22 @@ export default function Profile() {
 
     if (metadata) {
       setAccountSettings((prev) => ({
+        whatsappNotifications:
+          typeof metadata.whatsappNotifications === "boolean"
+            ? metadata.whatsappNotifications
+            : prev.whatsappNotifications,
         emailNotifications:
           typeof metadata.emailNotifications === "boolean"
             ? metadata.emailNotifications
             : prev.emailNotifications,
-        weeklySummary:
-          typeof metadata.weeklySummary === "boolean"
-            ? metadata.weeklySummary
-            : prev.weeklySummary,
-        productUpdates:
-          typeof metadata.productUpdates === "boolean"
-            ? metadata.productUpdates
-            : prev.productUpdates,
+        eventDigestEmail:
+          typeof metadata.eventDigestEmail === "boolean"
+            ? metadata.eventDigestEmail
+            : prev.eventDigestEmail,
+        eventReminderEmail:
+          typeof metadata.eventReminderEmail === "boolean"
+            ? metadata.eventReminderEmail
+            : prev.eventReminderEmail,
       }));
     }
   }, [user]);
@@ -683,28 +690,38 @@ export default function Profile() {
                     Communication Preferences
                   </CardTitle>
                   <CardDescription>
-                    Decide how MessageGuide keeps you informed.
+                    Choose your channels for clean, mobile-friendly event updates.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
                     {
+                      key: "whatsappNotifications",
+                      icon: (
+                        <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                      ),
+                      title: "WhatsApp alerts",
+                      desc: "Keep WhatsApp as your primary channel for event updates.",
+                    },
+                    {
                       key: "emailNotifications",
-                      icon: <Bell className="h-5 w-5 text-muted-foreground" />,
+                      icon: <MailCheck className="h-5 w-5 text-muted-foreground" />,
                       title: "Email notifications",
-                      desc: "Receive alerts about important account activity.",
+                      desc: "Enable non-promotional emails without affecting WhatsApp alerts.",
                     },
                     {
-                      key: "weeklySummary",
+                      key: "eventDigestEmail",
                       icon: <Calendar className="h-5 w-5 text-muted-foreground" />,
-                      title: "Weekly summary",
-                      desc: "Get a weekly recap of new sermons and study guides.",
+                      title: "Weekly event digest",
+                      desc: "Receive a weekly roundup of upcoming events.",
+                      requiresEmail: true,
                     },
                     {
-                      key: "productUpdates",
-                      icon: <Megaphone className="h-5 w-5 text-muted-foreground" />,
-                      title: "Product updates",
-                      desc: "Hear about new features and improvements first.",
+                      key: "eventReminderEmail",
+                      icon: <BellRing className="h-5 w-5 text-muted-foreground" />,
+                      title: "Event reminder (24 hours before)",
+                      desc: "Get a reminder email a day before each event.",
+                      requiresEmail: true,
                     },
                   ].map((setting) => (
                     <div
@@ -732,7 +749,11 @@ export default function Profile() {
                             checked,
                           )
                         }
-                        disabled={updatingSetting === setting.key}
+                        disabled={
+                          updatingSetting === setting.key ||
+                          (setting.requiresEmail &&
+                            !accountSettings.emailNotifications)
+                        }
                       />
                     </div>
                   ))}
