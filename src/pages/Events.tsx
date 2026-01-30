@@ -667,16 +667,16 @@ export default function Events() {
               </Card>
 
               {selectedEvent && (
-                <Card className="p-5 sm:p-6 space-y-5">
+                <Card className="p-4 sm:p-6 space-y-5">
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">Event page</p>
-                        <h2 className="text-xl font-semibold">{selectedEvent.title}</h2>
+                        <h2 className="text-lg font-semibold sm:text-xl">{selectedEvent.title}</h2>
                       </div>
-                      <Badge>{selectedEvent.type}</Badge>
+                      <Badge className="self-start">{selectedEvent.type}</Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:text-sm">
                       <Badge variant="secondary">{STATUS_LABELS[selectedEvent.status]}</Badge>
                       <span className="inline-flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
@@ -684,11 +684,11 @@ export default function Events() {
                         {" "}
                         {formatInTimeZone(selectedEvent.endAt, userTimeZone)}
                       </span>
-                      <span className="text-xs">(Your timezone: {userTimeZone})</span>
+                      <span className="text-[11px] sm:text-xs">(Your timezone: {userTimeZone})</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>
+                    <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:text-sm">
+                      <span className="inline-flex items-start gap-2">
+                        <MapPin className="mt-0.5 h-4 w-4" />
                         {selectedEvent.address}, {selectedEvent.city}, {selectedEvent.country}
                       </span>
                       {selectedEvent.mapsLink && (
@@ -696,7 +696,7 @@ export default function Events() {
                           asChild
                           variant="link"
                           size="sm"
-                          className="px-0 text-primary"
+                          className="h-auto px-0 text-primary"
                         >
                           <a href={selectedEvent.mapsLink} target="_blank" rel="noreferrer">
                             Open in Google Maps
@@ -709,10 +709,10 @@ export default function Events() {
                         <img
                           src={selectedEvent.imageUrl}
                           alt={`${selectedEvent.title} banner`}
-                          className="h-48 w-full object-cover"
+                          className="h-40 w-full object-cover sm:h-48"
                         />
                       ) : (
-                        <div className="flex h-48 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-muted">
+                        <div className="flex h-40 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-muted sm:h-48">
                           <div className="text-center">
                             <p className="text-sm font-semibold">Add an event image</p>
                             <p className="text-xs text-muted-foreground">
@@ -722,35 +722,43 @@ export default function Events() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{selectedEvent.shortDescription}</p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">{selectedEvent.shortDescription}</p>
                     {selectedEvent.fullDescription && (
-                      <p className="text-sm text-muted-foreground">{selectedEvent.fullDescription}</p>
+                      <p className="text-xs text-muted-foreground sm:text-sm">{selectedEvent.fullDescription}</p>
                     )}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <Badge variant="outline">{selectedEvent.format}</Badge>
                       <Badge variant="outline">{selectedEvent.entryType} entry</Badge>
                       <Badge variant="outline">Visibility: {selectedEvent.visibility}</Badge>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <Button variant="outline" onClick={() => toast.success("Calendar invite created.")}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => toast.success("Calendar invite created.")}
                     >
                       Add to Calendar
                     </Button>
                     <Button
                       variant={selectedEvent.engagement === "Interested" ? "default" : "outline"}
+                      className="w-full sm:w-auto"
                       onClick={() => handleEngagement("Interested")}
                     >
                       I’m Interested
                     </Button>
                     <Button
                       variant={selectedEvent.engagement === "Going" ? "default" : "outline"}
+                      className="w-full sm:w-auto"
                       onClick={() => handleEngagement("Going")}
                     >
                       I’m Going
                     </Button>
-                    <Button variant="ghost" className="gap-2" onClick={() => toast.success("Shared internally.")}
+                    <Button
+                      variant="ghost"
+                      className="w-full gap-2 sm:w-auto"
+                      onClick={() => toast.success("Shared internally.")}
                     >
                       <Share2 className="h-4 w-4" />
                       Share
