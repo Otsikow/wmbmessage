@@ -188,23 +188,45 @@ export default function Admin() {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="relative z-10 grid grid-cols-2 md:grid-cols-9 gap-1 bg-muted">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="moderation">
-              <Gavel className="h-4 w-4 mr-2" />
-              Moderation
-            </TabsTrigger>
-            <TabsTrigger value="bible"><Book className="h-4 w-4 mr-2" />Bible</TabsTrigger>
-            <TabsTrigger value="sermons"><MessageSquare className="h-4 w-4 mr-2" />Sermons</TabsTrigger>
-            <TabsTrigger value="crossrefs"><Link2 className="h-4 w-4 mr-2" />Cross Refs</TabsTrigger>
-            <TabsTrigger value="plans"><Book className="h-4 w-4 mr-2" />Plans</TabsTrigger>
-            <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" />Users</TabsTrigger>
-            <TabsTrigger value="events"><CalendarCheck className="h-4 w-4 mr-2" />Events</TabsTrigger>
-            <TabsTrigger value="message-churches">
-              <Building2 className="h-4 w-4 mr-2" />
-              Churches
-            </TabsTrigger>
-          </TabsList>
+          <div className="relative z-20 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+            <TabsList className="inline-flex h-auto min-w-max gap-1 p-1 bg-muted rounded-lg">
+              <TabsTrigger value="overview" className="px-3 py-2 text-xs whitespace-nowrap">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="moderation" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Gavel className="h-3.5 w-3.5 mr-1.5" />
+                Moderation
+              </TabsTrigger>
+              <TabsTrigger value="bible" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Book className="h-3.5 w-3.5 mr-1.5" />
+                Bible
+              </TabsTrigger>
+              <TabsTrigger value="sermons" className="px-3 py-2 text-xs whitespace-nowrap">
+                <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                Sermons
+              </TabsTrigger>
+              <TabsTrigger value="crossrefs" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                Cross Refs
+              </TabsTrigger>
+              <TabsTrigger value="plans" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Book className="h-3.5 w-3.5 mr-1.5" />
+                Plans
+              </TabsTrigger>
+              <TabsTrigger value="users" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="events" className="px-3 py-2 text-xs whitespace-nowrap">
+                <CalendarCheck className="h-3.5 w-3.5 mr-1.5" />
+                Events
+              </TabsTrigger>
+              <TabsTrigger value="message-churches" className="px-3 py-2 text-xs whitespace-nowrap">
+                <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                Churches
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
