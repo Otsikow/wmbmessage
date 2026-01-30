@@ -11,8 +11,9 @@ import {
   FileText,
   Library as LibraryIcon,
   Target,
+  HeartHandshake,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -40,7 +41,21 @@ export default function More() {
       title: "Community",
       items: [
         { icon: CalendarDays, label: "Events", path: "/events" },
-        { icon: MessageSquare, label: "Message Churches Directory", path: "/message-churches" },
+        {
+          icon: MessageSquare,
+          label: "Message Churches Directory",
+          path: "/message-churches",
+        },
+        {
+          icon: HeartHandshake,
+          label: "Prayer Board",
+          path: "/prayer-board",
+        },
+        {
+          icon: HeartHandshake,
+          label: "Testimonies",
+          path: "/testimonies",
+        },
       ],
     },
     {
@@ -59,7 +74,9 @@ export default function More() {
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
             <BackButton />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">More</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              More
+            </h1>
           </div>
 
           <div className="space-y-6 sm:space-y-8">
@@ -68,6 +85,7 @@ export default function More() {
                 <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
                   {section.title}
                 </h2>
+
                 <div className="bg-card border border-border rounded-lg divide-y divide-border">
                   {section.items.map((item) => {
                     const Icon = item.icon;
@@ -78,7 +96,9 @@ export default function More() {
                         className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-muted/50 transition-colors"
                       >
                         <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                        <span className="flex-1 font-medium text-sm sm:text-base">{item.label}</span>
+                        <span className="flex-1 font-medium text-sm sm:text-base">
+                          {item.label}
+                        </span>
                       </Link>
                     );
                   })}
@@ -88,7 +108,7 @@ export default function More() {
           </div>
         </div>
       </div>
-      
+
       <Footer />
       <div className="md:hidden">
         <Navigation />
