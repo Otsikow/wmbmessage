@@ -31,6 +31,7 @@ import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
 import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
+import Events from "./pages/Events";
 import Downloads from "./pages/Downloads";
 import Share from "./pages/Share";
 import MessageChurchDirectory from "./pages/MessageChurchDirectory";
@@ -188,6 +189,10 @@ function App() {
                                   <Route
                                     path="/calendar"
                                     element={withSectionBoundary("Calendar", <Calendar />)}
+                                  />
+                                  <Route
+                                    path="/events"
+                                    element={withSectionBoundary("Events", <Events />)}
                                   />
                                   <Route
                                     path="/downloads"
