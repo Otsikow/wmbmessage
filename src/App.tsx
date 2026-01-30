@@ -20,6 +20,7 @@ import SectionErrorBoundary from "@/components/SectionErrorBoundary";
 import ContextProviderBoundary from "@/components/ContextProviderBoundary";
 import { RouteTransitionIndicator } from "@/components/RouteTransitionIndicator";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Pages
 import Index from "./pages/Index";
@@ -113,6 +114,7 @@ function App() {
                             >
                               <ReadingPlanProvider>
                                 <BrowserRouter>
+                                  <ScrollToTop />
                                   <TooltipProvider>
                                     <Toaster />
                                     <Sonner />
