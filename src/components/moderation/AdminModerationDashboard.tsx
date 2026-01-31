@@ -8,7 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { TestimonyCategory, testimonyCategoryLabels } from '@/types/testimonies';
-import { MessageSquareText, ShieldCheck, Flag, Archive, Pencil, CheckCircle2, XCircle } from 'lucide-react';
+import { MessageSquareText, ShieldCheck, Flag, Archive, Pencil, CheckCircle2, XCircle, CalendarDays } from 'lucide-react';
+import { format } from 'date-fns';
 
 type ModerationRole = 'admin' | 'moderator' | 'user';
 
@@ -24,40 +25,15 @@ interface PendingTestimony {
   createdAt: string;
 }
 
-const reviewQueue = {
-  testimonies: [
-    {
-      id: 'TS-241',
-      name: 'Jordan Matthews',
-      submittedAt: '2h ago',
-      category: 'Healing',
-      excerpt: 'Shared how the prayer team supported their recovery journey.',
-    },
-    {
-      id: 'TS-240',
-      name: 'Avery Collins',
-      submittedAt: '5h ago',
-      category: 'Provision',
-      excerpt: 'Offered testimony about a new job after community prayer.',
-    },
-  ],
-  prayers: [
-    {
-      id: 'PR-118',
-      name: 'Mika Bryant',
-      submittedAt: '45m ago',
-      category: 'Family',
-      flagReason: 'Multiple reports for personal info',
-    },
-    {
-      id: 'PR-117',
-      name: 'Devin Hall',
-      submittedAt: '3h ago',
-      category: 'Health',
-      flagReason: 'Potentially harmful advice',
-    },
-  ],
-};
+interface PendingEvent {
+  id: string;
+  title: string;
+  type: string;
+  city: string;
+  startAt: string;
+  submittedBy: string;
+  createdAt: string;
+}
 
 const actionLogs = [
   {
@@ -86,30 +62,6 @@ const actionLogs = [
   },
 ];
 
-const commentThreads = [
-  {
-    id: 'CT-55',
-    title: 'Healing prayer follow-ups',
-    status: 'Active',
-    reports: 2,
-    lastUpdate: '20m ago',
-  },
-  {
-    id: 'CT-54',
-    title: 'Provision testimony comments',
-    status: 'Needs review',
-    reports: 4,
-    lastUpdate: '1h ago',
-  },
-  {
-    id: 'CT-53',
-    title: 'Prayer request thread - Teens',
-    status: 'Locked',
-    reports: 1,
-    lastUpdate: 'Yesterday',
-  },
-];
-
 const categoryActivity = [
   { name: 'Healing', percent: 68 },
   { name: 'Provision', percent: 52 },
@@ -127,9 +79,13 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
   const testimonyActionDisabledText = isAdmin
     ? 'Admin access granted.'
     : 'Only admins can approve or reject testimonies.';
+  
   const [pendingTestimonies, setPendingTestimonies] = useState<PendingTestimony[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<PendingEvent[]>([]);
   const [pendingLoading, setPendingLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [pendingError, setPendingError] = useState<string | null>(null);
+  const [eventsError, setEventsError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const pendingCountLabel = pendingLoading ? '—' : pendingTestimonies.length.toString();
@@ -138,6 +94,13 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     : pendingTestimonies.length === 0
       ? 'No testimonies awaiting review'
       : `${pendingTestimonies.length} awaiting review`;
+
+  const eventsCountLabel = eventsLoading ? '—' : pendingEvents.length.toString();
+  const eventsSubLabel = eventsLoading
+    ? 'Loading events...'
+    : pendingEvents.length === 0
+      ? 'No events awaiting approval'
+      : `${pendingEvents.length} pending`;
 
   const formatExcerpt = (text: string) => (text.length > 140 ? `${text.slice(0, 137).trim()}...` : text);
 
@@ -166,7 +129,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
 
       if (error) throw error;
 
-      const mapped = (data ?? []).map((item) => ({
+      const mapped = (data ?? []).map((item: any) => ({
         id: item.id,
         displayName: resolveDisplayName(item.identity_preference, item.display_name),
         category: item.category as TestimonyCategory,
@@ -182,6 +145,44 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
       setPendingTestimonies([]);
     } finally {
       setPendingLoading(false);
+    }
+  };
+
+  const fetchPendingEvents = async () => {
+    if (!isAdmin) {
+      setPendingEvents([]);
+      setEventsLoading(false);
+      return;
+    }
+
+    setEventsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, title, type, city, start_at, contact_name, created_at')
+        .eq('status', 'PENDING')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped = (data ?? []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        city: item.city,
+        startAt: item.start_at,
+        submittedBy: item.contact_name || 'Unknown',
+        createdAt: item.created_at,
+      }));
+
+      setPendingEvents(mapped);
+      setEventsError(null);
+    } catch (error) {
+      console.error('Unable to load pending events', error);
+      setEventsError('Unable to load pending events.');
+      setPendingEvents([]);
+    } finally {
+      setEventsLoading(false);
     }
   };
 
@@ -221,8 +222,39 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     }
   };
 
+  const updateEventStatus = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    if (!isAdmin) {
+      toast({
+        title: 'Admin access required.',
+        description: 'Only admins can approve or reject events.',
+      });
+      return;
+    }
+
+    setUpdatingId(id);
+    try {
+      const { error } = await supabase.from('events').update({ status }).eq('id', id);
+      if (error) throw error;
+
+      setPendingEvents((prev) => prev.filter((item) => item.id !== id));
+      toast({
+        title: `Event ${status.toLowerCase()}.`,
+        description: 'The event queue has been updated.',
+      });
+    } catch (error) {
+      console.error('Unable to update event status', error);
+      toast({
+        title: 'Unable to update event.',
+        description: 'Please try again or check your permissions.',
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchPendingTestimonies();
+    fetchPendingEvents();
   }, [isAdmin]);
 
   const testimonyCards = useMemo(() => pendingTestimonies, [pendingTestimonies]);
@@ -242,12 +274,12 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Flagged prayers</CardTitle>
-            <Flag className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending events</CardTitle>
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">6</div>
-            <p className="text-xs text-muted-foreground">2 urgent reviews</p>
+            <div className="text-2xl font-bold">{eventsCountLabel}</div>
+            <p className="text-xs text-muted-foreground">{eventsSubLabel}</p>
           </CardContent>
         </Card>
         <Card>
@@ -271,6 +303,85 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Events Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Flag className="h-5 w-5 text-amber-500" />
+            Pending Event Approvals
+          </CardTitle>
+          <CardDescription>Review submissions before they appear on the public calendar.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {eventsError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              {eventsError}
+            </div>
+          )}
+          {!eventsLoading && pendingEvents.length === 0 && !eventsError && (
+            <div className="rounded-lg border border-dashed border-muted p-6 text-center text-sm text-muted-foreground">
+              No events are waiting for approval. Check back soon.
+            </div>
+          )}
+          {pendingEvents.length > 0 && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Event</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Submitted By</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingEvents.map((event) => {
+                    const isUpdating = updatingId === event.id;
+                    return (
+                      <TableRow key={event.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-xs text-muted-foreground">{event.city}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{format(new Date(event.startAt), 'MMM d, yyyy')}</TableCell>
+                        <TableCell>{event.submittedBy}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{event.type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              size="sm"
+                              disabled={!isAdmin || isUpdating}
+                              onClick={() => updateEventStatus(event.id, 'APPROVED')}
+                            >
+                              <CheckCircle2 className="mr-1 h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!isAdmin || isUpdating}
+                              onClick={() => updateEventStatus(event.id, 'REJECTED')}
+                            >
+                              <XCircle className="mr-1 h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -301,7 +412,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                         {formatSubmittedAt(item.createdAt)} · {testimonyCategoryLabels[item.category]}
                       </p>
                     </div>
-                    <Badge variant="secondary">{item.id}</Badge>
+                    <Badge variant="secondary">{item.id.slice(0, 8)}</Badge>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">{item.excerpt}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -317,10 +428,6 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                     <Button size="sm" variant="secondary" disabled={isTestimonyActionDisabled} title={testimonyActionDisabledText}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={isTestimonyActionDisabled} title={testimonyActionDisabledText}>
-                      <MessageSquareText className="mr-2 h-4 w-4" />
-                      Comment
                     </Button>
                     <Button
                       size="sm"
@@ -351,93 +458,32 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
 
         <Card>
           <CardHeader>
-            <CardTitle>Flagged prayer requests</CardTitle>
-            <CardDescription>Resolve safety and privacy concerns quickly.</CardDescription>
+            <CardTitle>Admin Action Log</CardTitle>
+            <CardDescription>Every admin action is tracked for accountability.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {reviewQueue.prayers.map((item) => (
-              <div key={item.id} className="rounded-lg border border-muted p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.submittedAt} · {item.category}</p>
-                  </div>
-                  <Badge variant="destructive">Flagged</Badge>
+            {actionLogs.map((log) => (
+              <div key={log.id} className="flex items-start justify-between gap-3 rounded-lg border border-muted p-3">
+                <div>
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      log.action.includes('Approved') ? 'text-emerald-600 border-emerald-200' :
+                      log.action.includes('Hidden') ? 'text-amber-600 border-amber-200' :
+                      'text-blue-600 border-blue-200'
+                    }
+                  >
+                    {log.action}
+                  </Badge>
+                  <p className="mt-1 font-medium">{log.target}</p>
+                  <p className="text-xs text-muted-foreground">{log.actor}</p>
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">{item.flagReason}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="secondary">
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="destructive">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Reject
-                  </Button>
-                  <Button size="sm" variant="ghost" disabled={!isAdmin} title={actionDisabledText}>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Archive
-                  </Button>
-                </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{log.time}</span>
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Comment moderation</CardTitle>
-          <CardDescription>Manage discussion safety across prayer and testimony threads.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Thread</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reports</TableHead>
-                  <TableHead>Last update</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {commentThreads.map((thread) => (
-                  <TableRow key={thread.id}>
-                    <TableCell className="font-medium">
-                      {thread.title}
-                      <p className="text-xs text-muted-foreground">{thread.id}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={thread.status === 'Locked' ? 'secondary' : 'default'}>
-                        {thread.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{thread.reports}</TableCell>
-                    <TableCell>{thread.lastUpdate}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Button size="sm" variant="outline">Hide</Button>
-                        <Button size="sm" variant="destructive" disabled={!isAdmin} title={actionDisabledText}>
-                          Delete
-                        </Button>
-                        <Button size="sm" variant="secondary" disabled={!isAdmin} title={actionDisabledText}>
-                          Lock thread
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -460,57 +506,21 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
 
         <Card>
           <CardHeader>
-            <CardTitle>Repeat contributors</CardTitle>
-            <CardDescription>Top users returning to engage.</CardDescription>
+            <CardTitle>Quick Stats</CardTitle>
+            <CardDescription>Overview of moderation activity.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {['S. Rivera', 'K. Adams', 'M. Johnson', 'T. Clarke'].map((name) => (
-              <div key={name} className="flex items-center justify-between">
-                <span className="text-sm font-medium">{name}</span>
-                <Badge variant="secondary">3+ submissions</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Role-based access</CardTitle>
-            <CardDescription>Permissions are enforced per role.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Signed-in role</span>
-              <Badge variant="default">{role}</Badge>
+            <div className="flex items-center justify-between rounded-lg border border-muted p-3">
+              <span className="text-sm font-medium">Total approved today</span>
+              <Badge variant="secondary">12</Badge>
             </div>
-            <div className="rounded-md border border-muted p-3 text-sm text-muted-foreground">
-              {isAdmin
-                ? 'Admins can approve, reject, edit, archive, delete, and lock threads.'
-                : 'Moderators can review queues, leave notes, and hide threads. Admin approval is required for testimony decisions, deletions, and locks.'}
+            <div className="flex items-center justify-between rounded-lg border border-muted p-3">
+              <span className="text-sm font-medium">Pending reviews</span>
+              <Badge variant="secondary">{pendingTestimonies.length + pendingEvents.length}</Badge>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Action logs</CardTitle>
-            <CardDescription>Every moderation action is recorded.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {actionLogs.map((log) => (
-                <div key={log.id} className="rounded-lg border border-muted p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{log.action}</span>
-                    <Badge variant="secondary">{log.result}</Badge>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {log.actor} · {log.target} · {log.time}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between rounded-lg border border-muted p-3">
+              <span className="text-sm font-medium">Avg. response time</span>
+              <Badge variant="secondary">2.4h</Badge>
             </div>
           </CardContent>
         </Card>

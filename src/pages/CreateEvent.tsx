@@ -1,5 +1,5 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
 import Navigation from "@/components/Navigation";
@@ -11,8 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EVENT_TYPES, EVENT_FORMATS, ENTRY_TYPES, VISIBILITY_OPTIONS } from "@/data/events";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import type { EventFormState } from "@/types/events";
 
-const INITIAL_FORM_STATE = {
+const INITIAL_FORM_STATE: EventFormState = {
   title: "",
   type: EVENT_TYPES[0],
   shortDescription: "",
@@ -32,14 +35,69 @@ const INITIAL_FORM_STATE = {
   visibility: VISIBILITY_OPTIONS[0],
   regionCity: "",
   regionCountry: "",
-  imageDataUrl: "",
+  imageFile: null,
+  imagePreviewUrl: "",
 };
 
 export default function CreateEvent() {
-  const [formState, setFormState] = useState(INITIAL_FORM_STATE);
+  const { eventId } = useParams<{ eventId?: string }>();
+  const [formState, setFormState] = useState<EventFormState>(INITIAL_FORM_STATE);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isEditMode = Boolean(eventId);
+
+  // Load event data if editing
+  useEffect(() => {
+    if (eventId && user) {
+      setIsLoading(true);
+      supabase
+        .from("events")
+        .select("*")
+        .eq("id", eventId)
+        .single()
+        .then(({ data, error }) => {
+          if (error || !data) {
+            toast.error("Unable to load event for editing.");
+            navigate("/events");
+            return;
+          }
+          // Check if user owns this event
+          if (data.user_id !== user?.id) {
+            toast.error("You can only edit your own events.");
+            navigate("/events");
+            return;
+          }
+          setFormState({
+            title: data.title,
+            type: data.type,
+            shortDescription: data.short_description,
+            fullDescription: data.full_description || "",
+            startAt: data.start_at ? new Date(data.start_at).toISOString().slice(0, 16) : "",
+            endAt: data.end_at ? new Date(data.end_at).toISOString().slice(0, 16) : "",
+            timeZone: data.time_zone,
+            address: data.address,
+            city: data.city,
+            country: data.country,
+            mapsLink: data.maps_link || "",
+            format: data.format,
+            registrationLink: data.registration_link || "",
+            entryType: data.entry_type,
+            contactName: data.contact_name || "",
+            contactInfo: data.contact_info || "",
+            visibility: data.visibility,
+            regionCity: data.region_city || "",
+            regionCountry: data.region_country || "",
+            imageFile: null,
+            imagePreviewUrl: data.image_url || "",
+          });
+          setIsLoading(false);
+        });
+    }
+  }, [eventId, user, navigate]);
 
   const resetForm = () => {
     setFormState(INITIAL_FORM_STATE);
@@ -51,23 +109,37 @@ export default function CreateEvent() {
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      setFormState((prev) => ({ ...prev, imageDataUrl: "" }));
+      setFormState((prev) => ({ ...prev, imageFile: null, imagePreviewUrl: "" }));
       return;
     }
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file.");
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setFormState((prev) => ({ ...prev, imageDataUrl: result }));
-    };
-    reader.readAsDataURL(file);
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setFormState((prev) => ({ ...prev, imageFile: file, imagePreviewUrl: previewUrl }));
   };
 
-  const handleCreateEvent = () => {
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `event-${Date.now()}.${fileExt}`;
+    const filePath = `events/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("user-uploads")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("user-uploads").getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  const handleCreateEvent = async () => {
     if (!formState.title.trim()) {
       toast.error("Event title is required.");
       return;
@@ -89,10 +161,77 @@ export default function CreateEvent() {
       return;
     }
 
-    toast.success("Event submitted for admin approval.");
-    resetForm();
-    navigate("/events");
+    setIsSubmitting(true);
+    try {
+      let imageUrl = formState.imagePreviewUrl;
+      
+      // Upload image if a new file was selected
+      if (formState.imageFile) {
+        const uploadedUrl = await uploadImage(formState.imageFile);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+
+      const eventData = {
+        user_id: user?.id || null,
+        title: formState.title.trim(),
+        type: formState.type,
+        short_description: formState.shortDescription.trim(),
+        full_description: formState.fullDescription.trim() || null,
+        start_at: new Date(formState.startAt).toISOString(),
+        end_at: new Date(formState.endAt).toISOString(),
+        time_zone: formState.timeZone.trim(),
+        address: formState.address.trim(),
+        city: formState.city.trim(),
+        country: formState.country.trim(),
+        maps_link: formState.mapsLink.trim() || null,
+        format: formState.format,
+        registration_link: formState.registrationLink.trim() || null,
+        entry_type: formState.entryType,
+        contact_name: formState.contactName.trim() || null,
+        contact_info: formState.contactInfo.trim() || null,
+        visibility: formState.visibility,
+        region_city: formState.regionCity.trim() || null,
+        region_country: formState.regionCountry.trim() || null,
+        image_url: imageUrl || null,
+        status: "PENDING",
+      };
+
+      if (isEditMode && eventId) {
+        const { error } = await supabase
+          .from("events")
+          .update(eventData)
+          .eq("id", eventId);
+        
+        if (error) throw error;
+        toast.success("Event updated and resubmitted for approval.");
+      } else {
+        const { error } = await supabase
+          .from("events")
+          .insert(eventData);
+        
+        if (error) throw error;
+        toast.success("Event submitted for admin approval.");
+      }
+
+      resetForm();
+      navigate("/events");
+    } catch (error) {
+      console.error("Failed to submit event:", error);
+      toast.error("Failed to submit event. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-24 md:pb-8 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading event...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -101,9 +240,13 @@ export default function CreateEvent() {
           <div className="flex items-center gap-3 sm:gap-4">
             <BackButton fallbackPath="/events" />
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Create an event</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+                {isEditMode ? "Edit event" : "Create an event"}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                Submit new gatherings for admin review before publishing.
+                {isEditMode 
+                  ? "Update your event details. Changes require re-approval."
+                  : "Submit new gatherings for admin review before publishing."}
               </p>
             </div>
           </div>
@@ -133,9 +276,7 @@ export default function CreateEvent() {
                 <Label>Event type *</Label>
                 <Select
                   value={formState.type}
-                  onValueChange={(value) =>
-                    setFormState({ ...formState, type: value as (typeof EVENT_TYPES)[number] })
-                  }
+                  onValueChange={(value) => setFormState({ ...formState, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -184,10 +325,10 @@ export default function CreateEvent() {
                 <p className="text-xs text-muted-foreground">
                   Upload a banner image to make the event page feel more vibrant.
                 </p>
-                {formState.imageDataUrl && (
+                {formState.imagePreviewUrl && (
                   <div className="mt-2 overflow-hidden rounded-lg border border-border/60">
                     <img
-                      src={formState.imageDataUrl}
+                      src={formState.imagePreviewUrl}
                       alt="Event preview"
                       className="h-40 w-full object-cover"
                     />
@@ -267,9 +408,7 @@ export default function CreateEvent() {
                 <Label>Event format *</Label>
                 <Select
                   value={formState.format}
-                  onValueChange={(value) =>
-                    setFormState({ ...formState, format: value as (typeof EVENT_FORMATS)[number] })
-                  }
+                  onValueChange={(value) => setFormState({ ...formState, format: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select format" />
@@ -287,9 +426,7 @@ export default function CreateEvent() {
                 <Label>Entry type *</Label>
                 <Select
                   value={formState.entryType}
-                  onValueChange={(value) =>
-                    setFormState({ ...formState, entryType: value as (typeof ENTRY_TYPES)[number] })
-                  }
+                  onValueChange={(value) => setFormState({ ...formState, entryType: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select entry" />
@@ -337,9 +474,7 @@ export default function CreateEvent() {
                 <Label>Visibility *</Label>
                 <Select
                   value={formState.visibility}
-                  onValueChange={(value) =>
-                    setFormState({ ...formState, visibility: value as (typeof VISIBILITY_OPTIONS)[number] })
-                  }
+                  onValueChange={(value) => setFormState({ ...formState, visibility: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select visibility" />
@@ -374,10 +509,16 @@ export default function CreateEvent() {
             </div>
 
             <div className="flex flex-wrap gap-3 justify-end">
-              <Button variant="outline" onClick={resetForm}>
+              <Button variant="outline" onClick={resetForm} disabled={isSubmitting}>
                 Clear form
               </Button>
-              <Button onClick={handleCreateEvent}>Submit for approval</Button>
+              <Button onClick={handleCreateEvent} disabled={isSubmitting}>
+                {isSubmitting 
+                  ? "Submitting..." 
+                  : isEditMode 
+                    ? "Update and resubmit" 
+                    : "Submit for approval"}
+              </Button>
             </div>
           </Card>
         </div>
