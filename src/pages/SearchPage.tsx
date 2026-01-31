@@ -256,7 +256,6 @@ const SearchPage = () => {
   }, [filteredSermonResults, sermonDisplayCount]);
 
   const hasThemeQuery = searchQuery.trim().length > 0;
-  const heroHasQuery = hasThemeQuery;
   const displayedThemeResults = hasThemeQuery
     ? themeResults
     : defaultThemeResults;
@@ -270,9 +269,7 @@ const SearchPage = () => {
       <Header showBackButton />
 
       {/* Hero Section with Search */}
-      <section
-        className={`relative overflow-hidden ${heroHasQuery ? "py-10" : "py-20"}`}
-      >
+      <section className="relative overflow-hidden py-20">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
           style={{ backgroundImage: `url(${heroImage})`, backgroundPosition: 'center 30%' }}
@@ -280,11 +277,7 @@ const SearchPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/60 to-background/80" />
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <div
-            className={`max-w-3xl mx-auto text-center ${
-              heroHasQuery ? "mb-4" : "mb-8"
-            }`}
-          >
+          <div className="max-w-3xl mx-auto text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
               Search the Scriptures
             </h1>
