@@ -676,56 +676,55 @@ export default function Profile() {
             </div>
           </div>
 
-          <Card>
-            <CardContent className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={avatarUrl ?? ""} />
-                  <AvatarFallback className="text-xl">
-                    {fullName?.charAt(0)?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-xl font-semibold">
-                    {fullName || user?.email || "Unnamed user"}
-                  </p>
-                  <p className="text-sm text-muted-foreground break-all">{email}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {user?.email_confirmed_at ? (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Email verified
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        Verification pending
-                      </Badge>
-                    )}
-                    <Badge variant="outline">Member</Badge>
+          <TabsContent value="overview" className="space-y-6">
+            <Card>
+              <CardContent className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={avatarUrl ?? ""} />
+                    <AvatarFallback className="text-xl">
+                      {fullName?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-xl font-semibold">
+                      {fullName || user?.email || "Unnamed user"}
+                    </p>
+                    <p className="text-sm text-muted-foreground break-all">{email}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {user?.email_confirmed_at ? (
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Email verified
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                          Verification pending
+                        </Badge>
+                      )}
+                      <Badge variant="outline">Member</Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 md:text-right">
-                <div>
-                  <p className="font-medium text-foreground">Member since</p>
-                  <p>{joinedAt}</p>
+                <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 md:text-right">
+                  <div>
+                    <p className="font-medium text-foreground">Member since</p>
+                    <p>{joinedAt}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Last active</p>
+                    <p>{lastSignIn}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">Last active</p>
-                  <p>{lastSignIn}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <TabsContent value="overview" className="space-y-6">
+              </CardContent>
+            </Card>
             <div className="space-y-4">
               <EngagementPrompt />
               <EngagementSummary />
