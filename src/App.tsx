@@ -207,11 +207,19 @@ function App() {
                                   />
                                   <Route
                                     path="/events/create"
-                                    element={withSectionBoundary("Create Event", <CreateEvent />)}
+                                    element={
+                                      <ProtectedRoute>
+                                        {withSectionBoundary("Create Event", <CreateEvent />)}
+                                      </ProtectedRoute>
+                                    }
                                   />
                                   <Route
                                     path="/events/edit/:eventId"
-                                    element={withSectionBoundary("Edit Event", <CreateEvent />)}
+                                    element={
+                                      <ProtectedRoute>
+                                        {withSectionBoundary("Edit Event", <CreateEvent />)}
+                                      </ProtectedRoute>
+                                    }
                                   />
                                   <Route
                                     path="/events/:eventId"
