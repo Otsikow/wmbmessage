@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
@@ -41,7 +41,6 @@ import MessageChurchDirectory from "./pages/MessageChurchDirectory";
 import MessageChurchSubmission from "./pages/MessageChurchSubmission";
 import MessageChurchDetail from "./pages/MessageChurchDetail";
 import Testimonies from "./pages/Testimonies";
-import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import About from "./pages/About";
 import DailyVerse from "./pages/DailyVerse";
@@ -184,7 +183,7 @@ function App() {
                                   />
                                   <Route
                                     path="/settings"
-                                    element={withSectionBoundary("Settings", <Settings />)}
+                                    element={<Navigate to="/profile?tab=settings" replace />}
                                   />
                                   <Route
                                     path="/collections"

@@ -137,11 +137,11 @@ export default function Footer() {
               </li>
               <li>
                 <Link 
-                  to="/settings" 
+                  to="/profile?tab=settings" 
                   className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                 >
                   <Settings className="h-3.5 w-3.5" />
-                  Settings
+                  Profile & Settings
                 </Link>
               </li>
               <li>
