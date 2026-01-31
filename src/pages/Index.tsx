@@ -10,6 +10,7 @@ import { ReadingPlanWidget } from "@/components/reading-plans/ReadingPlanWidget"
 import MessageChurchesPromo from "@/components/MessageChurchesPromo";
 import CommunityPromo from "@/components/CommunityPromo";
 import Footer from "@/components/Footer";
+import HomeStats from "@/components/HomeStats";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { Loader2 } from "lucide-react";
@@ -108,6 +109,13 @@ const Index = () => {
               <EngagementSummary />
             </SectionErrorBoundary>
           </section>
+
+          <SectionErrorBoundary
+            section="Community impact stats"
+            description="We couldn't load the community stats section."
+          >
+            <HomeStats />
+          </SectionErrorBoundary>
         </main>
       </div>
 
