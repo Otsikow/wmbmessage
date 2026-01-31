@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageChurch } from "@/types/messageChurches";
 import { formatWhatsAppLink } from "@/utils/phone";
+import { buildChurchDetailsPath } from "@/utils/messageChurchShare";
 import { MapPin, MessageCircle } from "lucide-react";
 
 export default function MessageChurchDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [church, setChurch] = useState<MessageChurch | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -30,13 +32,44 @@ export default function MessageChurchDetail() {
 
   useEffect(() => {
     const fetchChurch = async () => {
-      if (!id) return;
+      if (!id && !searchParams.get("share")) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
+        let churchId = id ?? "";
+
+        if (!churchId) {
+          const sharedId = searchParams.get("share")?.trim();
+          if (sharedId) {
+            const { data: sharedData, error: sharedError } = await supabase
+              .from("message_churches")
+              .select("id")
+              .eq("id", sharedId)
+              .maybeSingle();
+
+            if (sharedError) throw sharedError;
+
+            if (sharedData?.id) {
+              churchId = sharedData.id;
+              const redirectPath = buildChurchDetailsPath(churchId);
+              if (typeof window !== "undefined") {
+                window.history.replaceState(null, "", redirectPath);
+              }
+            }
+          }
+        }
+
+        if (!churchId) {
+          setErrorMessage("We couldn't find that listing.");
+          return;
+        }
+
         const { data, error } = await supabase
           .from("message_churches")
           .select("*")
-          .eq("id", id)
+          .eq("id", churchId)
           .single();
 
         if (error) throw error;
@@ -51,7 +84,7 @@ export default function MessageChurchDetail() {
     };
 
     fetchChurch();
-  }, [id]);
+  }, [id, searchParams]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
