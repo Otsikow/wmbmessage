@@ -13,7 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageChurch } from "@/types/messageChurches";
 import { countries } from "@/data/countries";
 import MessageChurchCard from "@/components/message-churches/MessageChurchCard";
-import { MapPinned, Search, ShieldCheck } from "lucide-react";
+import { MapPinned, Search, Share2, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { buildChurchAddress, buildChurchShareDetails } from "@/utils/messageChurchShare";
 
 const verifiedOnlyDefault = true;
 
@@ -87,26 +89,41 @@ export default function MessageChurchDirectory() {
     [churches, selectedChurchId],
   );
 
-  const buildAddress = (church: MessageChurch) =>
-    [
-      church.address_line_1,
-      church.address_line_2,
-      church.city,
-      church.state_region,
-      church.postal_code,
-      church.country_name,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
   const mapEmbedUrl = selectedChurch
-    ? `https://www.google.com/maps?q=${encodeURIComponent(buildAddress(selectedChurch))}&output=embed`
+    ? `https://www.google.com/maps?q=${encodeURIComponent(buildChurchAddress(selectedChurch))}&output=embed`
     : "";
   const mapLinkUrl = selectedChurch
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(buildAddress(selectedChurch))}`
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(buildChurchAddress(selectedChurch))}`
     : "";
 
   const countryOptions = useMemo(() => [{ code: "all", name: "All countries" }, ...countries], []);
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const handleShare = async (church: MessageChurch) => {
+    const { text, title, url } = buildChurchShareDetails(church, {
+      baseUrl,
+      includeWhatsApp: true,
+      mapLink: mapLinkUrl,
+    });
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title, text, url });
+        toast.success("Church details ready to share.");
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        toast.success("Church details copied to clipboard.");
+        return;
+      }
+
+      toast.error("Sharing is not supported in this browser.");
+    } catch (error) {
+      console.error("Share failed", error);
+      toast.error("Unable to share church details right now.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -210,17 +227,54 @@ export default function MessageChurchDirectory() {
 
                       {selectedChurch && (
                         <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-4 text-sm">
-                          <p className="font-semibold">{selectedChurch.church_name}</p>
-                          <p className="text-muted-foreground">{buildAddress(selectedChurch)}</p>
+                          <div className="space-y-1">
+                            <p className="text-base font-semibold">{selectedChurch.church_name}</p>
+                            <p className="text-muted-foreground">{buildChurchAddress(selectedChurch)}</p>
+                          </div>
+                          <dl className="space-y-2 text-xs text-muted-foreground">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <dt className="uppercase tracking-wide">Location</dt>
+                              <dd className="text-right text-foreground">
+                                {[selectedChurch.city, selectedChurch.state_region, selectedChurch.country_name]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </dd>
+                            </div>
+                            {selectedChurch.pastor_or_contact_name && (
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <dt className="uppercase tracking-wide">Pastor/Contact</dt>
+                                <dd className="text-right text-foreground">
+                                  {selectedChurch.pastor_or_contact_name}
+                                </dd>
+                              </div>
+                            )}
+                            {selectedChurch.whatsapp_number && (
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <dt className="uppercase tracking-wide">WhatsApp</dt>
+                                <dd className="text-right text-foreground">{selectedChurch.whatsapp_number}</dd>
+                              </div>
+                            )}
+                          </dl>
                           <div className="flex flex-wrap gap-2">
                             <Badge variant="secondary">{selectedChurch.city}</Badge>
                             <Badge variant="secondary">{selectedChurch.country_name}</Badge>
                           </div>
-                          <Button asChild size="sm" className="w-full">
-                            <a href={mapLinkUrl} target="_blank" rel="noreferrer">
-                              Open in Google Maps
-                            </a>
-                          </Button>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button asChild size="sm" className="w-full sm:w-auto">
+                              <a href={mapLinkUrl} target="_blank" rel="noreferrer">
+                                Open in Google Maps
+                              </a>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full sm:w-auto"
+                              onClick={() => handleShare(selectedChurch)}
+                            >
+                              <Share2 className="mr-2 h-4 w-4" />
+                              Share details
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
