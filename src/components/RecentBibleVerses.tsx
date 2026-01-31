@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { BookOpen } from "lucide-react";
 import { useRecentVerses } from "@/hooks/useRecentVerses";
 import { useEffect, useState } from "react";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 export default function RecentBibleVerses() {
   const { recentVerses, addRecentVerse } = useRecentVerses();
   const [hasRevealed, setHasRevealed] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 
   // Add sample verses on first load
   useEffect(() => {
@@ -60,6 +61,22 @@ export default function RecentBibleVerses() {
     return () => clearTimeout(timer);
   }, [recentVerses.length]);
 
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (!carouselApi) {
+        return;
+      }
+
+      carouselApi.scrollNext();
+    }, 6500);
+
+    return () => clearInterval(interval);
+  }, [carouselApi]);
+
   if (recentVerses.length === 0) {
     return (
       <div className="w-full">
@@ -81,11 +98,12 @@ export default function RecentBibleVerses() {
       <Carousel
         opts={{
           align: "start",
-          loop: false,
+          loop: true,
         }}
+        setApi={setCarouselApi}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4 transition-[transform] duration-[680ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform">
+        <CarouselContent className="-ml-2 md:-ml-4 transition-[transform] duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform">
           {recentVerses.map((verse, index) => (
             <CarouselItem
               key={verse.id}
