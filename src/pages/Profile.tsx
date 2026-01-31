@@ -725,12 +725,11 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <div className="space-y-4">
-            <EngagementPrompt />
-            <EngagementSummary />
-          </div>
-
           <TabsContent value="overview" className="space-y-6">
+            <div className="space-y-4">
+              <EngagementPrompt />
+              <EngagementSummary />
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
