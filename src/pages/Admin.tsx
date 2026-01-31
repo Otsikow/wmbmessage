@@ -241,9 +241,17 @@ export default function Admin() {
           <p className="text-muted-foreground mt-2">
             Manage users, content, moderation, and events
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Live metrics refresh every {Math.floor(refreshIntervalMs / 1000)} seconds.
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-200">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Live updates
+            </span>
+            <span>Refreshes every {Math.floor(refreshIntervalMs / 1000)} seconds.</span>
+            {lastUpdated && <span>Last sync {lastUpdated.toLocaleString()}.</span>}
+          </div>
         </div>
 
         {errorMessage && (
@@ -295,48 +303,73 @@ export default function Admin() {
           </div>
 
           <TabsContent value="overview">
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="space-y-1">
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h2 className="text-lg font-semibold">Key metrics</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Real-time totals across core collections.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
                   <CardDescription>Total verses stored</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-semibold">{stats.bibleVerses}</div>
+                  <div className="text-3xl font-semibold tracking-tight">
+                    {stats.bibleVerses}
+                  </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="space-y-1">
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Sermons</CardTitle>
                   <CardDescription>William Branham sermons</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-semibold">{stats.sermons}</div>
+                  <div className="text-3xl font-semibold tracking-tight">
+                    {stats.sermons}
+                  </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="space-y-1">
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Cross References</CardTitle>
                   <CardDescription>Connections built</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-semibold">{stats.crossRefs}</div>
+                  <div className="text-3xl font-semibold tracking-tight">
+                    {stats.crossRefs}
+                  </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="space-y-1">
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                   <CardDescription>Registered accounts</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-semibold">{roleSummary.total}</div>
+                  <div className="text-3xl font-semibold tracking-tight">
+                    {roleSummary.total}
+                  </div>
                 </CardContent>
-              </Card>
-            </div>
+                </Card>
+              </div>
+            </section>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardHeader className="space-y-1">
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold">Operations overview</h2>
+                <p className="text-sm text-muted-foreground">
+                  Live status, role balance, and recent account activity.
+                </p>
+              </div>
+              <div className="grid gap-6 lg:grid-cols-3">
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">System Status</CardTitle>
                   <CardDescription>Supabase connectivity</CardDescription>
                 </CardHeader>
@@ -357,9 +390,9 @@ export default function Admin() {
                     </p>
                   )}
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="space-y-1">
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">User Roles</CardTitle>
                   <CardDescription>Role distribution snapshot</CardDescription>
                 </CardHeader>
@@ -377,9 +410,9 @@ export default function Admin() {
                     <span className="font-medium">{roleSummary.byRole.user || 0}</span>
                   </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="space-y-1">
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
                   <CardTitle className="text-sm font-medium">Live Activity</CardTitle>
                   <CardDescription>Recent account activity</CardDescription>
                 </CardHeader>
@@ -404,8 +437,9 @@ export default function Admin() {
                     )}
                   </div>
                 </CardContent>
-              </Card>
-            </div>
+                </Card>
+              </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="moderation">
