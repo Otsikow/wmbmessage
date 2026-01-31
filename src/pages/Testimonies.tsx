@@ -4,10 +4,13 @@ import {
   AlertTriangle,
   BadgeCheck,
   CalendarClock,
+  Facebook,
   FileAudio,
   FileText,
   HandHeart,
   Headphones,
+  Link as LinkIcon,
+  Mail,
   MessageCircle,
   Mic,
   ShieldCheck,
@@ -30,6 +33,7 @@ import { commentTemplates, testimonies } from "@/data/testimonies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { appendShareAttribution, buildShareUrl } from "@/lib/share";
 import { TestimonyCategory, TestimonyIdentity, testimonyCategoryLabels } from "@/types/testimonies";
 
 export default function Testimonies() {
@@ -145,6 +149,26 @@ export default function Testimonies() {
     (format === "audio" && !transcript.trim()) ||
     (identityPreference !== "anonymous" && !displayName.trim()) ||
     isSubmitting;
+
+  const getTestimonySharePayload = (testimony: (typeof testimonies)[number]) => {
+    const url = buildShareUrl(`/testimonies/${testimony.id}`);
+    const message = appendShareAttribution(`${testimony.name} — ${testimony.excerpt}\n${url}`);
+    return { url, message };
+  };
+
+  const openShareWindow = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyLink = async (testimony: (typeof testimonies)[number]) => {
+    const { url } = getTestimonySharePayload(testimony);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied.", description: "Share it by text or social media." });
+      return;
+    }
+    toast({ title: "Copy unavailable.", description: "Please copy the link manually." });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -474,6 +498,69 @@ export default function Testimonies() {
                         Comments locked
                       </Badge>
                     )}
+                  </div>
+
+                  <div className="rounded-lg border border-border/60 bg-muted/40 p-4 space-y-3">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-medium">Share this testimony</p>
+                        <p className="text-xs text-muted-foreground">
+                          Invite someone with the official MessageGuide link.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="self-start">
+                        messageguide.org
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { message } = getTestimonySharePayload(testimony);
+                          openShareWindow(`https://wa.me/?text=${encodeURIComponent(message)}`);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4 text-emerald-600" />
+                        WhatsApp
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { url } = getTestimonySharePayload(testimony);
+                          openShareWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
+                        }}
+                      >
+                        <Facebook className="h-4 w-4 text-blue-600" />
+                        Facebook
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { message } = getTestimonySharePayload(testimony);
+                          openShareWindow(
+                            `mailto:?subject=${encodeURIComponent("A testimony to encourage you")}&body=${encodeURIComponent(message)}`
+                          );
+                        }}
+                      >
+                        <Mail className="h-4 w-4 text-sky-600" />
+                        Email
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => void handleCopyLink(testimony)}
+                      >
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        Copy link
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/40">
