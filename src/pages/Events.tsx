@@ -29,6 +29,63 @@ const formatInTimeZone = (isoString: string, timeZone: string) => {
   }).format(date);
 };
 
+const formatIcsDate = (date: Date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+const escapeIcsText = (value: string) =>
+  value
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,");
+
+const sanitizeFileName = (value: string) =>
+  value
+    .trim()
+    .replace(/[/\\?%*:|"<>]/g, "-")
+    .replace(/\s+/g, " ");
+
+const buildCalendarInvite = (event: EventRecord) => {
+  const shareUrl = buildShareUrl(`/events/${event.id}`);
+  const descriptionParts = [
+    event.short_description,
+    event.full_description,
+    event.registration_link ? `Register: ${event.registration_link}` : null,
+    `Details: ${shareUrl}`,
+  ].filter(Boolean);
+
+  const description = escapeIcsText(descriptionParts.join("\n\n"));
+  const location = escapeIcsText(`${event.address}, ${event.city}, ${event.country}`);
+  const title = escapeIcsText(event.title);
+  const uid = `${event.id}@messageguide.org`;
+  const now = formatIcsDate(new Date());
+  const start = formatIcsDate(new Date(event.start_at));
+  const end = formatIcsDate(new Date(event.end_at));
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//MessageGuide//Events//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    `URL:${shareUrl}`,
+    "BEGIN:VALARM",
+    "TRIGGER:-PT30M",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Event reminder",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+};
+
 export default function Events() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,6 +180,20 @@ export default function Events() {
       return;
     }
     toast.error("Clipboard access unavailable. Please copy the link manually.");
+  };
+
+  const handleAddToCalendar = (event: EventRecord) => {
+    const invite = buildCalendarInvite(event);
+    const blob = new Blob([invite], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${sanitizeFileName(event.title || "event")}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Calendar invite downloaded. Add it to your calendar for reminders.");
   };
 
   if (isLoading) {
@@ -250,7 +321,7 @@ export default function Events() {
                       <Button
                         variant="outline"
                         className="w-full sm:w-auto"
-                        onClick={() => toast.success("Calendar invite created.")}
+                        onClick={() => handleAddToCalendar(selectedEvent)}
                       >
                         Add to Calendar
                       </Button>
