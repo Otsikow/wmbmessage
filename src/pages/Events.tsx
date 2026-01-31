@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, Facebook, Link as LinkIcon, Lock, Mail, MapPin, MessageCircle, Unlock, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
 import Navigation from "@/components/Navigation";
@@ -115,13 +115,25 @@ const formatInTimeZone = (isoString: string, timeZone: string) => {
 
 export default function Events() {
   const [events, setEvents] = useState<EventRecord[]>(initialEvents);
-  const [selectedId, setSelectedId] = useState(initialEvents[0]?.id ?? "");
+  const { eventId } = useParams<{ eventId?: string }>();
+  const navigate = useNavigate();
+  const [selectedId, setSelectedId] = useState(
+    initialEvents.find((event) => event.id === eventId)?.id ?? initialEvents[0]?.id ?? "",
+  );
   const [commentDraft, setCommentDraft] = useState("");
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedId) ?? events[0],
     [events, selectedId]
   );
+
+  useEffect(() => {
+    if (!eventId) return;
+    const matchingEvent = events.find((event) => event.id === eventId);
+    if (matchingEvent) {
+      setSelectedId(matchingEvent.id);
+    }
+  }, [eventId, events]);
 
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -472,7 +484,10 @@ export default function Events() {
                     <button
                       key={event.id}
                       type="button"
-                      onClick={() => setSelectedId(event.id)}
+                      onClick={() => {
+                        setSelectedId(event.id);
+                        navigate(`/events/${event.id}`);
+                      }}
                       className={`w-full text-left rounded-lg border p-3 transition-colors ${
                         selectedEvent?.id === event.id
                           ? "border-primary/60 bg-primary/5"
