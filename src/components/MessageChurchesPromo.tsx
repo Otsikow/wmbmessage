@@ -76,14 +76,14 @@ export default function MessageChurchesPromo() {
             {/* Right side - Visual element */}
             <div className="hidden md:flex flex-col items-center gap-4">
               <div className="relative">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500/20 to-primary/20 flex items-center justify-center">
-                  <MapPin className="h-16 w-16 text-emerald-600" />
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500/20 to-primary/20 flex items-center justify-center animate-globe-float">
+                  <MapPin className="h-16 w-16 text-emerald-600 animate-location-breathe" />
                 </div>
                 {/* Floating badges */}
-                <div className="absolute -top-2 -right-2 bg-background border border-border rounded-full px-3 py-1 text-xs font-medium shadow-lg">
+                <div className="absolute -top-2 -right-2 bg-background border border-border rounded-full px-3 py-1 text-xs font-medium shadow-lg animate-badge-float">
                   🌍 Global
                 </div>
-                <div className="absolute -bottom-2 -left-2 bg-emerald-600 text-white rounded-full px-3 py-1 text-xs font-medium shadow-lg">
+                <div className="absolute -bottom-2 -left-2 bg-emerald-600 text-white rounded-full px-3 py-1 text-xs font-medium shadow-lg animate-badge-float-delayed">
                   ✓ Verified
                 </div>
               </div>
