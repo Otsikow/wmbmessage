@@ -2,9 +2,25 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarClock, CheckCircle2, Lock, MessageSquareText, Pencil, Send, ShieldAlert, XCircle } from 'lucide-react';
+import {
+  CalendarClock,
+  CheckCircle2,
+  Lock,
+  MessageSquareText,
+  MoreHorizontal,
+  Pencil,
+  Send,
+  ShieldAlert,
+  XCircle,
+} from 'lucide-react';
 
 type PendingEvent = {
   id: string;
@@ -486,27 +502,38 @@ export default function AdminEventsDashboard() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(event.id)}>
-                        <Pencil className="mr-1 h-4 w-4" />
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleCancel(event.id)}>
-                        <XCircle className="mr-1 h-4 w-4" />
-                        Cancel
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleSendUpdate(event.id)}>
-                        <Send className="mr-1 h-4 w-4" />
-                        Notify
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleLockToggle(event.id)}>
-                        <Lock className="mr-1 h-4 w-4" />
-                        {event.commentsLocked ? 'Unlock' : 'Lock'}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => addLogEntry('Opened comments', event.title, 'info')}>
-                        <MessageSquareText className="mr-1 h-4 w-4" />
-                        Review
-                      </Button>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" aria-label="Open admin actions">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onSelect={() => handleEdit(event.id)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleCancel(event.id)}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Cancel
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleSendUpdate(event.id)}>
+                            <Send className="mr-2 h-4 w-4" />
+                            Notify
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleLockToggle(event.id)}>
+                            <Lock className="mr-2 h-4 w-4" />
+                            {event.commentsLocked ? 'Unlock' : 'Lock'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => addLogEntry('Opened comments', event.title, 'info')}
+                          >
+                            <MessageSquareText className="mr-2 h-4 w-4" />
+                            Review
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
