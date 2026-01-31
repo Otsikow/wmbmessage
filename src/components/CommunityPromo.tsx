@@ -63,12 +63,16 @@ export default function CommunityPromo() {
             >
               <article className={cn(
                 "relative overflow-hidden rounded-2xl h-72 sm:h-80",
-                "shadow-lg hover:shadow-xl transition-all duration-500",
-                "hover:-translate-y-1"
+                "shadow-lg hover:shadow-2xl transition-all duration-500 ease-out",
+                "hover:-translate-y-2"
               )}>
-                {/* Background Image */}
+                {/* Background Image with enhanced zoom */}
                 <div 
-                  className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+                  className={cn(
+                    "absolute inset-0 bg-cover bg-no-repeat",
+                    "transition-all duration-700 ease-out",
+                    "group-hover:scale-110 group-hover:brightness-110"
+                  )}
                   style={{ 
                     backgroundImage: `url(${feature.image})`,
                     backgroundPosition: feature.imagePosition === "bottom" ? "center bottom" : "center center",
