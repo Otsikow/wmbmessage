@@ -636,6 +636,8 @@ export default function Profile() {
         minute: "2-digit",
       })
     : "Not recorded";
+  const tabTriggerClass =
+    "gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:ring-1 data-[state=active]:ring-primary/40";
 
   return (
     <div className="min-h-screen bg-background">
@@ -660,16 +662,16 @@ export default function Profile() {
           <div className="sticky top-16 z-20">
             <div className="rounded-2xl border border-border/60 bg-background/95 p-2 shadow-lg backdrop-blur">
               <TabsList className="flex w-full flex-wrap gap-2 bg-transparent p-0 text-foreground">
-                <TabsTrigger value="overview" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                <TabsTrigger value="overview" className={tabTriggerClass}>
                   <User className="h-4 w-4" /> Overview
                 </TabsTrigger>
-                <TabsTrigger value="content" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                <TabsTrigger value="content" className={tabTriggerClass}>
                   <ClipboardList className="h-4 w-4" /> My Content
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                <TabsTrigger value="settings" className={tabTriggerClass}>
                   <SettingsIcon className="h-4 w-4" /> Settings
                 </TabsTrigger>
-                <TabsTrigger value="security" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                <TabsTrigger value="security" className={tabTriggerClass}>
                   <Lock className="h-4 w-4" /> Security
                 </TabsTrigger>
               </TabsList>
