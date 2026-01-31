@@ -63,15 +63,14 @@ export function useBibleSearch() {
     try {
       const allResults: BibleSearchResult[] = [];
       const normalizedQuery = query.trim();
-      const searchTerm = normalizedQuery.toLowerCase();
-      const variations = generateSearchVariations(searchTerm);
-      
+      const searchProfile = buildSearchProfile(normalizedQuery);
+
       // Create comprehensive search terms set
-      const searchTerms = new Set<string>([searchTerm, ...variations]);
+      const searchTerms = searchProfile.searchTerms;
 
       // PRIORITY STRATEGY: Search cached KJV dataset first (complete Bible, ~31,000 verses)
       // This is the most reliable source
-      const localResults = await searchLocalBibleVerses(query, variations, MAX_BIBLE_RESULTS);
+      const localResults = await searchLocalBibleVerses(query, searchProfile, MAX_BIBLE_RESULTS);
       if (localResults.length > 0) {
         allResults.push(...localResults);
         console.log(`[Search] Found ${localResults.length} results from local KJV dataset`);
@@ -82,7 +81,7 @@ export function useBibleSearch() {
         try {
           // Build OR conditions for all search variations
           const orConditions = Array.from(searchTerms)
-            .slice(0, 5) // Limit to prevent query size issues
+            .slice(0, 8) // Limit to prevent query size issues
             .map(term => `text.ilike.%${term}%`)
             .join(',');
           
@@ -118,7 +117,7 @@ export function useBibleSearch() {
       if (allResults.length < 100) {
         try {
           const searchResponse = await fetch(
-            `https://getbible.net/v2/kjv/search/${encodeURIComponent(searchTerm)}.json`,
+            `https://getbible.net/v2/kjv/search/${encodeURIComponent(searchProfile.normalizedQuery)}.json`,
             { signal: AbortSignal.timeout(8000) }
           );
 
@@ -221,8 +220,7 @@ export function useBibleSearch() {
     setError(null);
 
     try {
-      const searchTerm = query.toLowerCase().trim();
-      const searchVariations = generateSearchVariations(searchTerm);
+      const searchProfile = buildSearchProfile(query);
       
       // Search sermons and their paragraphs when Supabase is available
       let results: WMBSermonResult[] = [];
@@ -250,8 +248,6 @@ export function useBibleSearch() {
 
         if (Array.isArray(sermonData)) {
           // Create a set of all search terms including variations
-          const searchTerms = new Set<string>([searchTerm, ...searchVariations]);
-          
           sermonData.forEach((sermon: any) => {
             const paragraphs = sermon.sermon_paragraphs || [];
             const titleLower = sermon.title?.toLowerCase() || '';
@@ -259,13 +255,10 @@ export function useBibleSearch() {
             
             paragraphs.forEach((para: any) => {
               const contentLower = para.content?.toLowerCase() || '';
-              
-              // Check if ANY search term matches
-              const matches = Array.from(searchTerms).some(term => 
-                contentLower.includes(term) || 
-                titleLower.includes(term) || 
-                locationLower.includes(term)
-              );
+              const contentScore = getMatchScore(contentLower, searchProfile);
+              const titleScore = getMatchScore(titleLower, searchProfile);
+              const locationScore = getMatchScore(locationLower, searchProfile);
+              const matches = Math.max(contentScore, titleScore, locationScore) > 0;
               
               if (matches) {
                 const formattedDate = formatSermonDate(sermon.date);
@@ -285,7 +278,7 @@ export function useBibleSearch() {
       }
 
       // Also search sample sermons as fallback/supplement
-      const sampleResults = await searchSampleSermons(searchTerm);
+      const sampleResults = await searchSampleSermons(searchProfile);
       
       // Deduplicate by sermon_id + paragraph
       const seen = new Set<string>();
@@ -329,29 +322,20 @@ function getTestament(bookName: string): "OT" | "NT" {
 
 async function searchLocalBibleVerses(
   query: string,
-  variations: string[],
+  searchProfile: SearchProfile,
   limit = 10000
 ): Promise<BibleSearchResult[]> {
-  const cleanedQuery = sanitizeSearchQuery(query).toLowerCase();
+  const cleanedQuery = searchProfile.normalizedQuery;
   if (!cleanedQuery) return [];
 
   try {
     const dataset = await loadKJVBibleVerses();
     if (!dataset.length) return [];
 
-    const words = cleanedQuery.split(/\s+/).filter(Boolean);
-    const tokenSet = new Set<string>();
-    variations.forEach((variant) => {
-      const cleaned = sanitizeSearchQuery(variant).toLowerCase();
-      if (cleaned) tokenSet.add(cleaned);
-    });
-    words.forEach((word) => tokenSet.add(word));
-    if (cleanedQuery.length > 2) {
-      tokenSet.add(cleanedQuery);
-    }
-
     const results: BibleSearchResult[] = [];
     const seenKeys = new Set<string>();
+    const scoredMatches: Array<{ score: number; order: number; result: BibleSearchResult }> =
+      [];
 
     const parsedReference = parseVerseReference(query);
     if (parsedReference) {
@@ -367,24 +351,31 @@ async function searchLocalBibleVerses(
       }
     }
 
+    let order = 0;
     for (const verse of dataset) {
-      if (results.length >= limit) break;
+      if (results.length + scoredMatches.length >= limit) break;
 
       const key = buildResultKey(verse);
       if (seenKeys.has(key)) continue;
 
-      const verseLower = verse.text.toLowerCase();
-      const tokens = Array.from(tokenSet).filter((token) => token.length > 2);
-      const matchesWords =
-        tokens.length === 0
-          ? false
-          : tokens.some((token) => verseLower.includes(token));
+      const score = getMatchScore(verse.text, searchProfile);
+      if (score <= 0) {
+        order += 1;
+        continue;
+      }
 
-      if (!matchesWords) continue;
-
-      results.push(convertRecordToResult(verse));
+      const result = convertRecordToResult(verse);
+      scoredMatches.push({ score, order, result });
       seenKeys.add(key);
+      order += 1;
     }
+
+    scoredMatches
+      .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.order - b.order))
+      .forEach(({ result }) => {
+        if (results.length >= limit) return;
+        results.push(result);
+      });
 
     return results;
   } catch (error) {
@@ -417,58 +408,154 @@ function buildResultKey(record: BibleVerseRecord): string {
   return `${record.book}-${record.chapter}-${record.verse}`;
 }
 
-function generateSearchVariations(term: string): string[] {
-  const cleaned = sanitizeSearchQuery(term.toLowerCase());
-  if (!cleaned) return [];
+type SearchProfile = {
+  normalizedQuery: string;
+  tokens: string[];
+  coreTokens: string[];
+  tokenVariations: Map<string, string[]>;
+  searchTerms: Set<string>;
+};
 
-  const variations = new Set<string>();
-  const tokens = cleaned.split(/\s+/).filter(Boolean);
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "the",
+  "of",
+  "to",
+  "in",
+  "for",
+  "on",
+  "with",
+  "by",
+  "at",
+  "from",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+]);
 
-  const synonyms: Record<string, string[]> = {
-    love: ['loveth', 'loving', 'beloved', 'charity', 'loves', 'loved'],
-    faith: ['faithful', 'faithfulness', 'belief', 'believe', 'believeth'],
-    hope: ['hopeful', 'hoped', 'expectation'],
-    grace: ['favour', 'favor', 'gracious'],
-    prayer: ['pray', 'prayed', 'praying'],
-    pray: ['prayer', 'prayed', 'praying'],
-    mercy: ['merciful', 'mercies'],
-    peace: ['peaceful', 'shalom'],
-    joy: ['joyful', 'rejoice', 'rejoiced', 'gladness'],
-    believe: ['believeth', 'believes', 'believed'],
-  };
+const SEARCH_SYNONYMS: Record<string, string[]> = {
+  love: ["loveth", "loving", "beloved", "charity", "loves", "loved"],
+  faith: ["faithful", "faithfulness", "belief", "believe", "believeth"],
+  hope: ["hopeful", "hoped", "expectation"],
+  grace: ["favour", "favor", "gracious"],
+  prayer: ["pray", "prayed", "praying"],
+  pray: ["prayer", "prayed", "praying"],
+  mercy: ["merciful", "mercies"],
+  peace: ["peaceful", "shalom"],
+  joy: ["joyful", "rejoice", "rejoiced", "gladness"],
+  believe: ["believeth", "believes", "believed"],
+  spirit: ["ghost", "holy ghost", "holy spirit"],
+  lord: ["god", "jehovah"],
+  jesus: ["christ", "messiah"],
+};
 
-  const addVariantsForToken = (token: string) => {
-    if (token.length <= 2) return;
+function buildSearchProfile(query: string): SearchProfile {
+  const normalizedQuery = sanitizeSearchQuery(query).toLowerCase();
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  const coreTokens = tokens.filter((token) => !STOP_WORDS.has(token));
+  const finalTokens = coreTokens.length > 0 ? coreTokens : tokens;
 
-    variations.add(token);
+  const tokenVariations = new Map<string, string[]>();
+  const searchTerms = new Set<string>();
 
-    variations.add(token.replace(/s$/, ''));
-    variations.add(`${token}s`);
-    variations.add(`${token}ing`);
-    variations.add(`${token}ed`);
-    variations.add(`${token}eth`);
-    variations.add(`${token}est`);
-
-    if (token.endsWith('ing')) {
-      variations.add(token.slice(0, -3));
-      variations.add(token.slice(0, -3) + 'e');
-    }
-    if (token.endsWith('ed')) {
-      variations.add(token.slice(0, -2));
-      variations.add(token.slice(0, -2) + 'e');
-    }
-
-    synonyms[token]?.forEach((syn) => variations.add(syn));
-  };
-
-  if (tokens.length === 1) {
-    addVariantsForToken(tokens[0]);
-  } else {
-    tokens.forEach(addVariantsForToken);
-    variations.add(tokens.join(' '));
+  if (normalizedQuery.length > 2) {
+    searchTerms.add(normalizedQuery);
   }
 
-  return Array.from(variations).filter((v) => v && v.length > 2).slice(0, 15);
+  finalTokens.forEach((token) => {
+    const variations = buildTokenVariations(token);
+    tokenVariations.set(token, variations);
+    variations.forEach((variant) => searchTerms.add(variant));
+  });
+
+  if (finalTokens.length > 1) {
+    searchTerms.add(finalTokens.join(" "));
+  }
+
+  return {
+    normalizedQuery,
+    tokens,
+    coreTokens: finalTokens,
+    tokenVariations,
+    searchTerms,
+  };
+}
+
+function buildTokenVariations(token: string): string[] {
+  if (token.length <= 2) return [];
+
+  const variations = new Set<string>([token]);
+
+  variations.add(token.replace(/s$/, ""));
+  variations.add(`${token}s`);
+  variations.add(`${token}ing`);
+  variations.add(`${token}ed`);
+  variations.add(`${token}eth`);
+  variations.add(`${token}est`);
+  variations.add(`${token}ly`);
+  variations.add(`${token}ness`);
+
+  if (token.endsWith("ing")) {
+    variations.add(token.slice(0, -3));
+    variations.add(token.slice(0, -3) + "e");
+  }
+  if (token.endsWith("ed")) {
+    variations.add(token.slice(0, -2));
+    variations.add(token.slice(0, -2) + "e");
+  }
+  if (token.endsWith("y")) {
+    variations.add(token.slice(0, -1) + "ies");
+  }
+
+  SEARCH_SYNONYMS[token]?.forEach((syn) => variations.add(syn));
+
+  return Array.from(variations).filter((variant) => variant.length > 2);
+}
+
+function getMatchScore(text: string, profile: SearchProfile): number {
+  const normalizedText = sanitizeSearchQuery(text).toLowerCase();
+  if (!normalizedText) return 0;
+
+  const words = normalizedText.split(/\s+/).filter(Boolean);
+  const wordSet = new Set(words);
+  let score = 0;
+
+  if (profile.normalizedQuery.length > 2 && normalizedText.includes(profile.normalizedQuery)) {
+    score += 6;
+  }
+
+  let matchedTokens = 0;
+  profile.coreTokens.forEach((token) => {
+    const variations = profile.tokenVariations.get(token) ?? [token];
+    const tokenMatch = variations.some((variant) => {
+      if (wordSet.has(variant)) return true;
+      if (variant.length > 4) {
+        return words.some((word) => word.startsWith(variant));
+      }
+      return normalizedText.includes(variant);
+    });
+    if (tokenMatch) {
+      matchedTokens += 1;
+      score += 2;
+    }
+  });
+
+  if (matchedTokens > 0 && matchedTokens === profile.coreTokens.length) {
+    score += 4;
+  }
+
+  const variationMatches = Array.from(profile.searchTerms).filter(
+    (term) => term.length > 2 && normalizedText.includes(term),
+  ).length;
+  score += Math.min(variationMatches, 6);
+
+  return score;
 }
 
 function sanitizeSearchQuery(query: string): string {
@@ -520,14 +607,11 @@ async function loadSampleBibleVerses(): Promise<SupabaseBibleVerseRow[]> {
 }
 
 async function searchSampleBibleVerses(query: string): Promise<BibleSearchResult[]> {
-  const lowerQuery = query.toLowerCase();
+  const searchProfile = buildSearchProfile(query);
   const sampleVerses = await loadSampleBibleVerses();
 
   return sampleVerses
-    .filter((verse) =>
-      verse.text.toLowerCase().includes(lowerQuery) ||
-      verse.book.toLowerCase().includes(lowerQuery)
-    )
+    .filter((verse) => getMatchScore(verse.text, searchProfile) > 0)
     .map((verse) => ({
       book: verse.book,
       chapter: verse.chapter,
@@ -537,14 +621,18 @@ async function searchSampleBibleVerses(query: string): Promise<BibleSearchResult
     }));
 }
 
-async function searchSampleSermons(searchTerm: string): Promise<WMBSermonResult[]> {
-  const lowerQuery = searchTerm.toLowerCase();
+async function searchSampleSermons(
+  searchProfile: SearchProfile
+): Promise<WMBSermonResult[]> {
   const sampleSermons = await loadSampleSermons();
   const results: WMBSermonResult[] = [];
 
   sampleSermons.forEach((sermon, sermonIndex) => {
     sermon.paragraphs.forEach((paragraph, paragraphIndex) => {
-      if (paragraph.toLowerCase().includes(lowerQuery)) {
+      const paragraphScore = getMatchScore(paragraph, searchProfile);
+      const titleScore = getMatchScore(sermon.title, searchProfile);
+      const locationScore = getMatchScore(sermon.location || "", searchProfile);
+      if (Math.max(paragraphScore, titleScore, locationScore) > 0) {
         const themes =
           sermon.themes && sermon.themes.length > 0 ? [...sermon.themes] : undefined;
         const bibleReferences =
