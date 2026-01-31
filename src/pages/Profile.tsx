@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, ChangeEvent, useMemo } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,10 @@ import {
   MessageCircle,
   MailCheck,
   BellRing,
+  ClipboardList,
+  HeartHandshake,
+  Building2,
+  Mic,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { getFriendlyErrorMessage } from "@/lib/errorHandling";
@@ -56,6 +60,10 @@ import EngagementSummary from "@/components/engagement/EngagementSummary";
 import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import RetentionNotificationPreferences from "@/components/retention/RetentionNotificationPreferences";
 import { useScriptureFontOptions, type ScriptureFontId } from "@/hooks/useScriptureFontOptions";
+import type { EventRecord } from "@/types/events";
+import type { Database } from "@/integrations/supabase/types";
+import { parseSubmissionPayload } from "@/types/messageChurches";
+import { testimonyCategoryLabels } from "@/types/testimonies";
 
 interface AccountSettingsState {
   whatsappNotifications: boolean;
@@ -63,6 +71,20 @@ interface AccountSettingsState {
   eventDigestEmail: boolean;
   eventReminderEmail: boolean;
 }
+
+type EventSummary = Pick<EventRecord, "id" | "title" | "start_at" | "status" | "city" | "country">;
+type PrayerRequestSummary = Pick<
+  Database["public"]["Tables"]["prayer_requests"]["Row"],
+  "id" | "title" | "status" | "prayer_count" | "created_at"
+>;
+type ChurchSubmissionSummary = Pick<
+  Database["public"]["Tables"]["message_church_submissions"]["Row"],
+  "id" | "status" | "submitted_church_payload" | "created_at" | "updated_at"
+>;
+type TestimonySummary = Pick<
+  Database["public"]["Tables"]["testimonies"]["Row"],
+  "id" | "category" | "status" | "happened_at" | "created_at" | "excerpt"
+>;
 
 const RESEND_TIMEOUT_SECONDS = 60;
 const AVATAR_BUCKET = "user-uploads";
@@ -78,6 +100,17 @@ export default function Profile() {
     loading: settingsLoading,
   } = useSettings();
   const scriptureFontOptions = useScriptureFontOptions();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const validTabs = useMemo(
+    () => new Set(["overview", "content", "settings", "security"]),
+    [],
+  );
+  const resolvedTab = useMemo(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "preferences") return "settings";
+    if (tabParam && validTabs.has(tabParam)) return tabParam;
+    return "overview";
+  }, [searchParams, validTabs]);
 
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
@@ -98,6 +131,12 @@ export default function Profile() {
     useState<keyof AccountSettingsState | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [activeTab, setActiveTab] = useState(resolvedTab);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [events, setEvents] = useState<EventSummary[]>([]);
+  const [prayerRequests, setPrayerRequests] = useState<PrayerRequestSummary[]>([]);
+  const [churchSubmissions, setChurchSubmissions] = useState<ChurchSubmissionSummary[]>([]);
+  const [testimonies, setTestimonies] = useState<TestimonySummary[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -179,6 +218,82 @@ export default function Profile() {
     }, 1000);
     return () => clearInterval(timer);
   }, [resendCountdown]);
+
+  useEffect(() => {
+    setActiveTab(resolvedTab);
+  }, [resolvedTab]);
+
+  useEffect(() => {
+    if (!user) {
+      setEvents([]);
+      setPrayerRequests([]);
+      setChurchSubmissions([]);
+      setTestimonies([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchContent = async () => {
+      setContentLoading(true);
+      try {
+        const [eventsRes, prayersRes, submissionsRes, testimoniesRes] =
+          await Promise.all([
+            supabase
+              .from("events")
+              .select("id,title,start_at,status,city,country")
+              .eq("user_id", user.id)
+              .order("start_at", { ascending: false })
+              .limit(5),
+            supabase
+              .from("prayer_requests")
+              .select("id,title,status,prayer_count,created_at")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(5),
+            supabase
+              .from("message_church_submissions")
+              .select("id,status,submitted_church_payload,created_at,updated_at")
+              .eq("submitter_user_id", user.id)
+              .order("updated_at", { ascending: false })
+              .limit(5),
+            supabase
+              .from("testimonies")
+              .select("id,category,status,happened_at,created_at,excerpt")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(5),
+          ]);
+
+        if (!isMounted) return;
+
+        if (eventsRes.error) throw eventsRes.error;
+        if (prayersRes.error) throw prayersRes.error;
+        if (submissionsRes.error) throw submissionsRes.error;
+        if (testimoniesRes.error) throw testimoniesRes.error;
+
+        setEvents((eventsRes.data ?? []) as EventSummary[]);
+        setPrayerRequests((prayersRes.data ?? []) as PrayerRequestSummary[]);
+        setChurchSubmissions((submissionsRes.data ?? []) as ChurchSubmissionSummary[]);
+        setTestimonies((testimoniesRes.data ?? []) as TestimonySummary[]);
+      } catch (error) {
+        console.error("Error fetching profile content:", error);
+        toast({
+          title: "Unable to load profile activity",
+          description: "Please refresh the page or try again in a moment.",
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setContentLoading(false);
+        }
+      }
+    };
+
+    fetchContent();
+    return () => {
+      isMounted = false;
+    };
+  }, [user, toast]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -448,6 +563,62 @@ export default function Profile() {
     }
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const nextParams = new URLSearchParams(searchParams);
+    if (value === "overview") {
+      nextParams.delete("tab");
+    } else {
+      nextParams.set("tab", value);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "Not available";
+    return new Date(value).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return "Not scheduled";
+    return new Date(value).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const formatStatusLabel = (value?: string | null) => {
+    if (!value) return "Unknown";
+    const normalized = value.replace(/_/g, " ").toLowerCase();
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
+
+  const getStatusVariant = (value?: string | null) => {
+    const normalized = value?.toLowerCase();
+    if (!normalized) return "outline";
+    if (normalized.includes("approved") || normalized.includes("published")) {
+      return "default";
+    }
+    if (normalized.includes("pending")) return "secondary";
+    if (normalized.includes("rejected")) return "destructive";
+    return "outline";
+  };
+
+  const getChurchSummary = (submission: ChurchSubmissionSummary) => {
+    const payload = parseSubmissionPayload(submission.submitted_church_payload);
+    return {
+      name: payload?.church_name || "Church submission",
+      location: [payload?.city, payload?.country_name].filter(Boolean).join(", "),
+    };
+  };
+
   const joinedAt = user?.created_at
     ? new Date(user.created_at).toLocaleDateString(undefined, {
         month: "short",
@@ -475,8 +646,8 @@ export default function Profile() {
             <div>
               <h1 className="text-3xl font-bold">Your Profile</h1>
               <p className="text-muted-foreground">
-                Manage your personal information, communication settings, and app
-                preferences.
+                Manage your personal information, settings, and community
+                contributions in one place.
               </p>
             </div>
             <Button variant="outline" onClick={handleSignOut}>
@@ -539,13 +710,16 @@ export default function Profile() {
           <EngagementSummary />
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="flex flex-wrap gap-2 bg-muted p-1">
               <TabsTrigger value="overview" className="gap-2">
                 <User className="h-4 w-4" /> Overview
               </TabsTrigger>
-              <TabsTrigger value="preferences" className="gap-2">
-                <SettingsIcon className="h-4 w-4" /> Preferences
+              <TabsTrigger value="content" className="gap-2">
+                <ClipboardList className="h-4 w-4" /> My Content
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <SettingsIcon className="h-4 w-4" /> Settings
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-2">
                 <Lock className="h-4 w-4" /> Security
@@ -765,7 +939,227 @@ export default function Profile() {
               <RetentionNotificationPreferences />
             </TabsContent>
 
-            <TabsContent value="preferences" className="space-y-6">
+            <TabsContent value="content" className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Events you created
+                    </CardTitle>
+                    <CardDescription>
+                      Track upcoming events, update details, and monitor approval status.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {contentLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading your events…</p>
+                    ) : events.length > 0 ? (
+                      <div className="space-y-3">
+                        {events.map((event) => (
+                          <div
+                            key={event.id}
+                            className="space-y-2 rounded-lg border border-border/60 p-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium">{event.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDateTime(event.start_at)} · {event.city},{" "}
+                                  {event.country}
+                                </p>
+                              </div>
+                              <Badge variant={getStatusVariant(event.status)}>
+                                {formatStatusLabel(event.status)}
+                              </Badge>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button asChild size="sm" variant="outline">
+                                <Link to={`/events/${event.id}`}>View</Link>
+                              </Button>
+                              <Button asChild size="sm">
+                                <Link to={`/events/edit/${event.id}`}>Edit</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No events created yet. Share your first gathering with the community.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        <Link to="/events/create">Create event</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/events">Browse events</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <HeartHandshake className="h-5 w-5" />
+                      Prayer requests
+                    </CardTitle>
+                    <CardDescription>
+                      Keep track of prayer needs you have shared and their current status.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {contentLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading your requests…</p>
+                    ) : prayerRequests.length > 0 ? (
+                      <div className="space-y-3">
+                        {prayerRequests.map((request) => (
+                          <div
+                            key={request.id}
+                            className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-3"
+                          >
+                            <div>
+                              <p className="font-medium">{request.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(request.created_at)} · {request.prayer_count} prayers
+                              </p>
+                            </div>
+                            <Badge variant={getStatusVariant(request.status)}>
+                              {formatStatusLabel(request.status)}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No prayer requests yet. Share a need and invite others to pray with you.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        <Link to="/prayer-board/create">New request</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/prayer-board">Visit prayer board</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Church submissions
+                    </CardTitle>
+                    <CardDescription>
+                      Review the Message Church listings you submitted and track approval updates.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {contentLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading submissions…</p>
+                    ) : churchSubmissions.length > 0 ? (
+                      <div className="space-y-3">
+                        {churchSubmissions.map((submission) => {
+                          const summary = getChurchSummary(submission);
+                          return (
+                            <div
+                              key={submission.id}
+                              className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-3"
+                            >
+                              <div>
+                                <p className="font-medium">{summary.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {summary.location || "Location pending"} · Updated{" "}
+                                  {formatDate(submission.updated_at || submission.created_at)}
+                                </p>
+                              </div>
+                              <Badge variant={getStatusVariant(submission.status)}>
+                                {formatStatusLabel(submission.status)}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No church submissions yet. Add a Message Church to help others connect locally.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        <Link to="/message-churches/submit">Submit a church</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/message-churches">Browse directory</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mic className="h-5 w-5" />
+                      Testimonies shared
+                    </CardTitle>
+                    <CardDescription>
+                      Monitor testimony submissions as they move through review.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {contentLoading ? (
+                      <p className="text-sm text-muted-foreground">Loading testimonies…</p>
+                    ) : testimonies.length > 0 ? (
+                      <div className="space-y-3">
+                        {testimonies.map((testimony) => {
+                          const categoryLabel =
+                            testimonyCategoryLabels[
+                              testimony.category as keyof typeof testimonyCategoryLabels
+                            ] ?? "Testimony";
+                          return (
+                            <div
+                              key={testimony.id}
+                              className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-3"
+                            >
+                              <div>
+                                <p className="font-medium">{categoryLabel}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDate(testimony.happened_at)} ·{" "}
+                                  {testimony.excerpt
+                                    ? testimony.excerpt
+                                    : "Thank you for sharing your story."}
+                                </p>
+                              </div>
+                              <Badge variant={getStatusVariant(testimony.status)}>
+                                {formatStatusLabel(testimony.status)}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No testimonies shared yet. Encourage others by telling your story.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        <Link to="/testimonies#submit">Share a testimony</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/testimonies">View testimonies</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

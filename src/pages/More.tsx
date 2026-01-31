@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  Settings,
   HelpCircle,
   Info,
   Download,
@@ -12,6 +11,7 @@ import {
   Library as LibraryIcon,
   Target,
   HeartHandshake,
+  User,
 } from "lucide-react";
 
 import Navigation from "@/components/Navigation";
@@ -61,7 +61,7 @@ export default function More() {
     {
       title: "Account & Support",
       items: [
-        { icon: Settings, label: "Settings", path: "/settings" },
+        { icon: User, label: "Profile & Settings", path: "/profile?tab=settings" },
         { icon: HelpCircle, label: "Help", path: "/help" },
         { icon: Info, label: "About", path: "/about" },
       ],
