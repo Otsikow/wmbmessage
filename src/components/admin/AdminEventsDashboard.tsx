@@ -28,6 +28,7 @@ type PendingEvent = {
   date: string;
   location: string;
   submittedBy: string;
+  contactEmail: string;
   category: string;
   priority: 'High' | 'Medium' | 'Low';
 };
@@ -63,6 +64,7 @@ const initialPendingEvents: PendingEvent[] = [
     date: 'Dec 5, 2024',
     location: 'Downtown Auditorium',
     submittedBy: 'Olivia Parker',
+    contactEmail: 'olivia.parker@example.com',
     category: 'Revival',
     priority: 'High',
   },
@@ -72,6 +74,7 @@ const initialPendingEvents: PendingEvent[] = [
     date: 'Dec 7, 2024',
     location: 'New Hope Chapel',
     submittedBy: 'Deacon Lee',
+    contactEmail: 'deacon.lee@example.com',
     category: 'Prayer',
     priority: 'Medium',
   },
@@ -81,6 +84,7 @@ const initialPendingEvents: PendingEvent[] = [
     date: 'Dec 12, 2024',
     location: 'Grace Community Hall',
     submittedBy: 'Maria Scott',
+    contactEmail: 'maria.scott@example.com',
     category: 'Outreach',
     priority: 'Low',
   },
@@ -223,6 +227,9 @@ export default function AdminEventsDashboard() {
       event.title,
       approved ? 'success' : 'warning'
     );
+    if (approved) {
+      addLogEntry('Approval email sent', `${event.title} • ${event.contactEmail}`, 'info');
+    }
   };
 
   const handleCancel = (eventId: string) => {
