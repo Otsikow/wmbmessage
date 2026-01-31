@@ -143,13 +143,6 @@ export default function MessageChurchDetail() {
                     {church.pastor_title ? `${church.pastor_title} ` : ""}
                     {church.pastor_or_contact_name}
                   </p>
-                  {church.email && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      <a className="font-medium text-primary underline" href={`mailto:${church.email}`}>
-                        {church.email}
-                      </a>
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
