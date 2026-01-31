@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
@@ -9,6 +9,8 @@ import {
   FileText,
   HandHeart,
   Headphones,
+  Square,
+  Trash2,
   Link as LinkIcon,
   Mail,
   MessageCircle,
@@ -51,6 +53,110 @@ export default function Testimonies() {
   const [consentToShare, setConsentToShare] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<"idle" | "submitted">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [recordedAudioFile, setRecordedAudioFile] = useState<File | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<BlobPart[]>([]);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
+
+  const formatDuration = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const clearRecording = useCallback(() => {
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+    }
+    setRecordedAudioUrl(null);
+    setRecordedAudioFile(null);
+  }, [recordedAudioUrl]);
+
+  const stopRecordingTimer = useCallback(() => {
+    if (recordingTimerRef.current) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+    recordingStreamRef.current = null;
+    stopRecordingTimer();
+    setIsRecording(false);
+  }, [stopRecordingTimer]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        toast({
+          title: "Recording unavailable.",
+          description: "Your browser does not support microphone access.",
+        });
+        return;
+      }
+
+      clearRecording();
+      setRecordingSeconds(0);
+      recordingChunksRef.current = [];
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordingChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(recordingChunksRef.current, { type: mediaRecorder.mimeType });
+        const file = new File([audioBlob], "testimony-recording.webm", { type: audioBlob.type });
+        const url = URL.createObjectURL(audioBlob);
+        setRecordedAudioFile(file);
+        setRecordedAudioUrl(url);
+        recordingChunksRef.current = [];
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      recordingStreamRef.current = stream;
+      mediaRecorder.start();
+      setIsRecording(true);
+
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds((prev) => {
+          if (prev >= 179) {
+            stopRecording();
+            return 180;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } catch (error) {
+      console.error("Unable to access microphone", error);
+      toast({
+        title: "Microphone blocked.",
+        description: "Enable microphone permissions to record audio.",
+      });
+    }
+  }, [clearRecording, stopRecording, toast]);
+
+  useEffect(() => {
+    return () => {
+      stopRecording();
+      if (recordedAudioUrl) {
+        URL.revokeObjectURL(recordedAudioUrl);
+      }
+    };
+  }, [recordedAudioUrl, stopRecording]);
 
   const remainingCharacters = 180 - commentDraft.length;
   const categoryOptions = useMemo(
@@ -170,6 +276,18 @@ export default function Testimonies() {
     toast({ title: "Copy unavailable.", description: "Please copy the link manually." });
   };
 
+  const handleAudioUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (isRecording) {
+      stopRecording();
+    }
+    clearRecording();
+    const url = URL.createObjectURL(file);
+    setRecordedAudioFile(file);
+    setRecordedAudioUrl(url);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="sticky top-0 z-30 bg-card border-b border-border shadow-sm">
@@ -256,10 +374,42 @@ export default function Testimonies() {
                         <CardDescription>Max 3 minutes. Use a quiet space.</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Button type="button" variant="secondary" className="w-full gap-2">
-                          <Headphones className="h-4 w-4" />
-                          Start recording
-                        </Button>
+                        <div className="space-y-3">
+                          <Button
+                            type="button"
+                            variant={isRecording ? "default" : "secondary"}
+                            className="w-full gap-2"
+                            onClick={() => (isRecording ? stopRecording() : void startRecording())}
+                          >
+                            {isRecording ? (
+                              <>
+                                <Square className="h-4 w-4" />
+                                Stop recording
+                              </>
+                            ) : (
+                              <>
+                                <Headphones className="h-4 w-4" />
+                                Start recording
+                              </>
+                            )}
+                          </Button>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{isRecording ? "Recording..." : "Up to 3:00 minutes"}</span>
+                            <span>{formatDuration(recordingSeconds)}</span>
+                          </div>
+                          {recordedAudioUrl && (
+                            <div className="space-y-2">
+                              <audio className="w-full" controls src={recordedAudioUrl} />
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span>{recordedAudioFile?.name ?? "Recorded audio"}</span>
+                                <Button type="button" size="sm" variant="ghost" onClick={clearRecording}>
+                                  <Trash2 className="h-4 w-4" />
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                     <Card className="border-dashed">
@@ -271,7 +421,7 @@ export default function Testimonies() {
                         <CardDescription>MP3, M4A, WAV up to 3 minutes.</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        <Input type="file" accept="audio/*" />
+                        <Input type="file" accept="audio/*" onChange={handleAudioUpload} />
                         <p className="text-xs text-muted-foreground">
                           Audio will be auto-transcribed. Review and edit before submitting.
                         </p>
