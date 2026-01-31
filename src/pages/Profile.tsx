@@ -656,6 +656,26 @@ export default function Profile() {
             </Button>
           </div>
 
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <div className="sticky top-16 z-20">
+            <div className="rounded-2xl border border-border/60 bg-background/95 p-2 shadow-lg backdrop-blur">
+              <TabsList className="flex w-full flex-wrap gap-2 bg-transparent p-0 text-foreground">
+                <TabsTrigger value="overview" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                  <User className="h-4 w-4" /> Overview
+                </TabsTrigger>
+                <TabsTrigger value="content" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                  <ClipboardList className="h-4 w-4" /> My Content
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                  <SettingsIcon className="h-4 w-4" /> Settings
+                </TabsTrigger>
+                <TabsTrigger value="security" className="gap-2 rounded-xl px-4 py-2 text-sm font-semibold sm:text-base">
+                  <Lock className="h-4 w-4" /> Security
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
+
           <Card>
             <CardContent className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
@@ -702,91 +722,75 @@ export default function Profile() {
                   <p>{lastSignIn}</p>
                 </div>
               </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <div className="space-y-4">
-          <EngagementPrompt />
-          <EngagementSummary />
-        </div>
+          <div className="space-y-4">
+            <EngagementPrompt />
+            <EngagementSummary />
+          </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="flex flex-wrap gap-2 bg-muted p-1">
-              <TabsTrigger value="overview" className="gap-2">
-                <User className="h-4 w-4" /> Overview
-              </TabsTrigger>
-              <TabsTrigger value="content" className="gap-2">
-                <ClipboardList className="h-4 w-4" /> My Content
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
-                <SettingsIcon className="h-4 w-4" /> Settings
-              </TabsTrigger>
-              <TabsTrigger value="security" className="gap-2">
-                <Lock className="h-4 w-4" /> Security
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Personal Information
-                  </CardTitle>
-                  <CardDescription>
-                    Update your name and profile image. Email changes require
-                    contacting support.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={avatarUrl ?? ""} />
-                        <AvatarFallback className="text-2xl">
-                          {fullName?.charAt(0)?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={fileInputRef}
-                          className="hidden"
-                          onChange={handleAvatarUpload}
-                        />
-                        <div className="flex flex-wrap gap-2">
+          <TabsContent value="overview" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Personal Information
+                </CardTitle>
+                <CardDescription>
+                  Update your name and profile image. Email changes require
+                  contacting support.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={avatarUrl ?? ""} />
+                      <AvatarFallback className="text-2xl">
+                        {fullName?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingAvatar}
+                        >
+                          {uploadingAvatar ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          Upload Avatar
+                        </Button>
+                        {avatarUrl && (
                           <Button
                             type="button"
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
+                            variant="ghost"
+                            onClick={handleRemoveAvatar}
                             disabled={uploadingAvatar}
                           >
-                            {uploadingAvatar ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Upload className="h-4 w-4 mr-2" />
-                            )}
-                            Upload Avatar
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove
                           </Button>
-                          {avatarUrl && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              onClick={handleRemoveAvatar}
-                              disabled={uploadingAvatar}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Upload a square JPG or PNG (max 5MB).
-                        </p>
+                        )}
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        Upload a square JPG or PNG (max 5MB).
+                      </p>
                     </div>
                   </div>
+                </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
