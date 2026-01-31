@@ -73,7 +73,7 @@ export default function More() {
       <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto">
           <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <BackButton />
+            <BackButton fallbackPath="/" useHistory={false} />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
               More
             </h1>

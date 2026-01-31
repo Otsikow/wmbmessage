@@ -7,6 +7,7 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 interface BackButtonProps extends Omit<ButtonProps, "children" | "onClick"> {
   fallbackPath?: string;
   iconClassName?: string;
+  useHistory?: boolean;
 }
 
 export function BackButton({
@@ -15,13 +16,14 @@ export function BackButton({
   iconClassName = "h-4 w-4 sm:h-5 sm:w-5",
   variant = "ghost",
   size = "icon",
+  useHistory = true,
   ...buttonProps
 }: BackButtonProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {
     // Try to go back if there's history, otherwise use fallback
-    if (window.history.state && window.history.state.idx > 0) {
+    if (useHistory && window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
       navigate(fallbackPath);
