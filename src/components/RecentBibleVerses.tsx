@@ -71,6 +71,14 @@ export default function RecentBibleVerses() {
         return;
       }
 
+      const lastSnap = carouselApi.scrollSnapList().length - 1;
+      const currentSnap = carouselApi.selectedScrollSnap();
+
+      if (currentSnap >= lastSnap) {
+        carouselApi.scrollTo(0, true);
+        return;
+      }
+
       carouselApi.scrollNext();
     }, 6500);
 
@@ -98,7 +106,7 @@ export default function RecentBibleVerses() {
       <Carousel
         opts={{
           align: "start",
-          loop: true,
+          loop: false,
         }}
         setApi={setCarouselApi}
         className="w-full"
