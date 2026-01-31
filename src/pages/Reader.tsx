@@ -442,7 +442,7 @@ export default function Reader() {
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
   const controlButtonWideClass = cn(
     controlButtonClass,
-    "w-auto px-3 gap-2"
+    "w-auto px-4 gap-2 min-w-[120px] justify-center"
   );
 
   useEffect(() => {
@@ -508,9 +508,9 @@ export default function Reader() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <Button asChild variant="outline" className={controlButtonWideClass}>
-                  <Link to="/search" aria-label="Search the Bible">
+                  <Link to="/search" aria-label="Search the Bible" className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
                     <span className="text-sm font-medium">Search</span>
                   </Link>
