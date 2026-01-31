@@ -13,9 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageChurch } from "@/types/messageChurches";
 import { countries } from "@/data/countries";
 import MessageChurchCard from "@/components/message-churches/MessageChurchCard";
-import { MapPinned, Search, Share2, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
-import { buildChurchAddress, buildChurchDetailsPath, buildChurchShareDetails } from "@/utils/messageChurchShare";
+import { MapPinned, Search, ShieldCheck } from "lucide-react";
+import { buildChurchAddress } from "@/utils/messageChurchShare";
+import MessageChurchShareMenu from "@/components/message-churches/MessageChurchShareMenu";
 
 const verifiedOnlyDefault = true;
 
@@ -97,34 +97,6 @@ export default function MessageChurchDirectory() {
     : "";
 
   const countryOptions = useMemo(() => [{ code: "all", name: "All countries" }, ...countries], []);
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const handleShare = async (church: MessageChurch) => {
-    const shareLink = `${baseUrl}${buildChurchDetailsPath(church.id)}`;
-    const { text, title, url } = buildChurchShareDetails(church, {
-      baseUrl,
-      includeWhatsApp: true,
-      mapLink: mapLinkUrl,
-    });
-
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url: shareLink });
-        toast.success("Church details ready to share.");
-        return;
-      }
-
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text.replace(url, shareLink));
-        toast.success("Church details copied to clipboard.");
-        return;
-      }
-
-      toast.error("Sharing is not supported in this browser.");
-    } catch (error) {
-      console.error("Share failed", error);
-      toast.error("Unable to share church details right now.");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -266,15 +238,14 @@ export default function MessageChurchDirectory() {
                                 Open in Google Maps
                               </a>
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
+                            <MessageChurchShareMenu
+                              church={selectedChurch}
+                              mapLink={mapLinkUrl}
+                              buttonLabel="Share details"
+                              buttonSize="sm"
+                              buttonVariant="outline"
                               className="w-full sm:w-auto"
-                              onClick={() => handleShare(selectedChurch)}
-                            >
-                              <Share2 className="mr-2 h-4 w-4" />
-                              Share details
-                            </Button>
+                            />
                           </div>
                         </div>
                       )}
