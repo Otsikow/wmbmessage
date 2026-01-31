@@ -15,7 +15,7 @@ import { countries } from "@/data/countries";
 import MessageChurchCard from "@/components/message-churches/MessageChurchCard";
 import { MapPinned, Search, Share2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { buildChurchAddress, buildChurchShareDetails } from "@/utils/messageChurchShare";
+import { buildChurchAddress, buildChurchDetailsPath, buildChurchShareDetails } from "@/utils/messageChurchShare";
 
 const verifiedOnlyDefault = true;
 
@@ -99,6 +99,7 @@ export default function MessageChurchDirectory() {
   const countryOptions = useMemo(() => [{ code: "all", name: "All countries" }, ...countries], []);
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const handleShare = async (church: MessageChurch) => {
+    const shareLink = `${baseUrl}${buildChurchDetailsPath(church.id)}`;
     const { text, title, url } = buildChurchShareDetails(church, {
       baseUrl,
       includeWhatsApp: true,
@@ -107,13 +108,13 @@ export default function MessageChurchDirectory() {
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ title, text, url: shareLink });
         toast.success("Church details ready to share.");
         return;
       }
 
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text.replace(url, shareLink));
         toast.success("Church details copied to clipboard.");
         return;
       }

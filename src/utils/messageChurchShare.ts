@@ -12,6 +12,9 @@ export const buildChurchAddress = (church: MessageChurch) =>
     .filter(Boolean)
     .join(", ");
 
+export const buildChurchDetailsPath = (churchId: string) =>
+  `/message-churches/${encodeURIComponent(churchId.trim())}`;
+
 export const buildChurchShareDetails = (
   church: MessageChurch,
   options?: {
@@ -23,7 +26,8 @@ export const buildChurchShareDetails = (
   const address = buildChurchAddress(church);
   const location = [church.city, church.state_region, church.country_name].filter(Boolean).join(", ");
   const baseUrl = options?.baseUrl?.replace(/\/$/, "") ?? "";
-  const detailsUrl = baseUrl ? `${baseUrl}/message-churches/${church.id}` : `/message-churches/${church.id}`;
+  const detailsPath = buildChurchDetailsPath(church.id);
+  const detailsUrl = baseUrl ? `${baseUrl}${detailsPath}` : detailsPath;
 
   const lines = [
     church.church_name,

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatWhatsAppLink } from "@/utils/phone";
-import { buildChurchShareDetails } from "@/utils/messageChurchShare";
+import { buildChurchDetailsPath, buildChurchShareDetails } from "@/utils/messageChurchShare";
 import { Link } from "react-router-dom";
 import { MapPin, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ interface MessageChurchCardProps {
 export default function MessageChurchCard({ church }: MessageChurchCardProps) {
   const handleShare = async () => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const shareLink = `${baseUrl}${buildChurchDetailsPath(church.id)}`;
     const { text, title, url } = buildChurchShareDetails(church, {
       baseUrl,
       includeWhatsApp: true,
@@ -22,13 +23,13 @@ export default function MessageChurchCard({ church }: MessageChurchCardProps) {
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ title, text, url: shareLink });
         toast.success("Church details ready to share.");
         return;
       }
 
       if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text.replace(url, shareLink));
         toast.success("Church details copied to clipboard.");
         return;
       }
@@ -46,7 +47,7 @@ export default function MessageChurchCard({ church }: MessageChurchCardProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <Link
-              to={`/message-churches/${church.id}`}
+              to={buildChurchDetailsPath(church.id)}
               className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
             >
               {church.church_name}
@@ -79,7 +80,7 @@ export default function MessageChurchCard({ church }: MessageChurchCardProps) {
             Share
           </Button>
           <Button variant="ghost" asChild>
-            <Link to={`/message-churches/${church.id}`}>View Details</Link>
+            <Link to={buildChurchDetailsPath(church.id)}>View Details</Link>
           </Button>
         </div>
       </CardContent>
