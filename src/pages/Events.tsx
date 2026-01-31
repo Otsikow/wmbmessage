@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { CalendarDays, MapPin, Share2, Lock, Unlock, Users } from "lucide-react";
+import { CalendarDays, Facebook, Link as LinkIcon, Lock, Mail, MapPin, MessageCircle, Unlock, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { EVENT_TYPES, EVENT_FORMATS, ENTRY_TYPES, VISIBILITY_OPTIONS } from "@/data/events";
+import { appendShareAttribution, buildShareUrl } from "@/lib/share";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Awaiting admin approval",
@@ -170,6 +171,26 @@ export default function Events() {
     ? new Date(selectedEvent.endAt).getTime() < new Date().getTime()
     : false;
 
+  const getEventSharePayload = (event: EventRecord) => {
+    const url = buildShareUrl(`/events/${event.id}`);
+    const message = appendShareAttribution(`${event.title} — ${event.shortDescription}\n${url}`);
+    return { url, message };
+  };
+
+  const openShareWindow = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyLink = async (event: EventRecord) => {
+    const { url } = getEventSharePayload(event);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied. Share it by text or social media.");
+      return;
+    }
+    toast.error("Clipboard access unavailable. Please copy the link manually.");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
       <div className="w-full py-6 sm:py-8">
@@ -286,14 +307,69 @@ export default function Events() {
                     >
                       I’m Going
                     </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full gap-2 sm:w-auto"
-                      onClick={() => toast.success("Shared internally.")}
-                    >
-                      <Share2 className="h-4 w-4" />
-                      Share
-                    </Button>
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 bg-muted/40 p-4 space-y-3">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold">Share this event</p>
+                        <p className="text-xs text-muted-foreground">
+                          Send the official MessageGuide link so friends can RSVP on messageguide.org.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="self-start">
+                        Official link
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { message } = getEventSharePayload(selectedEvent);
+                          openShareWindow(`https://wa.me/?text=${encodeURIComponent(message)}`);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4 text-emerald-600" />
+                        WhatsApp
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { url } = getEventSharePayload(selectedEvent);
+                          openShareWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
+                        }}
+                      >
+                        <Facebook className="h-4 w-4 text-blue-600" />
+                        Facebook
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          const { message } = getEventSharePayload(selectedEvent);
+                          openShareWindow(
+                            `mailto:?subject=${encodeURIComponent(`Join me at ${selectedEvent.title}`)}&body=${encodeURIComponent(message)}`
+                          );
+                        }}
+                      >
+                        <Mail className="h-4 w-4 text-sky-600" />
+                        Email
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => void handleCopyLink(selectedEvent)}
+                      >
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        Copy link
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="border-t border-border/60 pt-4 space-y-3">
