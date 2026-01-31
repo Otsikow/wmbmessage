@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
@@ -44,6 +44,7 @@ export default function CreateEvent() {
   const [formState, setFormState] = useState<EventFormState>(INITIAL_FORM_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -106,8 +107,7 @@ export default function CreateEvent() {
     }
   };
 
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const setImageFile = (file: File | null) => {
     if (!file) {
       setFormState((prev) => ({ ...prev, imageFile: null, imagePreviewUrl: "" }));
       return;
@@ -116,10 +116,32 @@ export default function CreateEvent() {
       toast.error("Please upload an image file.");
       return;
     }
-    // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setFormState((prev) => ({ ...prev, imageFile: file, imagePreviewUrl: previewUrl }));
   };
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setImageFile(file);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0] ?? null;
+    setImageFile(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (formState.imageFile && formState.imagePreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(formState.imagePreviewUrl);
+      }
+    };
+  }, [formState.imageFile, formState.imagePreviewUrl]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileExt = file.name.split(".").pop();
@@ -315,25 +337,60 @@ export default function CreateEvent() {
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="event-image">Event image</Label>
-                <Input
-                  id="event-image"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Upload a banner image to make the event page feel more vibrant.
-                </p>
-                {formState.imagePreviewUrl && (
-                  <div className="mt-2 overflow-hidden rounded-lg border border-border/60">
-                    <img
-                      src={formState.imagePreviewUrl}
-                      alt="Event preview"
-                      className="h-40 w-full object-cover"
-                    />
+                <div
+                  className={`flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-4 py-6 text-sm transition ${
+                    isDragging
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border/70 text-muted-foreground hover:border-primary/60"
+                  }`}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(event) => {
+                    event.preventDefault();
+                    setIsDragging(false);
+                  }}
+                  onDrop={handleDrop}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                >
+                  <Input
+                    id="event-image"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <div className="text-center space-y-1">
+                    <p className="font-medium text-foreground">
+                      Drag and drop an image here, or click to browse
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Upload a banner image to make the event page feel more vibrant.
+                    </p>
                   </div>
-                )}
+                  {formState.imagePreviewUrl && (
+                    <div className="mt-2 w-full overflow-hidden rounded-lg border border-border/60 bg-background">
+                      <img
+                        src={formState.imagePreviewUrl}
+                        alt="Event preview"
+                        className="h-48 w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG, or GIF recommended.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="start-date">Start date & time *</Label>
