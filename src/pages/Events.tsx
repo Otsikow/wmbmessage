@@ -94,6 +94,7 @@ export default function Events() {
   const { user } = useAuth();
   const [selectedId, setSelectedId] = useState<string>("");
   const [commentDraft, setCommentDraft] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedId) ?? events[0],
@@ -137,6 +138,10 @@ export default function Events() {
       setSelectedId(matchingEvent.id);
     }
   }, [eventId, events]);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [selectedEvent?.image_url]);
 
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -289,11 +294,12 @@ export default function Events() {
                         )}
                       </div>
                       <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/40">
-                        {selectedEvent.image_url ? (
+                        {selectedEvent.image_url && !imageError ? (
                           <img
                             src={selectedEvent.image_url}
                             alt={`${selectedEvent.title} banner`}
                             className="h-40 w-full object-cover sm:h-48"
+                            onError={() => setImageError(true)}
                           />
                         ) : (
                           <div className="flex h-40 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-muted sm:h-48">

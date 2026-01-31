@@ -144,12 +144,16 @@ export default function CreateEvent() {
   }, [formState.imageFile, formState.imagePreviewUrl]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
+    if (!user?.id) {
+      toast.error("Please sign in to upload an event image.");
+      return null;
+    }
     const fileExt = file.name.split(".").pop();
     const fileName = `event-${Date.now()}.${fileExt}`;
-    const filePath = `events/${fileName}`;
+    const filePath = `${user.id}/events/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from("user-uploads")
+      .from("event-images")
       .upload(filePath, file);
 
     if (uploadError) {
@@ -157,7 +161,7 @@ export default function CreateEvent() {
       return null;
     }
 
-    const { data } = supabase.storage.from("user-uploads").getPublicUrl(filePath);
+    const { data } = supabase.storage.from("event-images").getPublicUrl(filePath);
     return data.publicUrl;
   };
 
