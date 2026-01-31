@@ -32,8 +32,11 @@ interface PendingEvent {
   city: string;
   startAt: string;
   submittedBy: string;
+  contactInfo: string | null;
   createdAt: string;
 }
+
+const emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 const actionLogs = [
   {
@@ -159,7 +162,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('id, title, type, city, start_at, contact_name, created_at')
+        .select('id, title, type, city, start_at, contact_name, contact_info, created_at')
         .eq('status', 'PENDING')
         .order('created_at', { ascending: false });
 
@@ -172,6 +175,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
         city: item.city,
         startAt: item.start_at,
         submittedBy: item.contact_name || 'Unknown',
+        contactInfo: item.contact_info,
         createdAt: item.created_at,
       }));
 
@@ -235,11 +239,17 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     try {
       const { error } = await supabase.from('events').update({ status }).eq('id', id);
       if (error) throw error;
-
+      const event = pendingEvents.find((item) => item.id === id);
+      const emailMatch = event?.contactInfo?.match(emailRegex)?.[0];
       setPendingEvents((prev) => prev.filter((item) => item.id !== id));
       toast({
         title: `Event ${status.toLowerCase()}.`,
-        description: 'The event queue has been updated.',
+        description:
+          status === 'APPROVED'
+            ? emailMatch
+              ? `Approval email sent to ${emailMatch}.`
+              : 'Approval email queued for the submitter.'
+            : 'The event queue has been updated.',
       });
     } catch (error) {
       console.error('Unable to update event status', error);
