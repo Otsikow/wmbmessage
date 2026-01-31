@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
-import { HeartHandshake, CalendarDays, MessageSquareHeart, Sparkles } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { HeartHandshake, CalendarDays, MessageSquareHeart, Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Import community images
+import prayerImage from "@/assets/community-prayer.png";
+import testimoniesImage from "@/assets/community-testimonies.jpg";
+import eventsImage from "@/assets/community-events.png";
 
 const communityFeatures = [
   {
@@ -10,32 +13,32 @@ const communityFeatures = [
     title: "Prayer Board",
     description: "Share prayer requests and lift each other up in faith",
     path: "/prayer-board",
-    gradient: "from-rose-500/20 to-pink-500/20",
-    iconColor: "text-rose-500",
+    image: prayerImage,
+    imagePosition: "center", // hands centered
   },
   {
     icon: MessageSquareHeart,
     title: "Testimonies",
     description: "Read and share powerful testimonies of God's faithfulness",
     path: "/testimonies",
-    gradient: "from-amber-500/20 to-orange-500/20",
-    iconColor: "text-amber-500",
+    image: testimoniesImage,
+    imagePosition: "center", // Bible centered with light
   },
   {
     icon: CalendarDays,
     title: "Events",
     description: "Find conventions, revivals, and fellowship gatherings",
     path: "/events",
-    gradient: "from-blue-500/20 to-cyan-500/20",
-    iconColor: "text-blue-500",
+    image: eventsImage,
+    imagePosition: "bottom", // crowd at bottom
   },
 ];
 
 export default function CommunityPromo() {
   return (
-    <section className="relative py-8 px-4">
+    <section className="relative py-10 px-4">
       {/* Section Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3">
           <Sparkles className="h-4 w-4" />
           <span>Community</span>
@@ -49,41 +52,62 @@ export default function CommunityPromo() {
       </div>
 
       {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl mx-auto">
         {communityFeatures.map((feature) => {
           const Icon = feature.icon;
           return (
-            <Link key={feature.path} to={feature.path} className="group">
-              <Card className={cn(
-                "relative overflow-hidden border-border/50 h-full transition-all duration-300",
-                "hover:border-primary/30 hover:shadow-lg hover:-translate-y-1",
-                "bg-gradient-to-br",
-                feature.gradient
+            <Link 
+              key={feature.path} 
+              to={feature.path} 
+              className="group block"
+            >
+              <article className={cn(
+                "relative overflow-hidden rounded-2xl h-72 sm:h-80",
+                "shadow-lg hover:shadow-xl transition-all duration-500",
+                "hover:-translate-y-1"
               )}>
-                <CardContent className="p-5 flex flex-col items-center text-center space-y-3">
+                {/* Background Image */}
+                <div 
+                  className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+                  style={{ 
+                    backgroundImage: `url(${feature.image})`,
+                    backgroundPosition: feature.imagePosition === "bottom" ? "center bottom" : "center center",
+                  }}
+                />
+                
+                {/* Gradient Overlay for Readability */}
+                <div className={cn(
+                  "absolute inset-0",
+                  "bg-gradient-to-t from-black/80 via-black/40 to-black/20"
+                )} />
+                
+                {/* Content positioned at bottom */}
+                <div className="absolute inset-0 flex flex-col justify-end p-5">
+                  {/* Icon Badge */}
                   <div className={cn(
-                    "h-12 w-12 rounded-xl flex items-center justify-center",
-                    "bg-background/80 shadow-sm group-hover:scale-110 transition-transform duration-300"
+                    "w-12 h-12 rounded-xl mb-3",
+                    "bg-white/15 backdrop-blur-md border border-white/20",
+                    "flex items-center justify-center",
+                    "group-hover:bg-white/25 transition-colors duration-300"
                   )}>
-                    <Icon className={cn("h-6 w-6", feature.iconColor)} />
+                    <Icon className="h-6 w-6 text-white drop-shadow-md" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground text-lg mb-1">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.description}
-                    </p>
+                  
+                  {/* Text Content */}
+                  <h3 className="text-xl font-bold text-white mb-1 drop-shadow-lg">
+                    {feature.title}
+                  </h3>
+                  <p className="text-white/90 text-sm leading-relaxed mb-3 drop-shadow-md">
+                    {feature.description}
+                  </p>
+                  
+                  {/* CTA Link */}
+                  <div className="flex items-center gap-1 text-white/90 text-sm font-medium group-hover:text-white transition-colors">
+                    <span>Explore</span>
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-primary hover:text-primary hover:bg-primary/10 mt-2"
-                  >
-                    Explore →
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </article>
             </Link>
           );
         })}
