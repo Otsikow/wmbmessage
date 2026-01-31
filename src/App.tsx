@@ -211,6 +211,10 @@ function App() {
                                     element={withSectionBoundary("Create Event", <CreateEvent />)}
                                   />
                                   <Route
+                                    path="/events/edit/:eventId"
+                                    element={withSectionBoundary("Edit Event", <CreateEvent />)}
+                                  />
+                                  <Route
                                     path="/events/:eventId"
                                     element={withSectionBoundary("Event details", <Events />)}
                                   />

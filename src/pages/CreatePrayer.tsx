@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORIES = [
   "Personal",
@@ -34,14 +37,20 @@ const INITIAL_FORM_STATE = {
   description: "",
   category: "",
   visibility: "",
+  displayName: "",
+  isUrgent: false,
 };
 
 export default function CreatePrayer() {
   const [formState, setFormState] = useState(INITIAL_FORM_STATE);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const remainingDescription = 500 - formState.description.length;
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const identityPreference = formState.visibility === "Anonymous public" ? "anonymous" : "full_name";
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!formState.title.trim()) {
       toast.error("Prayer title is required.");
@@ -60,9 +69,30 @@ export default function CreatePrayer() {
       return;
     }
 
-    toast.success("Prayer request submitted for review.");
-    setFormState(INITIAL_FORM_STATE);
-    navigate("/prayer-board");
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("prayer_requests").insert({
+        user_id: user?.id || null,
+        title: formState.title.trim(),
+        content: formState.description.trim(),
+        category: formState.category.toLowerCase().replace(/ \/ /g, "_").replace(/ /g, "_"),
+        identity_preference: identityPreference,
+        display_name: identityPreference === "anonymous" ? null : formState.displayName.trim() || null,
+        is_urgent: formState.category === "Urgent",
+        status: "pending",
+      });
+
+      if (error) throw error;
+
+      toast.success("Prayer request submitted for review.");
+      setFormState(INITIAL_FORM_STATE);
+      navigate("/prayer-board");
+    } catch (error) {
+      console.error("Failed to submit prayer request:", error);
+      toast.error("Failed to submit prayer request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -154,6 +184,19 @@ export default function CreatePrayer() {
                   </Select>
                 </div>
               </div>
+
+              {formState.visibility && formState.visibility !== "Anonymous public" && (
+                <div className="space-y-2">
+                  <Label htmlFor="display-name">Display name (optional)</Label>
+                  <Input
+                    id="display-name"
+                    value={formState.displayName}
+                    onChange={(event) => setFormState({ ...formState, displayName: event.target.value })}
+                    placeholder="Name to show publicly"
+                  />
+                </div>
+              )}
+
               <div className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
                 {PRIVACY_LEVELS.map((level) => (
                   <div
@@ -165,8 +208,8 @@ export default function CreatePrayer() {
                   </div>
                 ))}
               </div>
-              <Button type="submit" className="w-full">
-                Submit request
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit request"}
               </Button>
             </form>
           </Card>

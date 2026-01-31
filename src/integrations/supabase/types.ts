@@ -161,6 +161,93 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          address: string
+          city: string
+          contact_info: string | null
+          contact_name: string | null
+          country: string
+          created_at: string
+          discussion_locked: boolean
+          end_at: string
+          entry_type: string
+          format: string
+          full_description: string | null
+          id: string
+          image_url: string | null
+          maps_link: string | null
+          region_city: string | null
+          region_country: string | null
+          registration_link: string | null
+          short_description: string
+          start_at: string
+          status: string
+          time_zone: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+          visibility: string
+        }
+        Insert: {
+          address: string
+          city: string
+          contact_info?: string | null
+          contact_name?: string | null
+          country: string
+          created_at?: string
+          discussion_locked?: boolean
+          end_at: string
+          entry_type: string
+          format: string
+          full_description?: string | null
+          id?: string
+          image_url?: string | null
+          maps_link?: string | null
+          region_city?: string | null
+          region_country?: string | null
+          registration_link?: string | null
+          short_description: string
+          start_at: string
+          status?: string
+          time_zone: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+          visibility?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          contact_info?: string | null
+          contact_name?: string | null
+          country?: string
+          created_at?: string
+          discussion_locked?: boolean
+          end_at?: string
+          entry_type?: string
+          format?: string
+          full_description?: string | null
+          id?: string
+          image_url?: string | null
+          maps_link?: string | null
+          region_city?: string | null
+          region_country?: string | null
+          registration_link?: string | null
+          short_description?: string
+          start_at?: string
+          status?: string
+          time_zone?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          visibility?: string
+        }
+        Relationships: []
+      }
       message_church_submissions: {
         Row: {
           admin_notes: string | null
@@ -302,6 +389,51 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_requests: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          display_name: string | null
+          id: string
+          identity_preference: string
+          is_urgent: boolean
+          prayer_count: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          identity_preference?: string
+          is_urgent?: boolean
+          prayer_count?: number
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          identity_preference?: string
+          is_urgent?: boolean
+          prayer_count?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -429,6 +561,60 @@ export type Database = {
           location?: string
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      testimonies: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          change_summary: string
+          consent_public: boolean
+          created_at: string
+          display_name: string | null
+          excerpt: string | null
+          happened_at: string
+          id: string
+          identity_preference: string
+          situation_before: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          change_summary: string
+          consent_public?: boolean
+          created_at?: string
+          display_name?: string | null
+          excerpt?: string | null
+          happened_at: string
+          id?: string
+          identity_preference?: string
+          situation_before: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          change_summary?: string
+          consent_public?: boolean
+          created_at?: string
+          display_name?: string | null
+          excerpt?: string | null
+          happened_at?: string
+          id?: string
+          identity_preference?: string
+          situation_before?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
