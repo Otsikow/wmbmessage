@@ -119,16 +119,11 @@ export default function UserManager({
       ["admin", "super_admin"].includes(getUserRole(p.id)),
     ).length;
 
-    const invited = profiles.filter(
-      (p) => !p.full_name,
-    ).length;
+    const invited = profiles.filter((p) => !p.full_name).length;
 
     const last7Days = profiles.filter((p) => {
       const created = new Date(p.created_at).getTime();
-      return (
-        Date.now() - created <=
-        7 * 24 * 60 * 60 * 1000
-      );
+      return Date.now() - created <= 7 * 24 * 60 * 60 * 1000;
     }).length;
 
     return { total, admins, invited, last7Days };
@@ -273,9 +268,7 @@ export default function UserManager({
                       </Badge>
                     </TableCell>
 
-                    <TableCell>
-                      {formatDate(profile.created_at)}
-                    </TableCell>
+                    <TableCell>{formatDate(profile.created_at)}</TableCell>
 
                     <TableCell className="text-right">
                       <DropdownMenu>
