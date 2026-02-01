@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import {
-  CheckCircle2,
-  Clock,
-  Download,
   MoreHorizontal,
   Search,
   ShieldCheck,
   UserPlus,
   Users,
+  Download,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -19,8 +21,6 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -45,6 +45,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+/* =======================
+   Types
+======================= */
+
 export interface AdminProfile {
   id: string;
   email: string;
@@ -62,6 +66,10 @@ interface UserManagerProps {
   userRoles: AdminUserRole[];
 }
 
+/* =======================
+   Component
+======================= */
+
 export default function UserManager({
   profiles,
   userRoles,
@@ -69,6 +77,9 @@ export default function UserManager({
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
+  /* -----------------------
+     Role lookup
+  ------------------------ */
   const roleByUserId = useMemo(
     () => new Map(userRoles.map((r) => [r.user_id, r.role])),
     [userRoles],
@@ -77,40 +88,79 @@ export default function UserManager({
   const getUserRole = (userId: string) =>
     roleByUserId.get(userId) || "user";
 
+  /* -----------------------
+     Filtering
+  ------------------------ */
   const filteredProfiles = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const query = searchTerm.trim().toLowerCase();
 
     return profiles.filter((profile) => {
       const role = getUserRole(profile.id);
-      const matchesRole = roleFilter === "all" || role === roleFilter;
+
+      const matchesRole =
+        roleFilter === "all" || role === roleFilter;
+
       const matchesSearch =
-        !term ||
-        profile.email.toLowerCase().includes(term) ||
-        (profile.full_name ?? "").toLowerCase().includes(term);
+        !query ||
+        profile.email.toLowerCase().includes(query) ||
+        (profile.full_name ?? "").toLowerCase().includes(query);
 
       return matchesRole && matchesSearch;
     });
-  }, [profiles, roleByUserId, roleFilter, searchTerm]);
+  }, [profiles, roleFilter, searchTerm, roleByUserId]);
 
-  const totalUsers = profiles.length;
-  const adminCount = profiles.filter(
-    (p) => getUserRole(p.id) === "admin",
-  ).length;
-  const invitedCount = profiles.filter((p) => !p.full_name).length;
-  const newThisWeek = profiles.filter((p) => {
-    const created = new Date(p.created_at).getTime();
-    return created >= Date.now() - 7 * 24 * 60 * 60 * 1000;
-  }).length;
+  /* -----------------------
+     Stats
+  ------------------------ */
+  const stats = useMemo(() => {
+    const total = profiles.length;
 
-  const formatRoleLabel = (role: string) =>
-    role.charAt(0).toUpperCase() + role.slice(1);
+    const admins = profiles.filter((p) =>
+      ["admin", "super_admin"].includes(getUserRole(p.id)),
+    ).length;
 
+    const invited = profiles.filter(
+      (p) => !p.full_name,
+    ).length;
+
+    const last7Days = profiles.filter((p) => {
+      const created = new Date(p.created_at).getTime();
+      return (
+        Date.now() - created <=
+        7 * 24 * 60 * 60 * 1000
+      );
+    }).length;
+
+    return { total, admins, invited, last7Days };
+  }, [profiles, roleByUserId]);
+
+  /* -----------------------
+     Helpers
+  ------------------------ */
   const formatDate = (value: string) =>
     new Date(value).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+
+  const getInitials = (name?: string | null, email?: string) => {
+    if (name) {
+      return name
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase())
+        .join("");
+    }
+    return email?.[0]?.toUpperCase() ?? "U";
+  };
+
+  const formatRoleLabel = (role: string) =>
+    role.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  /* =======================
+     Render
+  ======================= */
 
   return (
     <Card>
@@ -122,6 +172,7 @@ export default function UserManager({
               Manage access, roles, and onboarding across the platform.
             </CardDescription>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" size="sm" className="gap-2">
               <Download className="h-4 w-4" />
@@ -148,6 +199,7 @@ export default function UserManager({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-full lg:w-56">
               <SelectValue placeholder="Filter by role" />
@@ -164,10 +216,10 @@ export default function UserManager({
 
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Stat label="Total users" value={totalUsers} icon={<Users />} />
-          <Stat label="Admins" value={adminCount} icon={<ShieldCheck />} />
-          <Stat label="Invited" value={invitedCount} icon={<Clock />} />
-          <Stat label="New this week" value={newThisWeek} icon={<CheckCircle2 />} />
+          <Stat label="Total users" value={stats.total} icon={<Users />} />
+          <Stat label="Admins" value={stats.admins} icon={<ShieldCheck />} />
+          <Stat label="Invited" value={stats.invited} icon={<Clock />} />
+          <Stat label="New this week" value={stats.last7Days} icon={<CheckCircle2 />} />
         </div>
 
         <Separator />
@@ -183,6 +235,7 @@ export default function UserManager({
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filteredProfiles.map((profile) => {
                 const role = getUserRole(profile.id);
@@ -194,8 +247,7 @@ export default function UserManager({
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarFallback>
-                            {(profile.full_name?.[0] ||
-                              profile.email[0]).toUpperCase()}
+                            {getInitials(profile.full_name, profile.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -208,17 +260,23 @@ export default function UserManager({
                         </div>
                       </div>
                     </TableCell>
+
                     <TableCell>
                       <Badge variant="secondary">
                         {formatRoleLabel(role)}
                       </Badge>
                     </TableCell>
+
                     <TableCell>
                       <Badge variant={invited ? "outline" : "default"}>
                         {invited ? "Invited" : "Active"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDate(profile.created_at)}</TableCell>
+
+                    <TableCell>
+                      {formatDate(profile.created_at)}
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -258,6 +316,10 @@ export default function UserManager({
     </Card>
   );
 }
+
+/* =======================
+   Stat Card
+======================= */
 
 function Stat({
   label,
