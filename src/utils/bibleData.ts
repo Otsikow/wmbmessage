@@ -20,9 +20,29 @@ export interface BibleVerseRecord {
 
 let cachedVerses: BibleVerseRecord[] | null = null;
 let chapterIndex: Map<string, BibleVerseRecord[]> | null = null;
+let cachedFromSample = false;
+let refreshAttempted = false;
 
 export async function loadKJVBibleVerses(): Promise<BibleVerseRecord[]> {
   if (cachedVerses) {
+    if (!cachedFromSample) {
+      return cachedVerses;
+    }
+    if (cachedFromSample && !refreshAttempted) {
+      refreshAttempted = true;
+      const raw = await loadRawBibleData();
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as RemoteBibleBook[];
+          cachedVerses = flattenRemoteBible(parsed);
+          chapterIndex = null;
+          cachedFromSample = false;
+          return cachedVerses;
+        } catch (error) {
+          console.warn("Failed to parse refreshed KJV dataset:", error);
+        }
+      }
+    }
     return cachedVerses;
   }
 
@@ -31,6 +51,7 @@ export async function loadKJVBibleVerses(): Promise<BibleVerseRecord[]> {
     try {
       const parsed = JSON.parse(raw) as RemoteBibleBook[];
       cachedVerses = flattenRemoteBible(parsed);
+      chapterIndex = null;
       return cachedVerses;
     } catch (error) {
       console.warn("Failed to parse remote KJV dataset:", error);
@@ -39,6 +60,7 @@ export async function loadKJVBibleVerses(): Promise<BibleVerseRecord[]> {
 
   const fallback = await loadLocalSampleVerses();
   cachedVerses = fallback;
+  cachedFromSample = true;
   return cachedVerses;
 }
 
