@@ -13,36 +13,43 @@ export default function RecentBibleVerses() {
   // Add sample verses on first load
   useEffect(() => {
     if (recentVerses.length === 0) {
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
       const sampleVerses = [
         {
           book: "John",
           chapter: 3,
           verse: 16,
           text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+          timestamp: now - 4 * dayMs,
         },
         {
           book: "Psalm",
           chapter: 23,
           verse: 1,
           text: "The LORD is my shepherd; I shall not want.",
+          timestamp: now - 3 * dayMs,
         },
         {
           book: "Proverbs",
           chapter: 3,
           verse: 5,
           text: "Trust in the LORD with all thine heart; and lean not unto thine own understanding.",
+          timestamp: now - 2 * dayMs,
         },
         {
           book: "Romans",
           chapter: 8,
           verse: 28,
           text: "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+          timestamp: now - dayMs,
         },
         {
           book: "Philippians",
           chapter: 4,
           verse: 13,
           text: "I can do all things through Christ which strengtheneth me.",
+          timestamp: now,
         },
       ];
       
