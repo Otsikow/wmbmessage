@@ -14,6 +14,8 @@ import {
   Building2,
   Gavel,
   CalendarCheck,
+  MoreHorizontal,
+  Search,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -41,6 +43,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tabs,
   TabsContent,
@@ -80,6 +99,8 @@ export default function Admin() {
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   const refreshIntervalMs = 30000;
 
   useEffect(() => {
@@ -215,6 +236,16 @@ export default function Admin() {
     (profile) => now - new Date(profile.created_at).getTime() <= 604800000,
   ).length;
   const latestUser = profiles[0];
+  const filteredProfiles = profiles.filter((profile) => {
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !term ||
+      profile.email.toLowerCase().includes(term) ||
+      profile.full_name?.toLowerCase().includes(term);
+    const role = getUserRole(profile.id);
+    const matchesRole = roleFilter === "all" || role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   if (roleLoading || loading) {
     return (
@@ -454,10 +485,73 @@ export default function Admin() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>Users</CardTitle>
-                <CardDescription>All registered accounts and assigned roles.</CardDescription>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <CardTitle>Users</CardTitle>
+                    <CardDescription>
+                      All registered accounts, roles, and recent activity.
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      Export CSV
+                    </Button>
+                    <Button size="sm">Invite user</Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg border bg-muted/40 p-4">
+                    <p className="text-xs uppercase text-muted-foreground">Total users</p>
+                    <p className="mt-2 text-2xl font-semibold">{roleSummary.total}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-4">
+                    <p className="text-xs uppercase text-muted-foreground">New (7 days)</p>
+                    <p className="mt-2 text-2xl font-semibold">{newUsersLastWeek}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-4">
+                    <p className="text-xs uppercase text-muted-foreground">Admins</p>
+                    <p className="mt-2 text-2xl font-semibold">
+                      {roleSummary.byRole.admin || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-4">
+                    <p className="text-xs uppercase text-muted-foreground">Moderators</p>
+                    <p className="mt-2 text-2xl font-semibold">
+                      {roleSummary.byRole.moderator || 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="relative w-full max-w-xs">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Search by name or email"
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                      <SelectTrigger className="h-9 w-[160px]">
+                        <SelectValue placeholder="Role filter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All roles</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="moderator">Moderator</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm">
+                      Bulk actions
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto rounded-md border">
                   <Table>
                     <TableHeader>
@@ -465,28 +559,66 @@ export default function Admin() {
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Joined</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {profiles.map((profile) => (
-                        <TableRow key={profile.id}>
-                          <TableCell className="font-medium">
-                            {profile.full_name || "—"}
-                          </TableCell>
-                          <TableCell>{profile.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{getUserRole(profile.id)}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(profile.created_at).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {profiles.length === 0 && (
+                      {filteredProfiles.map((profile) => {
+                        const role = getUserRole(profile.id);
+                        const isNew =
+                          Date.now() - new Date(profile.created_at).getTime() <= 604800000;
+                        return (
+                          <TableRow key={profile.id}>
+                            <TableCell className="font-medium">
+                              {profile.full_name || "—"}
+                            </TableCell>
+                            <TableCell>{profile.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <Badge
+                                  className={
+                                    isNew
+                                      ? "bg-emerald-500/15 text-emerald-200"
+                                      : "bg-muted text-muted-foreground"
+                                  }
+                                >
+                                  {isNew ? "New" : "Active"}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(profile.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Manage</DropdownMenuLabel>
+                                  <DropdownMenuItem>View profile</DropdownMenuItem>
+                                  <DropdownMenuItem>Reset password</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive">
+                                    Deactivate user
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {filteredProfiles.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                            No users found.
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                            No users match the current filters.
                           </TableCell>
                         </TableRow>
                       )}
