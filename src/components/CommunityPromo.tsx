@@ -105,9 +105,11 @@ export default function CommunityPromo() {
                     {feature.description}
                   </p>
                   
-                  {/* CTA Link */}
+                  {/* CTA Link with underline animation */}
                   <div className="flex items-center gap-1 text-white/90 text-sm font-medium group-hover:text-white transition-colors">
-                    <span>Explore</span>
+                    <span className="relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-white/80 after:origin-left after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                      Explore
+                    </span>
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </div>
