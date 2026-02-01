@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +115,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     return name?.trim() || 'Unnamed submitter';
   };
 
-  const fetchPendingTestimonies = async () => {
+  const fetchPendingTestimonies = useCallback(async () => {
     if (!isAdmin) {
       setPendingTestimonies([]);
       setPendingLoading(false);
@@ -149,9 +149,9 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     } finally {
       setPendingLoading(false);
     }
-  };
+  }, [isAdmin]);
 
-  const fetchPendingEvents = async () => {
+  const fetchPendingEvents = useCallback(async () => {
     if (!isAdmin) {
       setPendingEvents([]);
       setEventsLoading(false);
@@ -188,7 +188,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
     } finally {
       setEventsLoading(false);
     }
-  };
+  }, [isAdmin]);
 
   const updateTestimonyStatus = async (id: string, status: 'approved' | 'rejected' | 'archived') => {
     if (!isAdmin) {
@@ -265,7 +265,35 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
   useEffect(() => {
     fetchPendingTestimonies();
     fetchPendingEvents();
-  }, [isAdmin]);
+  }, [fetchPendingEvents, fetchPendingTestimonies]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
+    const channel = supabase
+      .channel('moderation-dashboard-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'testimonies' },
+        () => {
+          fetchPendingTestimonies();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        () => {
+          fetchPendingEvents();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPendingEvents, fetchPendingTestimonies, isAdmin]);
 
   const testimonyCards = useMemo(() => pendingTestimonies, [pendingTestimonies]);
 
