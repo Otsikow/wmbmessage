@@ -4,6 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,6 +100,13 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
   const [pendingError, setPendingError] = useState<string | null>(null);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const pendingCountLabel = pendingLoading ? '—' : pendingTestimonies.length.toString();
   const pendingSubLabel = pendingLoading
@@ -113,6 +130,17 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
   const resolveDisplayName = (identity: string | null, name: string | null) => {
     if (identity === 'anonymous') return 'Anonymous';
     return name?.trim() || 'Unnamed submitter';
+  };
+
+  const openConfirmDialog = (action: NonNullable<typeof confirmAction>) => {
+    setConfirmAction(action);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+    confirmAction.onConfirm();
+    setConfirmDialogOpen(false);
   };
 
   const fetchPendingTestimonies = useCallback(async () => {
@@ -395,7 +423,14 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                             <Button
                               size="sm"
                               disabled={!isAdmin || isUpdating}
-                              onClick={() => updateEventStatus(event.id, 'APPROVED')}
+                              onClick={() =>
+                                openConfirmDialog({
+                                  title: 'Approve event?',
+                                  description: `This will publish "${event.title}" to the public calendar.`,
+                                  confirmLabel: 'Approve event',
+                                  onConfirm: () => updateEventStatus(event.id, 'APPROVED'),
+                                })
+                              }
                             >
                               <CheckCircle2 className="mr-1 h-4 w-4" />
                               Approve
@@ -404,7 +439,14 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                               size="sm"
                               variant="destructive"
                               disabled={!isAdmin || isUpdating}
-                              onClick={() => updateEventStatus(event.id, 'REJECTED')}
+                              onClick={() =>
+                                openConfirmDialog({
+                                  title: 'Reject event?',
+                                  description: `This will reject "${event.title}" and remove it from the queue.`,
+                                  confirmLabel: 'Reject event',
+                                  onConfirm: () => updateEventStatus(event.id, 'REJECTED'),
+                                })
+                              }
                             >
                               <XCircle className="mr-1 h-4 w-4" />
                               Reject
@@ -458,7 +500,14 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                       size="sm"
                       disabled={isTestimonyActionDisabled}
                       title={testimonyActionDisabledText}
-                      onClick={() => updateTestimonyStatus(item.id, 'approved')}
+                      onClick={() =>
+                        openConfirmDialog({
+                          title: 'Approve testimony?',
+                          description: `This will publish ${item.displayName}'s testimony.`,
+                          confirmLabel: 'Approve testimony',
+                          onConfirm: () => updateTestimonyStatus(item.id, 'approved'),
+                        })
+                      }
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                       Approve
@@ -472,7 +521,14 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
                       variant="destructive"
                       disabled={isTestimonyActionDisabled}
                       title={testimonyActionDisabledText}
-                      onClick={() => updateTestimonyStatus(item.id, 'rejected')}
+                      onClick={() =>
+                        openConfirmDialog({
+                          title: 'Reject testimony?',
+                          description: `This will reject ${item.displayName}'s testimony and remove it from review.`,
+                          confirmLabel: 'Reject testimony',
+                          onConfirm: () => updateTestimonyStatus(item.id, 'rejected'),
+                        })
+                      }
                     >
                       <XCircle className="mr-2 h-4 w-4" />
                       Reject
@@ -563,6 +619,29 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog
+        open={confirmDialogOpen}
+        onOpenChange={(open) => {
+          setConfirmDialogOpen(open);
+          if (!open) {
+            setConfirmAction(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAction?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction}>
+              {confirmAction?.confirmLabel ?? 'Confirm'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
