@@ -9,6 +9,10 @@ export interface RecentVerse {
   timestamp: number;
 }
 
+type AddRecentVerseInput = Omit<RecentVerse, "id"> & {
+  timestamp?: number;
+};
+
 const MAX_RECENT_VERSES = 10;
 const STORAGE_KEY = "recent-bible-verses";
 
@@ -22,11 +26,11 @@ export function useRecentVerses() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recentVerses));
   }, [recentVerses]);
 
-  const addRecentVerse = (verse: Omit<RecentVerse, "id" | "timestamp">) => {
+  const addRecentVerse = (verse: AddRecentVerseInput) => {
     const newVerse: RecentVerse = {
       ...verse,
       id: `${verse.book}-${verse.chapter}-${verse.verse}`,
-      timestamp: Date.now(),
+      timestamp: verse.timestamp ?? Date.now(),
     };
 
     setRecentVerses((prev) => {
