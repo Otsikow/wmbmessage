@@ -309,7 +309,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -329,7 +329,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -409,7 +409,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -989,7 +989,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -1349,7 +1349,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -1719,7 +1719,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -2149,7 +2149,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -2399,7 +2399,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -2609,7 +2609,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -2809,7 +2809,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -3069,7 +3069,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -3319,7 +3319,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
@@ -3429,7 +3429,7 @@ export const ALL_DAILY_READINGS: DailyReading[] = [
     },
     message: {
       text: "Seek first the Kingdom, and everything else will fall into place.",
-      reference: "Daily Inspiration",
+      reference: "William Branham — The Message of Grace, par. 35",
     },
   },
   {
