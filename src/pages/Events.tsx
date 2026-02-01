@@ -101,6 +101,18 @@ export default function Events() {
     [events, selectedId]
   );
 
+  const mapQuery = selectedEvent
+    ? `${selectedEvent.address}, ${selectedEvent.city}, ${selectedEvent.country}`
+    : "";
+
+  const mapsSearchUrl = selectedEvent
+    ? selectedEvent.maps_link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
+    : "";
+
+  const mapsEmbedUrl = mapQuery
+    ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+    : "";
+
   // Fetch events from database
   useEffect(() => {
     const fetchEvents = async () => {
@@ -280,19 +292,30 @@ export default function Events() {
                           <MapPin className="mt-0.5 h-4 w-4" />
                           {selectedEvent.address}, {selectedEvent.city}, {selectedEvent.country}
                         </span>
-                        {selectedEvent.maps_link && (
+                        {mapsSearchUrl && (
                           <Button
                             asChild
                             variant="link"
                             size="sm"
                             className="h-auto px-0 text-primary"
                           >
-                            <a href={selectedEvent.maps_link} target="_blank" rel="noreferrer">
+                            <a href={mapsSearchUrl} target="_blank" rel="noreferrer">
                               Open in Google Maps
                             </a>
                           </Button>
                         )}
                       </div>
+                      {mapsEmbedUrl && (
+                        <div className="overflow-hidden rounded-xl border border-border/60">
+                          <iframe
+                            title={`Map for ${selectedEvent.title}`}
+                            src={mapsEmbedUrl}
+                            loading="lazy"
+                            className="h-44 w-full sm:h-56"
+                            referrerPolicy="no-referrer-when-downgrade"
+                          />
+                        </div>
+                      )}
                       <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/40">
                         {selectedEvent.image_url && !imageError ? (
                           <img
