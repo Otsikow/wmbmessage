@@ -8,6 +8,7 @@ import Navigation from "@/components/Navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { appendShareAttribution, buildShareUrl } from "@/lib/share";
 import { supabase } from "@/integrations/supabase/client";
@@ -303,12 +304,32 @@ export default function Events() {
                       </div>
                       <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/40">
                         {selectedEvent.image_url && !imageError ? (
-                          <img
-                            src={selectedEvent.image_url}
-                            alt={`${selectedEvent.title} banner`}
-                            className="h-40 w-full object-cover sm:h-48"
-                            onError={() => setImageError(true)}
-                          />
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button
+                                type="button"
+                                className="group relative block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label={`View full image for ${selectedEvent.title}`}
+                              >
+                                <img
+                                  src={selectedEvent.image_url}
+                                  alt={`${selectedEvent.title} banner`}
+                                  className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-48"
+                                  onError={() => setImageError(true)}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-xs font-semibold text-white opacity-0 transition-opacity duration-300 group-hover:bg-black/35 group-hover:opacity-100">
+                                  Click to expand
+                                </div>
+                              </button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-5xl border-0 bg-transparent p-2 shadow-none">
+                              <img
+                                src={selectedEvent.image_url}
+                                alt={`${selectedEvent.title} banner`}
+                                className="max-h-[80vh] w-full rounded-lg object-contain"
+                              />
+                            </DialogContent>
+                          </Dialog>
                         ) : (
                           <div className="flex h-40 items-center justify-center bg-gradient-to-br from-primary/15 via-background to-muted sm:h-48">
                             <div className="text-center">
