@@ -24,7 +24,10 @@ import ReadingPlanAdmin from "@/components/ReadingPlanAdmin";
 import MessageChurchAdmin from "@/components/message-churches/MessageChurchAdmin";
 import AdminModerationDashboard from "@/components/moderation/AdminModerationDashboard";
 import AdminEventsDashboard from "@/components/admin/AdminEventsDashboard";
-import UserManager, { AdminProfile, AdminUserRole } from "@/components/UserManager";
+import UserManager, {
+  AdminProfile,
+  AdminUserRole,
+} from "@/components/UserManager";
 
 import {
   Card,
@@ -33,7 +36,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
@@ -54,6 +56,9 @@ export default function Admin() {
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [userRoles, setUserRoles] = useState<AdminUserRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   const [stats, setStats] = useState({
     bibleVerses: 0,
     sermons: 0,
@@ -63,8 +68,7 @@ export default function Admin() {
     testimonies: 0,
     messageChurches: 0,
   });
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   const refreshIntervalMs = 30000;
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function Admin() {
     if (isAdmin) {
       fetchData();
       fetchStats();
+
       intervalId = setInterval(() => {
         fetchData();
         fetchStats();
@@ -91,84 +96,26 @@ export default function Admin() {
 
       channel = supabase
         .channel("admin-dashboard-realtime")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "profiles" },
-          () => {
-            fetchData();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "user_roles" },
-          () => {
-            fetchData();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "bible_verses" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "sermons" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "cross_references" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "events" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "prayer_requests" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "testimonies" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "message_churches" },
-          () => {
-            fetchStats();
-          },
-        )
+        .on("postgres_changes", { event: "*", schema: "public" }, () => {
+          fetchData();
+          fetchStats();
+        })
         .subscribe();
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      if (channel) supabase.removeChannel(channel);
     };
   }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchData = async () => {
     try {
       const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
       ]);
 
@@ -179,9 +126,9 @@ export default function Admin() {
       setUserRoles((rolesRes.data || []) as AdminUserRole[]);
       setErrorMessage(null);
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Unable to load admin data. Please check Supabase.");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Unable to load admin data.");
     } finally {
       setLoading(false);
     }
@@ -234,40 +181,19 @@ export default function Admin() {
         testimonies: testimonies.count || 0,
         messageChurches: messageChurches.count || 0,
       });
+
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setErrorMessage("Unable to load statistics.");
     }
   };
-
-  const getUserRole = (userId: string) =>
-    userRoles.find((r) => r.user_id === userId)?.role || "user";
-
-  const roleSummary = profiles.reduce(
-    (acc, profile) => {
-      const role = getUserRole(profile.id);
-      acc.total += 1;
-      acc.byRole[role] = (acc.byRole[role] || 0) + 1;
-      return acc;
-    },
-    { total: 0, byRole: {} as Record<string, number> },
-  );
-
-  const now = Date.now();
-  const newUsersLastDay = profiles.filter(
-    (profile) => now - new Date(profile.created_at).getTime() <= 86400000,
-  ).length;
-  const newUsersLastWeek = profiles.filter(
-    (profile) => now - new Date(profile.created_at).getTime() <= 604800000,
-  ).length;
-  const latestUser = profiles[0];
 
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header showBackButton />
-        <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
@@ -288,17 +214,11 @@ export default function Admin() {
           <p className="text-muted-foreground mt-2">
             Manage users, content, moderation, and events
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-200">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Live updates
-            </span>
-            <span>Refreshes every {Math.floor(refreshIntervalMs / 1000)} seconds.</span>
-            {lastUpdated && <span>Last sync {lastUpdated.toLocaleString()}.</span>}
-          </div>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last synced: {lastUpdated.toLocaleString()}
+            </p>
+          )}
         </div>
 
         {errorMessage && (
@@ -308,187 +228,72 @@ export default function Admin() {
           </Alert>
         )}
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="relative z-20 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <TabsList className="inline-flex h-auto min-w-max gap-1 p-1 bg-muted rounded-lg">
-              <TabsTrigger value="overview" className="px-3 py-2 text-xs whitespace-nowrap">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="moderation" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Gavel className="h-3.5 w-3.5 mr-1.5" />
-                Moderation
-              </TabsTrigger>
-              <TabsTrigger value="bible" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Book className="h-3.5 w-3.5 mr-1.5" />
-                Bible
-              </TabsTrigger>
-              <TabsTrigger value="sermons" className="px-3 py-2 text-xs whitespace-nowrap">
-                <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                Sermons
-              </TabsTrigger>
-              <TabsTrigger value="crossrefs" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                Cross Refs
-              </TabsTrigger>
-              <TabsTrigger value="plans" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Book className="h-3.5 w-3.5 mr-1.5" />
-                Plans
-              </TabsTrigger>
-              <TabsTrigger value="users" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Users className="h-3.5 w-3.5 mr-1.5" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="events" className="px-3 py-2 text-xs whitespace-nowrap">
-                <CalendarCheck className="h-3.5 w-3.5 mr-1.5" />
-                Events
-              </TabsTrigger>
-              <TabsTrigger value="message-churches" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Building2 className="h-3.5 w-3.5 mr-1.5" />
-                Churches
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="moderation">
+              <Gavel className="mr-1 h-4 w-4" /> Moderation
+            </TabsTrigger>
+            <TabsTrigger value="bible">
+              <Book className="mr-1 h-4 w-4" /> Bible
+            </TabsTrigger>
+            <TabsTrigger value="sermons">
+              <MessageSquare className="mr-1 h-4 w-4" /> Sermons
+            </TabsTrigger>
+            <TabsTrigger value="crossrefs">
+              <Link2 className="mr-1 h-4 w-4" /> Cross Refs
+            </TabsTrigger>
+            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="users">
+              <Users className="mr-1 h-4 w-4" /> Users
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <CalendarCheck className="mr-1 h-4 w-4" /> Events
+            </TabsTrigger>
+            <TabsTrigger value="message-churches">
+              <Building2 className="mr-1 h-4 w-4" /> Churches
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="overview">
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <h2 className="text-lg font-semibold">Community Overview</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Live community engagement metrics.
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-sm font-medium">
-                      Events Created
-                    </CardTitle>
-                    <CardDescription>
-                      Community gatherings posted in the last year
-                    </CardDescription>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Events", stats.events],
+                ["Prayer Requests", stats.prayerRequests],
+                ["Testimonies", stats.testimonies],
+                ["Churches", stats.messageChurches],
+              ].map(([label, value]) => (
+                <Card key={label}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">{label}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-semibold tracking-tight">
-                      {stats.events}
-                    </div>
+                    <div className="text-3xl font-bold">{value}</div>
                   </CardContent>
                 </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-sm font-medium">
-                      Prayer Requests
-                    </CardTitle>
-                    <CardDescription>
-                      Active prayer needs from the community
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-semibold tracking-tight">
-                      {stats.prayerRequests}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-sm font-medium">
-                      Testimonies
-                    </CardTitle>
-                    <CardDescription>
-                      Stories of faith shared by users
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-semibold tracking-tight">
-                      {stats.testimonies}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="text-sm font-medium">
-                      Churches in Directory
-                    </CardTitle>
-                    <CardDescription>
-                      Verified Message churches worldwide
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-semibold tracking-tight">
-                      {stats.messageChurches}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <h2 className="text-lg font-semibold">Key metrics</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Real-time totals across core collections.
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
-                  <CardDescription>Total verses stored</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.bibleVerses}
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Sermons</CardTitle>
-                  <CardDescription>William Branham sermons</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.sermons}
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Cross References</CardTitle>
-                  <CardDescription>Connections built</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.crossRefs}
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <CardDescription>Registered accounts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {roleSummary.total}
-                  </div>
-                </CardContent>
-                </Card>
-              </div>
-            </section>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="moderation">
             <AdminModerationDashboard role={role} />
           </TabsContent>
 
-          <TabsContent value="bible"><BibleManager /></TabsContent>
-          <TabsContent value="sermons"><SermonManager /></TabsContent>
-          <TabsContent value="crossrefs"><CrossRefManager /></TabsContent>
-          <TabsContent value="plans"><ReadingPlanAdmin /></TabsContent>
+          <TabsContent value="bible">
+            <BibleManager />
+          </TabsContent>
+
+          <TabsContent value="sermons">
+            <SermonManager />
+          </TabsContent>
+
+          <TabsContent value="crossrefs">
+            <CrossRefManager />
+          </TabsContent>
+
+          <TabsContent value="plans">
+            <ReadingPlanAdmin />
+          </TabsContent>
 
           <TabsContent value="users">
             <UserManager profiles={profiles} userRoles={userRoles} />
