@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { CalendarDays, Facebook, Link as LinkIcon, Lock, Mail, MapPin, MessageCircle, Pencil, Unlock, Users } from "lucide-react";
+import { CalendarDays, Facebook, Link as LinkIcon, Lock, Mail, MapPin, MessageCircle, Pencil, Unlock, Users, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
@@ -8,7 +8,7 @@ import Navigation from "@/components/Navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { appendShareAttribution, buildShareUrl } from "@/lib/share";
 import { supabase } from "@/integrations/supabase/client";
@@ -322,7 +322,13 @@ export default function Events() {
                                 </div>
                               </button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-5xl border-0 bg-transparent p-2 shadow-none">
+                            <DialogContent className="max-w-5xl border-0 bg-transparent p-2 shadow-none [&>button]:hidden">
+                              <DialogClose
+                                className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-lg ring-1 ring-white/20 transition hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                aria-label="Close image preview"
+                              >
+                                <X className="h-5 w-5" />
+                              </DialogClose>
                               <img
                                 src={selectedEvent.image_url}
                                 alt={`${selectedEvent.title} banner`}
