@@ -14,8 +14,6 @@ import {
   Building2,
   Gavel,
   CalendarCheck,
-  MoreHorizontal,
-  Search,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -26,6 +24,10 @@ import ReadingPlanAdmin from "@/components/ReadingPlanAdmin";
 import MessageChurchAdmin from "@/components/message-churches/MessageChurchAdmin";
 import AdminModerationDashboard from "@/components/moderation/AdminModerationDashboard";
 import AdminEventsDashboard from "@/components/admin/AdminEventsDashboard";
+import UserManager, {
+  AdminProfile,
+  AdminUserRole,
+} from "@/components/UserManager";
 
 import {
   Card,
@@ -34,32 +36,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tabs,
   TabsContent,
@@ -72,35 +48,27 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 
-interface Profile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  created_at: string;
-}
-
-interface UserRole {
-  user_id: string;
-  role: string;
-}
-
 export default function Admin() {
   const { user } = useAuth();
   const { isAdmin, role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [profiles, setProfiles] = useState<AdminProfile[]>([]);
+  const [userRoles, setUserRoles] = useState<AdminUserRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   const [stats, setStats] = useState({
     bibleVerses: 0,
     sermons: 0,
     crossRefs: 0,
+    events: 0,
+    prayerRequests: 0,
+    testimonies: 0,
+    messageChurches: 0,
   });
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+
   const refreshIntervalMs = 30000;
 
   useEffect(() => {
@@ -120,6 +88,7 @@ export default function Admin() {
     if (isAdmin) {
       fetchData();
       fetchStats();
+
       intervalId = setInterval(() => {
         fetchData();
         fetchStats();
@@ -127,69 +96,39 @@ export default function Admin() {
 
       channel = supabase
         .channel("admin-dashboard-realtime")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "profiles" },
-          () => {
-            fetchData();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "user_roles" },
-          () => {
-            fetchData();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "bible_verses" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "sermons" },
-          () => {
-            fetchStats();
-          },
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "cross_references" },
-          () => {
-            fetchStats();
-          },
-        )
+        .on("postgres_changes", { event: "*", schema: "public" }, () => {
+          fetchData();
+          fetchStats();
+        })
         .subscribe();
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      if (channel) supabase.removeChannel(channel);
     };
   }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchData = async () => {
     try {
       const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
       ]);
 
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
 
-      setProfiles(profilesRes.data || []);
-      setUserRoles(rolesRes.data || []);
+      setProfiles((profilesRes.data || []) as AdminProfile[]);
+      setUserRoles((rolesRes.data || []) as AdminUserRole[]);
       setErrorMessage(null);
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Unable to load admin data. Please check Supabase.");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Unable to load admin data.");
     } finally {
       setLoading(false);
     }
@@ -197,61 +136,64 @@ export default function Admin() {
 
   const fetchStats = async () => {
     try {
-      const [verses, sermons, crossRefs] = await Promise.all([
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      const [
+        verses,
+        sermons,
+        crossRefs,
+        events,
+        prayerRequests,
+        testimonies,
+        messageChurches,
+      ] = await Promise.all([
         supabase.from("bible_verses").select("*", { count: "exact", head: true }),
         supabase.from("sermons").select("*", { count: "exact", head: true }),
-        supabase.from("cross_references").select("*", { count: "exact", head: true }),
+        supabase
+          .from("cross_references")
+          .select("*", { count: "exact", head: true }),
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "APPROVED")
+          .gte("created_at", oneYearAgo.toISOString()),
+        supabase
+          .from("prayer_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("testimonies")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("message_churches")
+          .select("*", { count: "exact", head: true })
+          .eq("verified", true),
       ]);
 
       setStats({
         bibleVerses: verses.count || 0,
         sermons: sermons.count || 0,
         crossRefs: crossRefs.count || 0,
+        events: events.count || 0,
+        prayerRequests: prayerRequests.count || 0,
+        testimonies: testimonies.count || 0,
+        messageChurches: messageChurches.count || 0,
       });
+
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setErrorMessage("Unable to load statistics.");
     }
   };
-
-  const getUserRole = (userId: string) =>
-    userRoles.find((r) => r.user_id === userId)?.role || "user";
-
-  const roleSummary = profiles.reduce(
-    (acc, profile) => {
-      const role = getUserRole(profile.id);
-      acc.total += 1;
-      acc.byRole[role] = (acc.byRole[role] || 0) + 1;
-      return acc;
-    },
-    { total: 0, byRole: {} as Record<string, number> },
-  );
-
-  const now = Date.now();
-  const newUsersLastDay = profiles.filter(
-    (profile) => now - new Date(profile.created_at).getTime() <= 86400000,
-  ).length;
-  const newUsersLastWeek = profiles.filter(
-    (profile) => now - new Date(profile.created_at).getTime() <= 604800000,
-  ).length;
-  const latestUser = profiles[0];
-  const filteredProfiles = profiles.filter((profile) => {
-    const term = searchTerm.trim().toLowerCase();
-    const matchesSearch =
-      !term ||
-      profile.email.toLowerCase().includes(term) ||
-      profile.full_name?.toLowerCase().includes(term);
-    const role = getUserRole(profile.id);
-    const matchesRole = roleFilter === "all" || role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
 
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header showBackButton />
-        <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
@@ -272,17 +214,11 @@ export default function Admin() {
           <p className="text-muted-foreground mt-2">
             Manage users, content, moderation, and events
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-200">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Live updates
-            </span>
-            <span>Refreshes every {Math.floor(refreshIntervalMs / 1000)} seconds.</span>
-            {lastUpdated && <span>Last sync {lastUpdated.toLocaleString()}.</span>}
-          </div>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last synced: {lastUpdated.toLocaleString()}
+            </p>
+          )}
         </div>
 
         {errorMessage && (
@@ -292,341 +228,75 @@ export default function Admin() {
           </Alert>
         )}
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="relative z-20 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <TabsList className="inline-flex h-auto min-w-max gap-1 p-1 bg-muted rounded-lg">
-              <TabsTrigger value="overview" className="px-3 py-2 text-xs whitespace-nowrap">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="moderation" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Gavel className="h-3.5 w-3.5 mr-1.5" />
-                Moderation
-              </TabsTrigger>
-              <TabsTrigger value="bible" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Book className="h-3.5 w-3.5 mr-1.5" />
-                Bible
-              </TabsTrigger>
-              <TabsTrigger value="sermons" className="px-3 py-2 text-xs whitespace-nowrap">
-                <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                Sermons
-              </TabsTrigger>
-              <TabsTrigger value="crossrefs" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                Cross Refs
-              </TabsTrigger>
-              <TabsTrigger value="plans" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Book className="h-3.5 w-3.5 mr-1.5" />
-                Plans
-              </TabsTrigger>
-              <TabsTrigger value="users" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Users className="h-3.5 w-3.5 mr-1.5" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="events" className="px-3 py-2 text-xs whitespace-nowrap">
-                <CalendarCheck className="h-3.5 w-3.5 mr-1.5" />
-                Events
-              </TabsTrigger>
-              <TabsTrigger value="message-churches" className="px-3 py-2 text-xs whitespace-nowrap">
-                <Building2 className="h-3.5 w-3.5 mr-1.5" />
-                Churches
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="moderation">
+              <Gavel className="mr-1 h-4 w-4" /> Moderation
+            </TabsTrigger>
+            <TabsTrigger value="bible">
+              <Book className="mr-1 h-4 w-4" /> Bible
+            </TabsTrigger>
+            <TabsTrigger value="sermons">
+              <MessageSquare className="mr-1 h-4 w-4" /> Sermons
+            </TabsTrigger>
+            <TabsTrigger value="crossrefs">
+              <Link2 className="mr-1 h-4 w-4" /> Cross Refs
+            </TabsTrigger>
+            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="users">
+              <Users className="mr-1 h-4 w-4" /> Users
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <CalendarCheck className="mr-1 h-4 w-4" /> Events
+            </TabsTrigger>
+            <TabsTrigger value="message-churches">
+              <Building2 className="mr-1 h-4 w-4" /> Churches
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="overview">
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <h2 className="text-lg font-semibold">Key metrics</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Real-time totals across core collections.
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Bible Verses</CardTitle>
-                  <CardDescription>Total verses stored</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.bibleVerses}
-                  </div>
-                </CardContent>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Events", stats.events],
+                ["Prayer Requests", stats.prayerRequests],
+                ["Testimonies", stats.testimonies],
+                ["Churches", stats.messageChurches],
+              ].map(([label, value]) => (
+                <Card key={label}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">{label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">{value}</div>
+                  </CardContent>
                 </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Sermons</CardTitle>
-                  <CardDescription>William Branham sermons</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.sermons}
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Cross References</CardTitle>
-                  <CardDescription>Connections built</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {stats.crossRefs}
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <CardDescription>Registered accounts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold tracking-tight">
-                    {roleSummary.total}
-                  </div>
-                </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">Operations overview</h2>
-                <p className="text-sm text-muted-foreground">
-                  Live status, role balance, and recent account activity.
-                </p>
-              </div>
-              <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">System Status</CardTitle>
-                  <CardDescription>Supabase connectivity</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Badge
-                    className={
-                      errorMessage ? "bg-amber-500 text-white" : "bg-emerald-600 text-white"
-                    }
-                  >
-                    {errorMessage ? "Needs attention" : "Operational"}
-                  </Badge>
-                  <p className="text-sm text-muted-foreground">
-                    {errorMessage || "All admin data sources are responding normally."}
-                  </p>
-                  {lastUpdated && (
-                    <p className="text-xs text-muted-foreground">
-                      Last updated {lastUpdated.toLocaleString()}
-                    </p>
-                  )}
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">User Roles</CardTitle>
-                  <CardDescription>Role distribution snapshot</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Admins</span>
-                    <span className="font-medium">{roleSummary.byRole.admin || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Moderators</span>
-                    <span className="font-medium">{roleSummary.byRole.moderator || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Users</span>
-                    <span className="font-medium">{roleSummary.byRole.user || 0}</span>
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Live Activity</CardTitle>
-                  <CardDescription>Recent account activity</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">New users (24h)</span>
-                    <span className="font-medium">{newUsersLastDay}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">New users (7d)</span>
-                    <span className="font-medium">{newUsersLastWeek}</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground">Latest signup</p>
-                    <p className="font-medium">
-                      {latestUser?.full_name || latestUser?.email || "No recent signups"}
-                    </p>
-                    {latestUser?.created_at && (
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(latestUser.created_at).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-                </Card>
-              </div>
-            </section>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="moderation">
             <AdminModerationDashboard role={role} />
           </TabsContent>
 
-          <TabsContent value="bible"><BibleManager /></TabsContent>
-          <TabsContent value="sermons"><SermonManager /></TabsContent>
-          <TabsContent value="crossrefs"><CrossRefManager /></TabsContent>
-          <TabsContent value="plans"><ReadingPlanAdmin /></TabsContent>
+          <TabsContent value="bible">
+            <BibleManager />
+          </TabsContent>
+
+          <TabsContent value="sermons">
+            <SermonManager />
+          </TabsContent>
+
+          <TabsContent value="crossrefs">
+            <CrossRefManager />
+          </TabsContent>
+
+          <TabsContent value="plans">
+            <ReadingPlanAdmin />
+          </TabsContent>
 
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <CardTitle>Users</CardTitle>
-                    <CardDescription>
-                      All registered accounts, roles, and recent activity.
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      Export CSV
-                    </Button>
-                    <Button size="sm">Invite user</Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-lg border bg-muted/40 p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Total users</p>
-                    <p className="mt-2 text-2xl font-semibold">{roleSummary.total}</p>
-                  </div>
-                  <div className="rounded-lg border bg-muted/40 p-4">
-                    <p className="text-xs uppercase text-muted-foreground">New (7 days)</p>
-                    <p className="mt-2 text-2xl font-semibold">{newUsersLastWeek}</p>
-                  </div>
-                  <div className="rounded-lg border bg-muted/40 p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Admins</p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {roleSummary.byRole.admin || 0}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border bg-muted/40 p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Moderators</p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {roleSummary.byRole.moderator || 0}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="relative w-full max-w-xs">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search by name or email"
-                      className="pl-9"
-                    />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Select value={roleFilter} onValueChange={setRoleFilter}>
-                      <SelectTrigger className="h-9 w-[160px]">
-                        <SelectValue placeholder="Role filter" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All roles</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="moderator">Moderator</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm">
-                      Bulk actions
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Joined</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProfiles.map((profile) => {
-                        const role = getUserRole(profile.id);
-                        const isNew =
-                          Date.now() - new Date(profile.created_at).getTime() <= 604800000;
-                        return (
-                          <TableRow key={profile.id}>
-                            <TableCell className="font-medium">
-                              {profile.full_name || "—"}
-                            </TableCell>
-                            <TableCell>{profile.email}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{role}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap items-center gap-1">
-                                <Badge
-                                  className={
-                                    isNew
-                                      ? "bg-emerald-500/15 text-emerald-200"
-                                      : "bg-muted text-muted-foreground"
-                                  }
-                                >
-                                  {isNew ? "New" : "Active"}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(profile.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Manage</DropdownMenuLabel>
-                                  <DropdownMenuItem>View profile</DropdownMenuItem>
-                                  <DropdownMenuItem>Reset password</DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-destructive">
-                                    Deactivate user
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {filteredProfiles.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                            No users match the current filters.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            <UserManager profiles={profiles} userRoles={userRoles} />
           </TabsContent>
 
           <TabsContent value="events">
