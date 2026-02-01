@@ -60,6 +60,7 @@ const SearchPage = () => {
   const [pendingScrollQuery, setPendingScrollQuery] = useState<string | null>(
     null,
   );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [bibleFilter, setBibleFilter] = useState<"all" | "ot" | "nt">("all");
   const [selectedBibleBook, setSelectedBibleBook] = useState("all");
   const [sermonYear, setSermonYear] = useState("all");
@@ -159,6 +160,10 @@ const SearchPage = () => {
       return;
     }
 
+    if (isSearchFocused) {
+      return;
+    }
+
     const hasResults =
       bibleResults.length > 0 ||
       sermonResults.length > 0 ||
@@ -178,6 +183,7 @@ const SearchPage = () => {
     sermonResults.length,
     themeResults.length,
     searchQuery,
+    isSearchFocused,
   ]);
 
   const handleThemeExplore = useCallback(
@@ -295,6 +301,8 @@ const SearchPage = () => {
                 onChange={(e) => {
                   void handleSearch(e.target.value, searchMode);
                 }}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
               />
             </div>
 
