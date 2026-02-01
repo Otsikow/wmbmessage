@@ -24,6 +24,7 @@ import ReadingPlanAdmin from "@/components/ReadingPlanAdmin";
 import MessageChurchAdmin from "@/components/message-churches/MessageChurchAdmin";
 import AdminModerationDashboard from "@/components/moderation/AdminModerationDashboard";
 import AdminEventsDashboard from "@/components/admin/AdminEventsDashboard";
+import UserManager, { AdminProfile, AdminUserRole } from "@/components/UserManager";
 
 import {
   Card,
@@ -32,14 +33,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
@@ -53,25 +46,13 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 
-interface Profile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  created_at: string;
-}
-
-interface UserRole {
-  user_id: string;
-  role: string;
-}
-
 export default function Admin() {
   const { user } = useAuth();
   const { isAdmin, role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [profiles, setProfiles] = useState<AdminProfile[]>([]);
+  const [userRoles, setUserRoles] = useState<AdminUserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     bibleVerses: 0,
@@ -162,8 +143,8 @@ export default function Admin() {
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
 
-      setProfiles(profilesRes.data || []);
-      setUserRoles(rolesRes.data || []);
+      setProfiles((profilesRes.data || []) as AdminProfile[]);
+      setUserRoles((rolesRes.data || []) as AdminUserRole[]);
       setErrorMessage(null);
       setLastUpdated(new Date());
     } catch (error) {
@@ -452,49 +433,7 @@ export default function Admin() {
           <TabsContent value="plans"><ReadingPlanAdmin /></TabsContent>
 
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>Users</CardTitle>
-                <CardDescription>All registered accounts and assigned roles.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Joined</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {profiles.map((profile) => (
-                        <TableRow key={profile.id}>
-                          <TableCell className="font-medium">
-                            {profile.full_name || "—"}
-                          </TableCell>
-                          <TableCell>{profile.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{getUserRole(profile.id)}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(profile.created_at).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {profiles.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                            No users found.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            <UserManager profiles={profiles} userRoles={userRoles} />
           </TabsContent>
 
           <TabsContent value="events">
