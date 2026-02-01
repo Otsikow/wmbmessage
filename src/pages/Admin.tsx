@@ -58,6 +58,10 @@ export default function Admin() {
     bibleVerses: 0,
     sermons: 0,
     crossRefs: 0,
+    events: 0,
+    prayerRequests: 0,
+    testimonies: 0,
+    messageChurches: 0,
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -122,6 +126,34 @@ export default function Admin() {
             fetchStats();
           },
         )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "events" },
+          () => {
+            fetchStats();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "prayer_requests" },
+          () => {
+            fetchStats();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "testimonies" },
+          () => {
+            fetchStats();
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "message_churches" },
+          () => {
+            fetchStats();
+          },
+        )
         .subscribe();
     }
 
@@ -157,16 +189,50 @@ export default function Admin() {
 
   const fetchStats = async () => {
     try {
-      const [verses, sermons, crossRefs] = await Promise.all([
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      const [
+        verses,
+        sermons,
+        crossRefs,
+        events,
+        prayerRequests,
+        testimonies,
+        messageChurches,
+      ] = await Promise.all([
         supabase.from("bible_verses").select("*", { count: "exact", head: true }),
         supabase.from("sermons").select("*", { count: "exact", head: true }),
-        supabase.from("cross_references").select("*", { count: "exact", head: true }),
+        supabase
+          .from("cross_references")
+          .select("*", { count: "exact", head: true }),
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "APPROVED")
+          .gte("created_at", oneYearAgo.toISOString()),
+        supabase
+          .from("prayer_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("testimonies")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("message_churches")
+          .select("*", { count: "exact", head: true })
+          .eq("verified", true),
       ]);
 
       setStats({
         bibleVerses: verses.count || 0,
         sermons: sermons.count || 0,
         crossRefs: crossRefs.count || 0,
+        events: events.count || 0,
+        prayerRequests: prayerRequests.count || 0,
+        testimonies: testimonies.count || 0,
+        messageChurches: messageChurches.count || 0,
       });
       setLastUpdated(new Date());
     } catch (error) {
@@ -287,6 +353,79 @@ export default function Admin() {
             <section className="space-y-4">
               <div className="flex flex-wrap items-end justify-between gap-2">
                 <div>
+                  <h2 className="text-lg font-semibold">Community Overview</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Live community engagement metrics.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-sm font-medium">
+                      Events Created
+                    </CardTitle>
+                    <CardDescription>
+                      Community gatherings posted in the last year
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-semibold tracking-tight">
+                      {stats.events}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-sm font-medium">
+                      Prayer Requests
+                    </CardTitle>
+                    <CardDescription>
+                      Active prayer needs from the community
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-semibold tracking-tight">
+                      {stats.prayerRequests}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-sm font-medium">
+                      Testimonies
+                    </CardTitle>
+                    <CardDescription>
+                      Stories of faith shared by users
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-semibold tracking-tight">
+                      {stats.testimonies}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/60 bg-card/80 shadow-sm">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-sm font-medium">
+                      Churches in Directory
+                    </CardTitle>
+                    <CardDescription>
+                      Verified Message churches worldwide
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-semibold tracking-tight">
+                      {stats.messageChurches}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
                   <h2 className="text-lg font-semibold">Key metrics</h2>
                   <p className="text-sm text-muted-foreground">
                     Real-time totals across core collections.
@@ -335,87 +474,6 @@ export default function Admin() {
                 <CardContent>
                   <div className="text-3xl font-semibold tracking-tight">
                     {roleSummary.total}
-                  </div>
-                </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">Operations overview</h2>
-                <p className="text-sm text-muted-foreground">
-                  Live status, role balance, and recent account activity.
-                </p>
-              </div>
-              <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">System Status</CardTitle>
-                  <CardDescription>Supabase connectivity</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Badge
-                    className={
-                      errorMessage ? "bg-amber-500 text-white" : "bg-emerald-600 text-white"
-                    }
-                  >
-                    {errorMessage ? "Needs attention" : "Operational"}
-                  </Badge>
-                  <p className="text-sm text-muted-foreground">
-                    {errorMessage || "All admin data sources are responding normally."}
-                  </p>
-                  {lastUpdated && (
-                    <p className="text-xs text-muted-foreground">
-                      Last updated {lastUpdated.toLocaleString()}
-                    </p>
-                  )}
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">User Roles</CardTitle>
-                  <CardDescription>Role distribution snapshot</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Admins</span>
-                    <span className="font-medium">{roleSummary.byRole.admin || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Moderators</span>
-                    <span className="font-medium">{roleSummary.byRole.moderator || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Users</span>
-                    <span className="font-medium">{roleSummary.byRole.user || 0}</span>
-                  </div>
-                </CardContent>
-                </Card>
-                <Card className="border-border/60 bg-card/80 shadow-sm">
-                  <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium">Live Activity</CardTitle>
-                  <CardDescription>Recent account activity</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">New users (24h)</span>
-                    <span className="font-medium">{newUsersLastDay}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">New users (7d)</span>
-                    <span className="font-medium">{newUsersLastWeek}</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground">Latest signup</p>
-                    <p className="font-medium">
-                      {latestUser?.full_name || latestUser?.email || "No recent signups"}
-                    </p>
-                    {latestUser?.created_at && (
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(latestUser.created_at).toLocaleString()}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
                 </Card>
