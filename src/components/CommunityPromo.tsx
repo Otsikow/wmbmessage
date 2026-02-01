@@ -92,7 +92,8 @@ export default function CommunityPromo() {
                     "w-12 h-12 rounded-xl mb-3",
                     "bg-white/15 backdrop-blur-md border border-white/20",
                     "flex items-center justify-center",
-                    "group-hover:bg-white/25 transition-colors duration-300"
+                    "group-hover:bg-white/25 transition-all duration-300",
+                    "group-hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
                   )}>
                     <Icon className="h-6 w-6 text-white drop-shadow-md" />
                   </div>
