@@ -70,8 +70,8 @@ export default function CommunityPromo() {
                 <div 
                   className={cn(
                     "absolute inset-0 bg-cover bg-no-repeat",
-                    "transition-all duration-700 ease-out",
-                    "group-hover:scale-110 group-hover:brightness-110"
+                    "transform-gpu transition-transform duration-700 ease-out",
+                    "scale-100 group-hover:scale-105 group-hover:brightness-110"
                   )}
                   style={{ 
                     backgroundImage: `url(${feature.image})`,

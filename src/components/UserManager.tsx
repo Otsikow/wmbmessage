@@ -4,8 +4,12 @@ import {
   Search,
   ShieldCheck,
   UserPlus,
-  Users as UsersIcon,
+  Users,
+  Download,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +19,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -23,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +37,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+/* =======================
+   Types
+======================= */
 
 export interface AdminProfile {
   id: string;
@@ -51,167 +66,163 @@ interface UserManagerProps {
   userRoles: AdminUserRole[];
 }
 
-export default function UserManager({ profiles, userRoles }: UserManagerProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+/* =======================
+   Component
+======================= */
+
+export default function UserManager({
+  profiles,
+  userRoles,
+}: UserManagerProps) {
+  const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
+  /* -----------------------
+     Role lookup
+  ------------------------ */
+  const roleByUserId = useMemo(
+    () => new Map(userRoles.map((r) => [r.user_id, r.role])),
+    [userRoles],
+  );
+
   const getUserRole = (userId: string) =>
-    userRoles.find((r) => r.user_id === userId)?.role || "user";
+    roleByUserId.get(userId) || "user";
 
-  const normalizeRole = (role: string) => role.replaceAll("_", " ");
-
-  const stats = useMemo(() => {
-    const total = profiles.length;
-    const admins = profiles.filter((profile) =>
-      ["admin", "super_admin"].includes(getUserRole(profile.id)),
-    ).length;
-    const moderators = profiles.filter((profile) =>
-      ["moderator", "mod"].includes(getUserRole(profile.id)),
-    ).length;
-    const last30Days = profiles.filter((profile) => {
-      const created = new Date(profile.created_at).getTime();
-      const now = new Date().getTime();
-      return now - created <= 1000 * 60 * 60 * 24 * 30;
-    }).length;
-
-    return { total, admins, moderators, last30Days };
-  }, [profiles, userRoles]);
-
+  /* -----------------------
+     Filtering
+  ------------------------ */
   const filteredProfiles = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = searchTerm.trim().toLowerCase();
+
     return profiles.filter((profile) => {
       const role = getUserRole(profile.id);
-      const matchesRole = roleFilter === "all" || role === roleFilter;
-      const matchesQuery =
-        !query ||
-        profile.full_name?.toLowerCase().includes(query) ||
-        profile.email.toLowerCase().includes(query);
-      return matchesRole && matchesQuery;
-    });
-  }, [profiles, searchQuery, roleFilter, userRoles]);
 
-  const formatJoinDate = (date: string) =>
-    new Date(date).toLocaleDateString(undefined, {
+      const matchesRole =
+        roleFilter === "all" || role === roleFilter;
+
+      const matchesSearch =
+        !query ||
+        profile.email.toLowerCase().includes(query) ||
+        (profile.full_name ?? "").toLowerCase().includes(query);
+
+      return matchesRole && matchesSearch;
+    });
+  }, [profiles, roleFilter, searchTerm, roleByUserId]);
+
+  /* -----------------------
+     Stats
+  ------------------------ */
+  const stats = useMemo(() => {
+    const total = profiles.length;
+
+    const admins = profiles.filter((p) =>
+      ["admin", "super_admin"].includes(getUserRole(p.id)),
+    ).length;
+
+    const invited = profiles.filter(
+      (p) => !p.full_name,
+    ).length;
+
+    const last7Days = profiles.filter((p) => {
+      const created = new Date(p.created_at).getTime();
+      return (
+        Date.now() - created <=
+        7 * 24 * 60 * 60 * 1000
+      );
+    }).length;
+
+    return { total, admins, invited, last7Days };
+  }, [profiles, roleByUserId]);
+
+  /* -----------------------
+     Helpers
+  ------------------------ */
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    const parts = name.trim().split(" ");
-    return parts
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("");
+  const getInitials = (name?: string | null, email?: string) => {
+    if (name) {
+      return name
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase())
+        .join("");
+    }
+    return email?.[0]?.toUpperCase() ?? "U";
   };
 
-  const handleClearFilters = () => {
-    setSearchQuery("");
-    setRoleFilter("all");
-  };
+  const formatRoleLabel = (role: string) =>
+    role.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  /* =======================
+     Render
+  ======================= */
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <CardHeader className="space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle>Users</CardTitle>
+            <CardTitle className="text-2xl">Users</CardTitle>
             <CardDescription>
-              All registered accounts, roles, and activity insights.
+              Manage access, roles, and onboarding across the platform.
             </CardDescription>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Role policies
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
             </Button>
-            <Button size="sm">
-              <UserPlus className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" className="gap-2">
+              <UserPlus className="h-4 w-4" />
               Invite user
+            </Button>
+            <Button size="sm" className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Add admin
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border bg-muted/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <UsersIcon className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total users</p>
-                  <p className="text-2xl font-semibold">{stats.total}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border bg-muted/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Admins</p>
-                  <p className="text-2xl font-semibold">{stats.admins}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border bg-muted/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Moderators</p>
-                  <p className="text-2xl font-semibold">{stats.moderators}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border bg-muted/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <UsersIcon className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">New in 30 days</p>
-                  <p className="text-2xl font-semibold">{stats.last30Days}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 items-center gap-3">
-            <div className="relative w-full lg:max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search users by name or email"
-                className="pl-9"
-              />
-            </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email"
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full lg:w-56">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All roles</SelectItem>
-              <SelectItem value="super_admin">Super admin</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="moderator">Moderator</SelectItem>
               <SelectItem value="user">User</SelectItem>
             </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline">{filteredProfiles.length} results</Badge>
-            <Button variant="outline" size="sm">
-              Export CSV
-            </Button>
-          </div>
+          </Select>
         </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Stat label="Total users" value={stats.total} icon={<Users />} />
+          <Stat label="Admins" value={stats.admins} icon={<ShieldCheck />} />
+          <Stat label="Invited" value={stats.invited} icon={<Clock />} />
+          <Stat label="New this week" value={stats.last7Days} icon={<CheckCircle2 />} />
+        </div>
+
+        <Separator />
 
         <div className="overflow-x-auto rounded-md border">
           <Table>
@@ -224,48 +235,62 @@ export default function UserManager({ profiles, userRoles }: UserManagerProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filteredProfiles.map((profile) => {
                 const role = getUserRole(profile.id);
+                const invited = !profile.full_name;
+
                 return (
                   <TableRow key={profile.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarFallback>{getInitials(profile.full_name)}</AvatarFallback>
+                          <AvatarFallback>
+                            {getInitials(profile.full_name, profile.email)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium leading-tight">
-                            {profile.full_name || "Unassigned user"}
+                          <p className="font-medium">
+                            {profile.full_name || "Invited user"}
                           </p>
-                          <p className="text-sm text-muted-foreground">{profile.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {profile.email}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
+
                     <TableCell>
-                      <Badge variant="secondary" className="capitalize">
-                        {normalizeRole(role)}
+                      <Badge variant="secondary">
+                        {formatRoleLabel(role)}
                       </Badge>
                     </TableCell>
+
                     <TableCell>
-                      <Badge variant="outline">Active</Badge>
+                      <Badge variant={invited ? "outline" : "default"}>
+                        {invited ? "Invited" : "Active"}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{formatJoinDate(profile.created_at)}</TableCell>
+
+                    <TableCell>
+                      {formatDate(profile.created_at)}
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View profile</DropdownMenuItem>
-                          <DropdownMenuItem>Edit roles</DropdownMenuItem>
-                          <DropdownMenuItem>Reset password</DropdownMenuItem>
+                          <DropdownMenuItem>Edit role</DropdownMenuItem>
+                          <DropdownMenuItem>Send reset link</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive">
-                            Suspend user
+                            Deactivate user
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -273,18 +298,14 @@ export default function UserManager({ profiles, userRoles }: UserManagerProps) {
                   </TableRow>
                 );
               })}
+
               {filteredProfiles.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center">
-                    <div className="space-y-2">
-                      <p className="font-medium">No users found</p>
-                      <p className="text-sm text-muted-foreground">
-                        Try adjusting your search or role filters.
-                      </p>
-                      <Button size="sm" variant="outline" onClick={handleClearFilters}>
-                        Clear filters
-                      </Button>
-                    </div>
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-muted-foreground"
+                  >
+                    No users match the current filters.
                   </TableCell>
                 </TableRow>
               )}
@@ -293,5 +314,29 @@ export default function UserManager({ profiles, userRoles }: UserManagerProps) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/* =======================
+   Stat Card
+======================= */
+
+function Stat({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-background/60 p-4">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <p className="text-sm">{label}</p>
+        {icon}
+      </div>
+      <p className="mt-2 text-2xl font-semibold">{value}</p>
+    </div>
   );
 }

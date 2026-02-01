@@ -58,6 +58,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const [stats, setStats] = useState({
     bibleVerses: 0,
@@ -228,7 +229,7 @@ export default function Admin() {
           </Alert>
         )}
 
-        <Tabs defaultValue="overview">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="moderation">
@@ -258,12 +259,41 @@ export default function Admin() {
           <TabsContent value="overview">
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
               {[
-                ["Events", stats.events],
-                ["Prayer Requests", stats.prayerRequests],
-                ["Testimonies", stats.testimonies],
-                ["Churches", stats.messageChurches],
-              ].map(([label, value]) => (
-                <Card key={label}>
+                {
+                  label: "Events",
+                  value: stats.events,
+                  tab: "events",
+                },
+                {
+                  label: "Prayer Requests",
+                  value: stats.prayerRequests,
+                  tab: "moderation",
+                },
+                {
+                  label: "Testimonies",
+                  value: stats.testimonies,
+                  tab: "moderation",
+                },
+                {
+                  label: "Churches",
+                  value: stats.messageChurches,
+                  tab: "message-churches",
+                },
+              ].map(({ label, value, tab }) => (
+                <Card
+                  key={label}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveTab(tab)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setActiveTab(tab);
+                    }
+                  }}
+                  className="cursor-pointer transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                  aria-label={`Open ${label} section`}
+                >
                   <CardHeader>
                     <CardTitle className="text-sm">{label}</CardTitle>
                   </CardHeader>
