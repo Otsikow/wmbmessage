@@ -1,6 +1,17 @@
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import {
+  MoreHorizontal,
+  Search,
+  ShieldCheck,
+  UserPlus,
+  Users,
+  Download,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -8,15 +19,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,7 +30,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+/* =======================
+   Types
+======================= */
 
 export interface AdminProfile {
   id: string;
@@ -44,164 +66,270 @@ interface UserManagerProps {
   userRoles: AdminUserRole[];
 }
 
-export default function UserManager({ profiles, userRoles }: UserManagerProps) {
-  const [query, setQuery] = useState("");
+/* =======================
+   Component
+======================= */
+
+export default function UserManager({
+  profiles,
+  userRoles,
+}: UserManagerProps) {
+  const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
+  /* -----------------------
+     Role lookup
+  ------------------------ */
+  const roleByUserId = useMemo(
+    () => new Map(userRoles.map((r) => [r.user_id, r.role])),
+    [userRoles],
+  );
+
   const getUserRole = (userId: string) =>
-    userRoles.find((r) => r.user_id === userId)?.role || "user";
+    roleByUserId.get(userId) || "user";
 
-  const roleOptions = useMemo(() => {
-    const roles = new Set<string>(["user"]);
-    userRoles.forEach((role) => roles.add(role.role));
-    return ["all", ...Array.from(roles).sort()];
-  }, [userRoles]);
-
+  /* -----------------------
+     Filtering
+  ------------------------ */
   const filteredProfiles = useMemo(() => {
-    const search = query.trim().toLowerCase();
+    const query = searchTerm.trim().toLowerCase();
+
     return profiles.filter((profile) => {
       const role = getUserRole(profile.id);
-      const matchesRole = roleFilter === "all" || role === roleFilter;
-      if (!search) return matchesRole;
 
-      const name = profile.full_name?.toLowerCase() ?? "";
-      const email = profile.email?.toLowerCase() ?? "";
-      return matchesRole && (name.includes(search) || email.includes(search));
+      const matchesRole =
+        roleFilter === "all" || role === roleFilter;
+
+      const matchesSearch =
+        !query ||
+        profile.email.toLowerCase().includes(query) ||
+        (profile.full_name ?? "").toLowerCase().includes(query);
+
+      return matchesRole && matchesSearch;
     });
-  }, [profiles, query, roleFilter, getUserRole]);
+  }, [profiles, roleFilter, searchTerm, roleByUserId]);
 
-  const totalUsers = profiles.length;
-  const adminUsers = profiles.filter((profile) => getUserRole(profile.id) === "admin").length;
-  const lastSevenDays = profiles.filter((profile) => {
-    const createdAt = new Date(profile.created_at).getTime();
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return createdAt >= sevenDaysAgo;
-  }).length;
+  /* -----------------------
+     Stats
+  ------------------------ */
+  const stats = useMemo(() => {
+    const total = profiles.length;
+
+    const admins = profiles.filter((p) =>
+      ["admin", "super_admin"].includes(getUserRole(p.id)),
+    ).length;
+
+    const invited = profiles.filter((p) => !p.full_name).length;
+
+    const last7Days = profiles.filter((p) => {
+      const created = new Date(p.created_at).getTime();
+      return Date.now() - created <= 7 * 24 * 60 * 60 * 1000;
+    }).length;
+
+    return { total, admins, invited, last7Days };
+  }, [profiles, roleByUserId]);
+
+  /* -----------------------
+     Helpers
+  ------------------------ */
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const getInitials = (name?: string | null, email?: string) => {
+    if (name) {
+      return name
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase())
+        .join("");
+    }
+    return email?.[0]?.toUpperCase() ?? "U";
+  };
+
+  const formatRoleLabel = (role: string) =>
+    role.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  /* =======================
+     Render
+  ======================= */
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <Card>
+      <CardHeader className="space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle>Users</CardTitle>
-            <CardDescription>Manage accounts, permissions, and onboarding activity.</CardDescription>
+            <CardTitle className="text-2xl">Users</CardTitle>
+            <CardDescription>
+              Manage access, roles, and onboarding across the platform.
+            </CardDescription>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
               Export
             </Button>
-            <Button size="sm">Invite user</Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Invite user
+            </Button>
+            <Button size="sm" className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Add admin
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              ["Total users", totalUsers, "All registered accounts."],
-              ["Admins", adminUsers, "Users with full access."],
-              ["New (7 days)", lastSevenDays, "Recent sign-ups."],
-            ].map(([label, value, helper]) => (
-              <Card key={label} className="border-muted/50">
-                <CardHeader className="space-y-1">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {label}
-                  </CardTitle>
-                  <div className="text-2xl font-semibold">{value}</div>
-                  <CardDescription>{helper}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+        </div>
 
-          <Separator />
-
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
-              <Input
-                placeholder="Search by name or email"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="md:max-w-xs"
-              />
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="md:max-w-[180px]">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roleOptions.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role === "all" ? "All roles" : role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Showing {filteredProfiles.length} of {totalUsers} users
-            </div>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email"
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProfiles.map((profile) => {
-                  const role = getUserRole(profile.id);
-                  const initials = profile.full_name
-                    ?.split(" ")
-                    .map((part) => part[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full lg:w-56">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="moderator">Moderator</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
 
-                  return (
-                    <TableRow key={profile.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback>{initials || "U"}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{profile.full_name || "—"}</div>
-                            <div className="text-xs text-muted-foreground">ID: {profile.id}</div>
-                          </div>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Stat label="Total users" value={stats.total} icon={<Users />} />
+          <Stat label="Admins" value={stats.admins} icon={<ShieldCheck />} />
+          <Stat label="Invited" value={stats.invited} icon={<Clock />} />
+          <Stat label="New this week" value={stats.last7Days} icon={<CheckCircle2 />} />
+        </div>
+
+        <Separator />
+
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {filteredProfiles.map((profile) => {
+                const role = getUserRole(profile.id);
+                const invited = !profile.full_name;
+
+                return (
+                  <TableRow key={profile.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback>
+                            {getInitials(profile.full_name, profile.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {profile.full_name || "Invited user"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {profile.email}
+                          </p>
                         </div>
-                      </TableCell>
-                      <TableCell>{profile.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={role === "admin" ? "default" : "secondary"}>
-                          {role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(profile.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {filteredProfiles.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-10">
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <p className="text-sm font-medium">No matching users</p>
-                        <p className="text-sm text-muted-foreground">
-                          Try adjusting your search or role filters.
-                        </p>
                       </div>
                     </TableCell>
+
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {formatRoleLabel(role)}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge variant={invited ? "outline" : "default"}>
+                        {invited ? "Invited" : "Active"}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>{formatDate(profile.created_at)}</TableCell>
+
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View profile</DropdownMenuItem>
+                          <DropdownMenuItem>Edit role</DropdownMenuItem>
+                          <DropdownMenuItem>Send reset link</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">
+                            Deactivate user
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+
+              {filteredProfiles.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-muted-foreground"
+                  >
+                    No users match the current filters.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* =======================
+   Stat Card
+======================= */
+
+function Stat({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-background/60 p-4">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <p className="text-sm">{label}</p>
+        {icon}
+      </div>
+      <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
   );
 }
