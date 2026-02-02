@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarCheck, Church, HandHeart, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,6 +100,7 @@ const HomeStats = () => {
         description: "Community gatherings posted in the last year.",
         icon: CalendarCheck,
         accent: "text-primary",
+        href: "/events",
       },
       {
         label: "Prayer requests",
@@ -106,6 +108,7 @@ const HomeStats = () => {
         description: "Hearts lifting one another up each day.",
         icon: HandHeart,
         accent: "text-secondary",
+        href: "/prayer-board",
       },
       {
         label: "Testimonies",
@@ -113,6 +116,7 @@ const HomeStats = () => {
         description: "Stories of hope and answered prayer shared.",
         icon: Sparkles,
         accent: "text-amber-300",
+        href: "/testimonies",
       },
       {
         label: "Churches in directory",
@@ -120,6 +124,7 @@ const HomeStats = () => {
         description: "Growing list of Message churches worldwide.",
         icon: Church,
         accent: "text-sky-300",
+        href: "/message-churches",
       },
     ],
     [counts],
@@ -141,34 +146,40 @@ const HomeStats = () => {
         </div>
 
         <div className="mt-8 grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map(({ label, value, description, icon: Icon, accent }) => (
-            <Card
+          {stats.map(({ label, value, description, icon: Icon, accent, href }) => (
+            <Link
               key={label}
-              variant="glass"
-              hoverable
-              className="group border-white/15 bg-white/[0.08] shadow-glass-subtle"
+              to={href}
+              aria-label={`View ${label.toLowerCase()}`}
+              className="group block rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardIcon className={`${accent} bg-white/5 rounded-full p-2 shadow-glass-subtle`}>
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </CardIcon>
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {label}
-                    </span>
+              <Card
+                variant="glass"
+                hoverable
+                className="h-full border-white/15 bg-white/[0.08] shadow-glass-subtle"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CardIcon className={`${accent} bg-white/5 rounded-full p-2 shadow-glass-subtle`}>
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </CardIcon>
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {label}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <CardTitle glass className="text-3xl">
-                  {value}
-                </CardTitle>
-                <CardDescription glass className="mt-1 text-xs sm:text-sm">
-                  {description}
-                </CardDescription>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <CardTitle glass className="text-3xl">
+                    {value}
+                  </CardTitle>
+                  <CardDescription glass className="mt-1 text-xs sm:text-sm">
+                    {description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>
