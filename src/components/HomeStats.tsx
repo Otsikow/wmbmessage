@@ -1,39 +1,130 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarCheck, Church, HandHeart, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
-const stats = [
-  {
-    label: "Events created",
-    value: "1,284",
-    description: "Community gatherings posted in the last year.",
-    icon: CalendarCheck,
-    accent: "text-primary",
-  },
-  {
-    label: "Prayer requests",
-    value: "6,920",
-    description: "Hearts lifting one another up each day.",
-    icon: HandHeart,
-    accent: "text-secondary",
-  },
-  {
-    label: "Testimonies",
-    value: "842",
-    description: "Stories of hope and answered prayer shared.",
-    icon: Sparkles,
-    accent: "text-amber-300",
-  },
-  {
-    label: "Churches in directory",
-    value: "312",
-    description: "Growing list of Message churches worldwide.",
-    icon: Church,
-    accent: "text-sky-300",
-  },
-];
+const formatCount = (value: number | null) => {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("en-US").format(value);
+};
+
+const refreshIntervalMs = 60000;
 
 const HomeStats = () => {
+  const [counts, setCounts] = useState({
+    events: null as number | null,
+    prayerRequests: null as number | null,
+    testimonies: null as number | null,
+    messageChurches: null as number | null,
+  });
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      const [
+        events,
+        prayerRequests,
+        testimonies,
+        messageChurches,
+      ] = await Promise.all([
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "APPROVED")
+          .gte("created_at", oneYearAgo.toISOString()),
+        supabase
+          .from("prayer_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("testimonies")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+        supabase
+          .from("message_churches")
+          .select("*", { count: "exact", head: true })
+          .eq("verified", true),
+      ]);
+
+      if (
+        events.error ||
+        prayerRequests.error ||
+        testimonies.error ||
+        messageChurches.error
+      ) {
+        throw new Error("Failed to load community stats.");
+      }
+
+      setCounts({
+        events: events.count ?? 0,
+        prayerRequests: prayerRequests.count ?? 0,
+        testimonies: testimonies.count ?? 0,
+        messageChurches: messageChurches.count ?? 0,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    fetchStats();
+
+    intervalId = setInterval(fetchStats, refreshIntervalMs);
+
+    channel = supabase
+      .channel("home-stats-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "events" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "prayer_requests" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "testimonies" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "message_churches" }, fetchStats)
+      .subscribe();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [fetchStats]);
+
+  const stats = useMemo(
+    () => [
+      {
+        label: "Events created",
+        value: formatCount(counts.events),
+        description: "Community gatherings posted in the last year.",
+        icon: CalendarCheck,
+        accent: "text-primary",
+      },
+      {
+        label: "Prayer requests",
+        value: formatCount(counts.prayerRequests),
+        description: "Hearts lifting one another up each day.",
+        icon: HandHeart,
+        accent: "text-secondary",
+      },
+      {
+        label: "Testimonies",
+        value: formatCount(counts.testimonies),
+        description: "Stories of hope and answered prayer shared.",
+        icon: Sparkles,
+        accent: "text-amber-300",
+      },
+      {
+        label: "Churches in directory",
+        value: formatCount(counts.messageChurches),
+        description: "Growing list of Message churches worldwide.",
+        icon: Church,
+        accent: "text-sky-300",
+      },
+    ],
+    [counts],
+  );
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none" />
