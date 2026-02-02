@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { TestimonyCategory } from "@/types/testimonies";
 import {
   Bell,
   HeartHandshake,
@@ -95,6 +96,7 @@ const getPrivacyStyle = (visibility: string) => {
 };
 
 export default function PrayerBoard() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState(initialRequests);
   const [prayedToday, setPrayedToday] = useState(false);
   const [encouragements, setEncouragements] = useState<Record<string, string>>({});
@@ -141,6 +143,41 @@ export default function PrayerBoard() {
     }));
   };
 
+  const resolveTestimonyCategory = (category: string): TestimonyCategory => {
+    switch (category) {
+      case "Health":
+        return "healing";
+      case "Family":
+        return "family_marriage";
+      case "Personal":
+        return "salvation_growth";
+      case "Urgent":
+        return "deliverance";
+      default:
+        return "other";
+    }
+  };
+
+  const handleLinkTestimony = (request: (typeof requests)[number]) => {
+    const testimony = testimonies[request.id];
+    const title = testimony?.title?.trim() ?? "";
+    const story = testimony?.story?.trim() ?? "";
+    const changeSummary = [title, story].filter(Boolean).join("\n\n");
+
+    if (!changeSummary) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      source: "prayer",
+      before: request.description,
+      change: changeSummary,
+      category: resolveTestimonyCategory(request.category),
+    });
+
+    navigate(`/testimonies?${params.toString()}#submit`);
+  };
+
   const ownedRequests = useMemo(() => requests.filter((request) => request.isOwner), [requests]);
 
   return (
@@ -174,6 +211,9 @@ export default function PrayerBoard() {
                     const encouragement = encouragements[request.id] ?? "";
                     const remainingEncouragement = 180 - encouragement.length;
                     const testimony = testimonies[request.id] ?? { title: "", story: "" };
+                    const isTestimonyReady = Boolean(
+                      [testimony.title, testimony.story].some((value) => value.trim().length > 0),
+                    );
 
                     return (
                       <Card key={request.id} className="border-border/60 bg-card/80">
@@ -295,8 +335,17 @@ export default function PrayerBoard() {
                                     placeholder="Short testimony (what God has done)"
                                     rows={3}
                                   />
-                                  <Button type="button" size="sm" className="w-full sm:w-auto">
-                                    Link testimony
+                                  <p className="text-xs text-muted-foreground">
+                                    We’ll carry your notes into the testimony form so you can finish the submission.
+                                  </p>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="w-full sm:w-auto"
+                                    onClick={() => handleLinkTestimony(request)}
+                                    disabled={!isTestimonyReady}
+                                  >
+                                    Continue to testimony submission
                                   </Button>
                                 </div>
                               )}
