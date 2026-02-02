@@ -8,6 +8,8 @@ import {
   Link2,
   BookMarked,
   Search,
+  MessageSquare,
+  Library,
   Cog,
   Moon,
   Sun,
@@ -532,7 +534,7 @@ export default function Reader() {
                     <TooltipContent side="bottom">Quick actions and shortcuts</TooltipContent>
                   </Tooltip>
                   <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuLabel>Shortcuts</DropdownMenuLabel>
+                    <DropdownMenuLabel>Quick access</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => setShowCrossRef(true)} className="gap-3 py-3">
                       <Link2 className="h-4 w-4" />
@@ -561,6 +563,30 @@ export default function Reader() {
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-foreground">Search the Bible</span>
                         <span className="text-xs text-muted-foreground">Jump to the search tool</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => navigate("/messages")}
+                      className="gap-3 py-3"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Messages</span>
+                        <span className="text-xs text-muted-foreground">
+                          Explore WMB sermons and highlights
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => navigate("/library")}
+                      className="gap-3 py-3"
+                    >
+                      <Library className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">Library</span>
+                        <span className="text-xs text-muted-foreground">
+                          Review bookmarks, highlights, and notes
+                        </span>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
