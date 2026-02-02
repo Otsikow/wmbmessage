@@ -11,8 +11,47 @@ const corsHeaders = {
 
 interface PasswordResetRequest {
   email: string;
-  resetUrl: string;
+  resetUrl?: string;
+  redirectTo?: string;
 }
+
+const generateResetUrl = async (email: string, redirectTo?: string) => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("Supabase admin credentials are not configured");
+    throw new Error("Password reset is not configured");
+  }
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: serviceRoleKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "recovery",
+      email,
+      options: redirectTo ? { redirectTo } : undefined,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Failed to generate reset link:", errorText);
+    throw new Error("Unable to generate password reset link");
+  }
+
+  const data = await response.json();
+  if (!data?.action_link) {
+    console.error("Missing action_link in reset link response:", data);
+    throw new Error("Unable to generate password reset link");
+  }
+
+  return data.action_link as string;
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -27,12 +66,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email service is not configured");
     }
 
-    const { email, resetUrl }: PasswordResetRequest = await req.json();
+    const { email, resetUrl, redirectTo }: PasswordResetRequest = await req.json();
 
     // Validate required fields
-    if (!email || !resetUrl) {
-      console.error("Missing required fields:", { email: !!email, resetUrl: !!resetUrl });
-      throw new Error("Missing required fields: email and resetUrl are required");
+    if (!email) {
+      console.error("Missing required fields:", { email: !!email });
+      throw new Error("Missing required field: email is required");
     }
 
     // Validate email format
@@ -41,6 +80,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Invalid email format:", email);
       throw new Error("Invalid email format");
     }
+
+    const resolvedResetUrl = resetUrl ?? await generateResetUrl(email, redirectTo);
 
     console.log("Sending password reset email to:", email);
 
@@ -72,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <table role="presentation" style="width: 100%; border-collapse: collapse;">
                           <tr>
                             <td align="center" style="padding: 20px 0;">
-                              <a href="${resetUrl}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #7c3aed; text-decoration: none; border-radius: 8px;">
+                              <a href="${resolvedResetUrl}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #7c3aed; text-decoration: none; border-radius: 8px;">
                                 Reset Password
                               </a>
                             </td>
@@ -93,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
                           If the button doesn't work, copy and paste this link into your browser:
                         </p>
                         <p style="margin: 8px 0 0; font-size: 12px; line-height: 18px; color: #7c3aed; text-align: center; word-break: break-all;">
-                          ${resetUrl}
+                          ${resolvedResetUrl}
                         </p>
                       </td>
                     </tr>

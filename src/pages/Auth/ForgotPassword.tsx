@@ -21,11 +21,18 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const redirectTo = `${window.location.origin}/auth/reset-password`;
+      const { data, error } = await supabase.functions.invoke<{
+        success: boolean;
+        error?: string;
+      }>("send-password-reset", {
+        body: { email, redirectTo },
       });
 
       if (error) throw error;
+      if (data && !data.success) {
+        throw new Error(data.error || "Password reset request failed.");
+      }
 
       setSent(true);
       toast({

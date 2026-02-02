@@ -73,6 +73,9 @@ const createDisabledSupabaseClient = (): SupabaseWithStatus => {
       signOut: async () => disabledResult("Sign out"),
       getUser: async () => ({ data: { user: null }, ...disabledResult("User lookup") }),
     },
+    functions: {
+      invoke: async () => disabledResult("Edge function"),
+    },
     from: () => createDisabledQueryBuilder(),
     storage: {
       from: () => createDisabledStorageBuilder(),
