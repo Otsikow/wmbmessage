@@ -19,7 +19,7 @@ const communityFeatures = [
   {
     icon: MessageSquareHeart,
     title: "Testimonies",
-    description: "Read and share powerful testimonies of God's faithfulness",
+    description: "Read and share testimonies of God's faithfulness",
     path: "/testimonies",
     image: testimoniesImage,
     imagePosition: "center", // Bible centered with light
