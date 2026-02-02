@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, LogOut, Shield } from "lucide-react";
+import { User, LogOut, Shield, BookMarked } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -79,9 +79,6 @@ export default function Header({
               <Link to="/prayer-board" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Prayer
               </Link>
-              <Link to="/library" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
-                Library
-              </Link>
 
               {user ? (
                 <DropdownMenu>
@@ -108,6 +105,10 @@ export default function Header({
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/library')}>
+                      <BookMarked className="mr-2 h-4 w-4" />
+                      <span>My Library</span>
                     </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => navigate('/admin')}>
@@ -153,6 +154,10 @@ export default function Header({
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/library')}>
+                    <BookMarked className="mr-2 h-4 w-4" />
+                    <span>My Library</span>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate('/admin')}>
