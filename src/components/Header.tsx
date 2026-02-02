@@ -182,7 +182,7 @@ export default function Header({
           </div>
         </div>
 
-        <nav className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <nav className="hidden md:flex lg:hidden items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
           {mobileNavLinks.map((link) => (
             <Link
               key={link.path}
