@@ -187,6 +187,18 @@ export default function Testimonies() {
     };
   }, [recordedAudioUrl, stopRecording]);
 
+  useEffect(() => {
+    if (prefillFromPrayer) {
+      setBeforeStory(prefillBefore);
+      setChangeStory(prefillChange);
+      setCategory(isTestimonyCategory(prefillCategory) ? prefillCategory : "healing");
+      return;
+    }
+
+    setBeforeStory("");
+    setChangeStory("");
+  }, [prefillBefore, prefillCategory, prefillChange, prefillFromPrayer]);
+
   const remainingCharacters = 180 - commentDraft.length;
   const categoryOptions = useMemo(
     () =>
