@@ -70,8 +70,8 @@ export default function Header({
               <Link to="/bible" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Bible
               </Link>
-              <Link to="/messages" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
-                Messages
+              <Link to="/events" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
+                Events
               </Link>
               <Link to="/message-churches" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-emerald-600 hover:bg-emerald-500/10">
                 Churches
