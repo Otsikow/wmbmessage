@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import { validateSignInInput } from "@/lib/validation/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { lovable } from "@/integrations/lovable";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -95,20 +96,9 @@ export default function SignIn() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!isSupabaseConfigured) {
-      toast({
-        title: "Service unavailable",
-        description:
-          "Sign in is temporarily unavailable while we finish setting up authentication. Please try again soon.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/` },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
 
       if (error) throw error;

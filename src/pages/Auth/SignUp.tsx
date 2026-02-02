@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getFriendlyErrorMessage } from "@/lib/errorHandling";
 import { validateSignUpInput } from "@/lib/validation/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { lovable } from "@/integrations/lovable";
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -82,9 +83,8 @@ export default function SignUp() {
 
   const handleGoogleSignUp = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/` },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
 
       if (error) throw error;
