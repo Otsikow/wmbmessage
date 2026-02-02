@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -38,16 +38,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { appendShareAttribution, buildShareUrl } from "@/lib/share";
 import { TestimonyCategory, TestimonyIdentity, testimonyCategoryLabels } from "@/types/testimonies";
 
+const isTestimonyCategory = (value: string | null): value is TestimonyCategory => {
+  if (!value) return false;
+  return [
+    "healing",
+    "financial_breakthrough",
+    "family_marriage",
+    "salvation_growth",
+    "deliverance",
+    "career_education",
+    "other",
+  ].includes(value);
+};
+
 export default function Testimonies() {
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
+  const prefillSource = searchParams.get("source");
+  const prefillBefore = searchParams.get("before") ?? "";
+  const prefillChange = searchParams.get("change") ?? "";
+  const prefillCategory = searchParams.get("category");
+  const prefillFromPrayer = prefillSource === "prayer";
+
   const [identityPreference, setIdentityPreference] = useState<TestimonyIdentity>("full_name");
   const [format, setFormat] = useState<"text" | "audio">("text");
   const [commentDraft, setCommentDraft] = useState("");
-  const [category, setCategory] = useState<TestimonyCategory>("healing");
+  const [category, setCategory] = useState<TestimonyCategory>(
+    isTestimonyCategory(prefillCategory) ? prefillCategory : "healing",
+  );
   const [happenedAt, setHappenedAt] = useState("");
-  const [beforeStory, setBeforeStory] = useState("");
-  const [changeStory, setChangeStory] = useState("");
+  const [beforeStory, setBeforeStory] = useState(() => (prefillFromPrayer ? prefillBefore : ""));
+  const [changeStory, setChangeStory] = useState(() => (prefillFromPrayer ? prefillChange : ""));
   const [transcript, setTranscript] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [consentToShare, setConsentToShare] = useState(false);
@@ -343,6 +365,14 @@ export default function Testimonies() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {prefillFromPrayer && (
+              <div className="rounded-lg border border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
+                <p className="font-medium">Prayer update detected</p>
+                <p className="text-xs text-emerald-700">
+                  We brought over your prayer request context so you can finish this testimony quickly.
+                </p>
+              </div>
+            )}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <Tabs value={format} onValueChange={(value) => setFormat(value as "text" | "audio")}>
                 <TabsList className="grid grid-cols-2 w-full">
