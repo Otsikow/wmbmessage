@@ -9,6 +9,7 @@ import {
   FileText,
   HandHeart,
   Headphones,
+  MoreHorizontal,
   Square,
   Trash2,
   Link as LinkIcon,
@@ -27,6 +28,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -662,54 +669,60 @@ export default function Testimonies() {
                         messageguide.org
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          const { message } = getTestimonySharePayload(testimony);
-                          openShareWindow(`https://wa.me/?text=${encodeURIComponent(message)}`);
-                        }}
-                      >
-                        <MessageCircle className="h-4 w-4 text-emerald-600" />
-                        WhatsApp
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          const { url } = getTestimonySharePayload(testimony);
-                          openShareWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
-                        }}
-                      >
-                        <Facebook className="h-4 w-4 text-blue-600" />
-                        Facebook
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          const { message } = getTestimonySharePayload(testimony);
-                          openShareWindow(
-                            `mailto:?subject=${encodeURIComponent("A testimony to encourage you")}&body=${encodeURIComponent(message)}`
-                          );
-                        }}
-                      >
-                        <Mail className="h-4 w-4 text-sky-600" />
-                        Email
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => void handleCopyLink(testimony)}
-                      >
-                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                        Copy link
-                      </Button>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        Tap the menu to choose a sharing option.
+                      </p>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button type="button" variant="outline" size="icon" aria-label="Share options">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const { message } = getTestimonySharePayload(testimony);
+                              openShareWindow(`https://wa.me/?text=${encodeURIComponent(message)}`);
+                            }}
+                            className="gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4 text-emerald-600" />
+                            WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const { url } = getTestimonySharePayload(testimony);
+                              openShareWindow(
+                                `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+                              );
+                            }}
+                            className="gap-2"
+                          >
+                            <Facebook className="h-4 w-4 text-blue-600" />
+                            Facebook
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const { message } = getTestimonySharePayload(testimony);
+                              openShareWindow(
+                                `mailto:?subject=${encodeURIComponent("A testimony to encourage you")}&body=${encodeURIComponent(message)}`
+                              );
+                            }}
+                            className="gap-2"
+                          >
+                            <Mail className="h-4 w-4 text-sky-600" />
+                            Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => void handleCopyLink(testimony)}
+                            className="gap-2"
+                          >
+                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                            Copy link
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
