@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending password reset email to:", email);
 
     const emailResponse = await resend.emails.send({
-      from: "MessageGuide <noreply@resend.dev>", // Update with your verified domain
+      from: "MessageGuide <support@messageguide.org>",
       to: [email],
       subject: "Reset Your Password - MessageGuide",
       html: `
