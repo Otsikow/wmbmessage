@@ -76,8 +76,8 @@ export default function Header({
               <Link to="/message-churches" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-emerald-600 hover:bg-emerald-500/10">
                 Churches
               </Link>
-              <Link to="/search" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
-                Search
+              <Link to="/prayer-board" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
+                Prayer
               </Link>
               <Link to="/library" className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 hover:text-primary hover:bg-primary/10">
                 Library
