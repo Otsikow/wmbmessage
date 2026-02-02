@@ -151,7 +151,7 @@ export default function UserManager({
   };
 
   const formatRoleLabel = (role: string) =>
-    role.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   /* =======================
      Render
