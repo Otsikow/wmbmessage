@@ -31,6 +31,12 @@ export default function Header({
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
+  const mobileNavLinks = [
+    { label: "Bible", path: "/bible" },
+    { label: "Churches", path: "/message-churches" },
+    { label: "Events", path: "/events" },
+    { label: "Prayer", path: "/prayer-board" },
+  ];
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -170,6 +176,18 @@ export default function Header({
             )}
           </div>
         </div>
+
+        <nav className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {mobileNavLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className="text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap hover:text-primary hover:bg-primary/10"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
         <PageBreadcrumbs className="hidden sm:block" />
       </div>
