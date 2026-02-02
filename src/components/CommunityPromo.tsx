@@ -11,7 +11,7 @@ const communityFeatures = [
   {
     icon: HeartHandshake,
     title: "Prayer Board",
-    description: "Share prayer requests and lift each other up in faith",
+    description: "Share prayer requests and pray for one another",
     path: "/prayer-board",
     image: prayerImage,
     imagePosition: "center", // hands centered
