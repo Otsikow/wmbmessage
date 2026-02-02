@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -62,6 +62,8 @@ export default function Testimonies() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isSignedIn = Boolean(user);
+  const navigate = useNavigate();
   const prefillSource = searchParams.get("source");
   const prefillBefore = searchParams.get("before") ?? "";
   const prefillChange = searchParams.get("change") ?? "";
@@ -210,6 +212,14 @@ export default function Testimonies() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!user) {
+      toast({
+        title: "Sign in required.",
+        description: "Please sign in to submit a testimony.",
+      });
+      navigate("/auth/sign-in");
+      return;
+    }
 
     if (!category) {
       toast({ title: "Select a testimony category.", description: "Choose the best fit before submitting." });
@@ -295,7 +305,8 @@ export default function Testimonies() {
     !consentToShare ||
     (format === "audio" && !transcript.trim()) ||
     (identityPreference !== "anonymous" && !displayName.trim()) ||
-    isSubmitting;
+    isSubmitting ||
+    !isSignedIn;
 
   const getTestimonySharePayload = (testimony: (typeof testimonies)[number]) => {
     const url = buildShareUrl(`/testimonies/${testimony.id}`);
@@ -390,6 +401,14 @@ export default function Testimonies() {
                 <p className="text-xs text-emerald-700">
                   We brought over your prayer request context so you can finish this testimony quickly.
                 </p>
+              </div>
+            )}
+            {!isSignedIn && (
+              <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                Sign in to submit a testimony.{" "}
+                <Link to="/auth/sign-in" className="text-primary underline">
+                  Sign in
+                </Link>
               </div>
             )}
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -600,7 +619,7 @@ export default function Testimonies() {
                   </p>
                 </div>
                 <Button type="submit" className="gap-2" variant="default" disabled={isSubmitDisabled}>
-                  {isSubmitting ? "Submitting..." : "Submit testimony"}
+                  {isSignedIn ? (isSubmitting ? "Submitting..." : "Submit testimony") : "Sign in to submit"}
                 </Button>
               </div>
             </form>
@@ -773,9 +792,17 @@ export default function Testimonies() {
                       <p className="font-medium">Encouragement comments</p>
                       <span className="text-xs text-muted-foreground">180 character limit</span>
                     </div>
+                    {!isSignedIn && (
+                      <p className="text-xs text-muted-foreground">
+                        Sign in to leave an encouragement comment.{" "}
+                        <Link to="/auth/sign-in" className="text-primary underline">
+                          Sign in
+                        </Link>
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2">
                       {commentTemplates.map((template) => (
-                        <Button key={template.id} type="button" variant="secondary" size="sm">
+                        <Button key={template.id} type="button" variant="secondary" size="sm" disabled={!isSignedIn}>
                           {template.label}
                         </Button>
                       ))}
@@ -785,6 +812,7 @@ export default function Testimonies() {
                       maxLength={180}
                       value={commentDraft}
                       onChange={(event) => setCommentDraft(event.target.value)}
+                      disabled={!isSignedIn}
                     />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Only encouragements. No advice, debates, or preaching.</span>

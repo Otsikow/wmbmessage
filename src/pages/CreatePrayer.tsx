@@ -47,11 +47,17 @@ export default function CreatePrayer() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const remainingDescription = 500 - formState.description.length;
+  const isSignedIn = Boolean(user);
 
   const identityPreference = formState.visibility === "Anonymous public" ? "anonymous" : "full_name";
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!user) {
+      toast.error("Please sign in to submit a prayer request.");
+      navigate("/auth/sign-in");
+      return;
+    }
     if (!formState.title.trim()) {
       toast.error("Prayer title is required.");
       return;
@@ -116,6 +122,19 @@ export default function CreatePrayer() {
                 <p className="text-sm sm:text-base text-muted-foreground">
                   Requests are reviewed to keep the board safe and supportive.
                 </p>
+                {!isSignedIn && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Please sign in to submit a request.{" "}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="px-0 text-primary"
+                      onClick={() => navigate("/auth/sign-in")}
+                    >
+                      Sign in
+                    </Button>
+                  </p>
+                )}
               </div>
               <Badge variant="outline">Prayer board</Badge>
             </div>
@@ -208,8 +227,8 @@ export default function CreatePrayer() {
                   </div>
                 ))}
               </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit request"}
+              <Button type="submit" className="w-full" disabled={isSubmitting || !isSignedIn}>
+                {isSignedIn ? (isSubmitting ? "Submitting..." : "Submit request") : "Sign in to submit"}
               </Button>
             </form>
           </Card>
