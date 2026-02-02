@@ -76,6 +76,8 @@ export default function UserManager({
 }: UserManagerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   /* -----------------------
      Role lookup
@@ -91,43 +93,94 @@ export default function UserManager({
   /* -----------------------
      Filtering
   ------------------------ */
+  const isNewUser = (profile: AdminProfile) => {
+    const created = new Date(profile.created_at).getTime();
+    return Date.now() - created <= 7 * 24 * 60 * 60 * 1000;
+  };
+
   const filteredProfiles = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
     return profiles.filter((profile) => {
       const role = getUserRole(profile.id);
+      const invited = !profile.full_name;
 
       const matchesRole =
         roleFilter === "all" || role === roleFilter;
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "invited" && invited) ||
+        (statusFilter === "active" && !invited);
+
+      const matchesDate =
+        dateFilter === "all" ||
+        (dateFilter === "last7Days" && isNewUser(profile));
 
       const matchesSearch =
         !query ||
         profile.email.toLowerCase().includes(query) ||
         (profile.full_name ?? "").toLowerCase().includes(query);
 
-      return matchesRole && matchesSearch;
+      return matchesRole && matchesStatus && matchesDate && matchesSearch;
     });
-  }, [profiles, roleFilter, searchTerm, roleByUserId]);
+  }, [
+    dateFilter,
+    profiles,
+    roleFilter,
+    searchTerm,
+    statusFilter,
+    roleByUserId,
+  ]);
 
   /* -----------------------
      Stats
   ------------------------ */
   const stats = useMemo(() => {
-    const total = profiles.length;
+    const total = filteredProfiles.length;
 
-    const admins = profiles.filter((p) =>
+    const admins = filteredProfiles.filter((p) =>
       ["admin", "super_admin"].includes(getUserRole(p.id)),
     ).length;
 
-    const invited = profiles.filter((p) => !p.full_name).length;
+    const invited = filteredProfiles.filter((p) => !p.full_name).length;
 
-    const last7Days = profiles.filter((p) => {
-      const created = new Date(p.created_at).getTime();
-      return Date.now() - created <= 7 * 24 * 60 * 60 * 1000;
-    }).length;
+    const last7Days = filteredProfiles.filter((p) => isNewUser(p)).length;
 
     return { total, admins, invited, last7Days };
-  }, [profiles, roleByUserId]);
+  }, [filteredProfiles, roleByUserId]);
+
+  const handleStatFilter = (filter: "total" | "admins" | "invited" | "new") => {
+    if (filter === "total") {
+      setRoleFilter("all");
+      setStatusFilter("all");
+      setDateFilter("all");
+      setSearchTerm("");
+      return;
+    }
+
+    if (filter === "admins") {
+      setRoleFilter((current) => (current === "admin" ? "all" : "admin"));
+      setStatusFilter("all");
+      setDateFilter("all");
+      return;
+    }
+
+    if (filter === "invited") {
+      setStatusFilter((current) =>
+        current === "invited" ? "all" : "invited",
+      );
+      setRoleFilter("all");
+      setDateFilter("all");
+      return;
+    }
+
+    setDateFilter((current) =>
+      current === "last7Days" ? "all" : "last7Days",
+    );
+    setRoleFilter("all");
+    setStatusFilter("all");
+  };
 
   /* -----------------------
      Helpers
@@ -211,10 +264,39 @@ export default function UserManager({
 
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Stat label="Total users" value={stats.total} icon={<Users />} />
-          <Stat label="Admins" value={stats.admins} icon={<ShieldCheck />} />
-          <Stat label="Invited" value={stats.invited} icon={<Clock />} />
-          <Stat label="New this week" value={stats.last7Days} icon={<CheckCircle2 />} />
+          <Stat
+            label="Total users"
+            value={stats.total}
+            icon={<Users />}
+            onClick={() => handleStatFilter("total")}
+            active={
+              roleFilter === "all" &&
+              statusFilter === "all" &&
+              dateFilter === "all" &&
+              !searchTerm
+            }
+          />
+          <Stat
+            label="Admins"
+            value={stats.admins}
+            icon={<ShieldCheck />}
+            onClick={() => handleStatFilter("admins")}
+            active={roleFilter === "admin"}
+          />
+          <Stat
+            label="Invited"
+            value={stats.invited}
+            icon={<Clock />}
+            onClick={() => handleStatFilter("invited")}
+            active={statusFilter === "invited"}
+          />
+          <Stat
+            label="New this week"
+            value={stats.last7Days}
+            icon={<CheckCircle2 />}
+            onClick={() => handleStatFilter("new")}
+            active={dateFilter === "last7Days"}
+          />
         </div>
 
         <Separator />
@@ -318,18 +400,28 @@ function Stat({
   label,
   value,
   icon,
+  onClick,
+  active,
 }: {
   label: string;
   value: number;
   icon: React.ReactNode;
+  onClick?: () => void;
+  active?: boolean;
 }) {
   return (
-    <div className="rounded-lg border bg-background/60 p-4">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-lg border bg-background/60 p-4 text-left transition hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        active ? "border-primary/60 bg-primary/5 shadow-sm" : ""
+      }`}
+    >
       <div className="flex items-center justify-between text-muted-foreground">
         <p className="text-sm">{label}</p>
         {icon}
       </div>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
-    </div>
+    </button>
   );
 }
