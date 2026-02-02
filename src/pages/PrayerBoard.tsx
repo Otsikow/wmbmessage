@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 import { TestimonyCategory } from "@/types/testimonies";
 import {
   Bell,
@@ -97,6 +98,7 @@ const getPrivacyStyle = (visibility: string) => {
 
 export default function PrayerBoard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [requests, setRequests] = useState(initialRequests);
   const [prayedToday, setPrayedToday] = useState(false);
   const [encouragements, setEncouragements] = useState<Record<string, string>>({});
@@ -108,6 +110,7 @@ export default function PrayerBoard() {
     answeredUpdates: true,
     newRequests: true,
   });
+  const isSignedIn = Boolean(user);
 
   const handlePrayed = (id: string) => {
     setRequests((prev) =>
@@ -246,11 +249,19 @@ export default function PrayerBoard() {
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                          {!isSignedIn && (
+                            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                              Sign in to send encouragements.{" "}
+                              <Link to="/auth/sign-in" className="text-primary underline">
+                                Sign in
+                              </Link>
+                            </div>
+                          )}
                           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                             <Button className="w-full sm:w-auto" onClick={() => handlePrayed(request.id)}>
                               I prayed 🙏
                             </Button>
-                            <Button className="w-full sm:w-auto" variant="outline">
+                            <Button className="w-full sm:w-auto" variant="outline" disabled={!isSignedIn}>
                               Send encouragement 💬
                             </Button>
                           </div>
@@ -270,6 +281,7 @@ export default function PrayerBoard() {
                                   variant="secondary"
                                   size="sm"
                                   className="whitespace-normal text-left"
+                                  disabled={!isSignedIn}
                                   onClick={() => handleTemplateClick(request.id, template)}
                                 >
                                   {template}
@@ -282,6 +294,7 @@ export default function PrayerBoard() {
                               onChange={(event) => handleEncouragementChange(request.id, event.target.value)}
                               placeholder="Share a short encouragement without advice, preaching, or debate."
                               rows={3}
+                              disabled={!isSignedIn}
                             />
                             <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                               <span>No advice, no preaching, no debates.</span>
@@ -289,7 +302,7 @@ export default function PrayerBoard() {
                                 type="button"
                                 size="sm"
                                 className="w-full sm:w-auto"
-                                disabled={!encouragement || encouragement.length > 180}
+                                disabled={!isSignedIn || !encouragement || encouragement.length > 180}
                                 onClick={() => handleEncouragementChange(request.id, "")}
                               >
                                 Send encouragement
@@ -367,11 +380,19 @@ export default function PrayerBoard() {
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Button asChild className="w-full">
-                      <Link to="/prayer-board/create">Create a prayer request</Link>
-                    </Button>
+                    {isSignedIn ? (
+                      <Button asChild className="w-full">
+                        <Link to="/prayer-board/create">Create a prayer request</Link>
+                      </Button>
+                    ) : (
+                      <Button asChild className="w-full" variant="secondary">
+                        <Link to="/auth/sign-in">Sign in to create a prayer request</Link>
+                      </Button>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                      Requests are reviewed to keep the board safe, focused, and supportive.
+                      {isSignedIn
+                        ? "Requests are reviewed to keep the board safe, focused, and supportive."
+                        : "Prayer requests require a signed-in account."}
                     </p>
                   </CardContent>
                 </Card>
