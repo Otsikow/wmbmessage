@@ -27,7 +27,7 @@ const communityFeatures = [
   {
     icon: CalendarDays,
     title: "Events",
-    description: "Find conventions, revivals, and fellowship gatherings",
+    description: "Post and find conventions, revivals, fellowship gatherings, weddings etc.",
     path: "/events",
     image: eventsImage,
     imagePosition: "bottom", // crowd at bottom
