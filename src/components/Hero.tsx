@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen,
-  Search,
+  CalendarDays,
   Sparkles,
   MapPin,
 } from "lucide-react";
@@ -87,13 +87,13 @@ export default function Hero() {
                 </Button>
               </Link>
 
-              <Link to="/search" className="w-full">
+              <Link to="/events" className="w-full">
                 <Button 
                   size="lg" 
                   className="w-full h-12 sm:h-14 glass glass-neon-primary bg-transparent hover:bg-transparent text-foreground hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300 ease-out rounded-glass group"
                 >
-                  <Search className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
-                  <span className="truncate">Search Scripture</span>
+                  <CalendarDays className="mr-2 h-5 w-5 flex-shrink-0 icon-neon group-hover:scale-110 transition-transform" />
+                  <span className="truncate">Events</span>
                 </Button>
               </Link>
 
