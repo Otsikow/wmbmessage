@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Church, HeartHandshake, MoreHorizontal } from "lucide-react";
+import { Home, Book, Music, Church, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/bible", icon: Book, label: "Bible" },
+  { path: "/songs", icon: Music, label: "Songs" },
   { path: "/message-churches", icon: Church, label: "Churches" },
-  { path: "/prayer-board", icon: HeartHandshake, label: "Prayer" },
   { path: "/more", icon: MoreHorizontal, label: "More" },
 ];
 
