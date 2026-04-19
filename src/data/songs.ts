@@ -1,4 +1,6 @@
-[
+import type { Song } from "@/types/songs";
+
+export const BUNDLED_SONGS: Song[] = [
   {
     "number": 1,
     "title": "Only Believe",
@@ -4748,4 +4750,4 @@
     "searchText": "81 jesus is the one jesus is the one,\nyes he’s the only one,\nlet him have his way\nuntil the day is done;\nwhen he speaks, you know",
     "id": "song-81"
   }
-]
+];
