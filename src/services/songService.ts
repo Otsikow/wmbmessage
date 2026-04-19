@@ -1,5 +1,5 @@
 import type { Song } from "@/types/songs";
-import bundledSongs from "@/data/songs.json";
+import { BUNDLED_SONGS } from "@/data/songs";
 
 /**
  * Song service.
@@ -12,7 +12,7 @@ import bundledSongs from "@/data/songs.json";
  */
 export async function loadSongs(): Promise<Song[]> {
   // Defensive copy + sort by number
-  const songs = (bundledSongs as Song[]).slice().sort((a, b) => a.number - b.number);
+  const songs = BUNDLED_SONGS.slice().sort((a, b) => a.number - b.number);
   return songs;
 }
 
