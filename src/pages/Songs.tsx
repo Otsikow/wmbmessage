@@ -11,6 +11,41 @@ import type { Song, SongSection } from "@/types/songs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+
+function splitIntoStanzas(lines: string[]): string[] {
+  const normalizedLines = lines.map((line) => line.trimEnd());
+  const hasBlankSeparators = normalizedLines.some((line) => line.trim() === "");
+
+  if (hasBlankSeparators) {
+    const stanzas: string[] = [];
+    let current: string[] = [];
+
+    for (const line of normalizedLines) {
+      if (!line.trim()) {
+        if (current.length) {
+          stanzas.push(current.join("\n"));
+          current = [];
+        }
+        continue;
+      }
+      current.push(line);
+    }
+
+    if (current.length) stanzas.push(current.join("\n"));
+    return stanzas;
+  }
+
+  if (normalizedLines.length <= 6) {
+    return [normalizedLines.join("\n")];
+  }
+
+  const stanzaLength = normalizedLines.length % 4 === 0 ? 4 : 8;
+  const stanzas: string[] = [];
+  for (let i = 0; i < normalizedLines.length; i += stanzaLength) {
+    stanzas.push(normalizedLines.slice(i, i + stanzaLength).join("\n"));
+  }
+  return stanzas;
+}
 function SectionBlock({ section, index }: { section: SongSection; index: number }) {
   const isChorus = section.type === "chorus";
   return (
@@ -39,7 +74,11 @@ function SectionBlock({ section, index }: { section: SongSection; index: number 
           isChorus && "font-medium italic",
         )}
       >
-        {section.lines.join("\n")}
+        {splitIntoStanzas(section.lines).map((stanza, stanzaIndex) => (
+          <p key={stanzaIndex} className="mb-4 last:mb-0">
+            {stanza}
+          </p>
+        ))}
       </div>
     </div>
   );
