@@ -4,16 +4,55 @@ import { BUNDLED_SONGS } from "@/data/songs";
 /**
  * Song service.
  *
- * The bundled dataset (`src/data/songs.json`) was parsed from the official
- * SV Fellowship Song Book PDF. We keep this as the reliable, offline-first
- * source so the Songs feature is always usable. A future remote source
- * (e.g. https://svfellowship.info/song-book/) can be wired in here behind
- * the same `loadSongs()` interface without any UI changes.
+ * Primary source: /data/songs.json (the full 366-song dataset parsed from the
+ * official SV Fellowship Song Book PDF, served from /public so the bundle stays
+ * small). If the fetch fails (offline / network error), we fall back to the
+ * smaller bundled dataset baked into the JS so the Songs feature is always
+ * usable.
  */
+
+const REMOTE_SONGS_URL = "/data/songs.json";
+
+let cache: Song[] | null = null;
+let inflight: Promise<Song[]> | null = null;
+
+function sortByNumber(songs: Song[]): Song[] {
+  return songs.slice().sort((a, b) => a.number - b.number);
+}
+
+async function fetchRemoteSongs(): Promise<Song[]> {
+  const res = await fetch(REMOTE_SONGS_URL, { cache: "force-cache" });
+  if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
+  const data = (await res.json()) as Song[];
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error("Remote songs payload is empty");
+  }
+  return sortByNumber(data);
+}
+
 export async function loadSongs(): Promise<Song[]> {
-  // Defensive copy + sort by number
-  const songs = BUNDLED_SONGS.slice().sort((a, b) => a.number - b.number);
-  return songs;
+  if (cache) return cache;
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    try {
+      const remote = await fetchRemoteSongs();
+      cache = remote;
+      return remote;
+    } catch (err) {
+      console.warn(
+        "[songService] Falling back to bundled songs dataset:",
+        err,
+      );
+      const fallback = sortByNumber(BUNDLED_SONGS);
+      cache = fallback;
+      return fallback;
+    } finally {
+      inflight = null;
+    }
+  })();
+
+  return inflight;
 }
 
 export interface SongSearchOptions {
