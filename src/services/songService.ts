@@ -1,4 +1,4 @@
-import type { Song } from "@/types/songs";
+import type { Song, SongSection, SongSectionType } from "@/types/songs";
 import { BUNDLED_SONGS } from "@/data/songs";
 
 /**
@@ -12,12 +12,97 @@ import { BUNDLED_SONGS } from "@/data/songs";
  */
 
 const REMOTE_SONGS_URL = "/data/songs.json";
+const SECTION_MARKER_REGEX = /^(chorus|refrain|bridge|verse)(?:\s+\d+)?$/i;
 
 let cache: Song[] | null = null;
 let inflight: Promise<Song[]> | null = null;
 
 function sortByNumber(songs: Song[]): Song[] {
   return songs.slice().sort((a, b) => a.number - b.number);
+}
+
+function normalizeLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function buildSectionsFromRawText(rawText: string, chorus: string | null): SongSection[] {
+  const blocks = rawText
+    .split(/\n\s*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+
+  const chorusSignature = chorus
+    ? normalizeLines(chorus).join("\n").toLowerCase()
+    : null;
+
+  const sections: SongSection[] = [];
+  let pendingMarker: { type: SongSectionType; label: string } | null = null;
+
+  for (const block of blocks) {
+    const blockLines = normalizeLines(block);
+    if (blockLines.length === 0) continue;
+
+    const markerMatch = blockLines[0].match(SECTION_MARKER_REGEX);
+    if (markerMatch) {
+      const markerType = markerMatch[1].toLowerCase() as SongSectionType;
+      const label = blockLines[0].toUpperCase();
+      const remainingLines = blockLines.slice(1);
+
+      if (remainingLines.length === 0) {
+        pendingMarker = { type: markerType, label };
+        continue;
+      }
+
+      sections.push({
+        type: markerType,
+        label,
+        lines: remainingLines,
+      });
+      pendingMarker = null;
+      continue;
+    }
+
+    if (pendingMarker) {
+      sections.push({
+        type: pendingMarker.type,
+        label: pendingMarker.label,
+        lines: blockLines,
+      });
+      pendingMarker = null;
+      continue;
+    }
+
+    const blockSignature = blockLines.join("\n").toLowerCase();
+    const isChorusBlock = chorusSignature !== null && blockSignature === chorusSignature;
+
+    sections.push({
+      type: isChorusBlock ? "chorus" : "verse",
+      label: isChorusBlock ? "CHORUS" : null,
+      lines: blockLines,
+    });
+  }
+
+  return sections;
+}
+
+function normalizeSong(song: Song): Song {
+  const rebuiltSections = buildSectionsFromRawText(song.rawText, song.chorus);
+  if (rebuiltSections.length === 0) return song;
+
+  const firstChorus = rebuiltSections.find((section) => section.type === "chorus");
+
+  return {
+    ...song,
+    sections: rebuiltSections,
+    chorus: firstChorus ? firstChorus.lines.join("\n") : null,
+  };
+}
+
+function normalizeSongCollection(songs: Song[]): Song[] {
+  return songs.map(normalizeSong);
 }
 
 async function fetchRemoteSongs(): Promise<Song[]> {
@@ -27,7 +112,7 @@ async function fetchRemoteSongs(): Promise<Song[]> {
   if (!Array.isArray(data) || data.length === 0) {
     throw new Error("Remote songs payload is empty");
   }
-  return sortByNumber(data);
+  return sortByNumber(normalizeSongCollection(data));
 }
 
 export async function loadSongs(): Promise<Song[]> {
@@ -44,7 +129,7 @@ export async function loadSongs(): Promise<Song[]> {
         "[songService] Falling back to bundled songs dataset:",
         err,
       );
-      const fallback = sortByNumber(BUNDLED_SONGS);
+      const fallback = sortByNumber(normalizeSongCollection(BUNDLED_SONGS));
       cache = fallback;
       return fallback;
     } finally {
