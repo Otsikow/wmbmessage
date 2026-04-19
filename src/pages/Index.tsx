@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import SongsPromo from "@/components/SongsPromo";
 import Navigation from "@/components/Navigation";
 import DailyVerseCard from "@/components/DailyVerseCard";
 import FeaturedSermons from "@/components/FeaturedSermons";
@@ -52,6 +53,14 @@ const Index = () => {
         <main className="space-y-6">
           <SectionErrorBoundary section="Hero" description="The hero content is temporarily unavailable.">
             <Hero />
+          </SectionErrorBoundary>
+
+          {/* Songs - prominent CTA right after Hero */}
+          <SectionErrorBoundary
+            section="Songs"
+            description="The Songs promo could not load."
+          >
+            <SongsPromo />
           </SectionErrorBoundary>
 
           {/* Community Section - Prayer, Testimonies, Events */}
