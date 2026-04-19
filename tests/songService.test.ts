@@ -4,11 +4,11 @@ import assert from "node:assert/strict";
 import { loadSongs, searchSongs } from "@/services/songService";
 
 describe("songService", () => {
-  test("loads all 81 songs with sequential numbers", async () => {
+  test("loads full songs dataset", async () => {
     const songs = await loadSongs();
-    assert.equal(songs.length, 81);
+    assert.equal(songs.length, 366);
     assert.equal(songs[0].number, 1);
-    assert.equal(songs[songs.length - 1].number, 81);
+    assert.equal(songs[songs.length - 1].number, 942);
     for (const s of songs) {
       assert.ok(s.sections.length > 0, `song ${s.number} has no sections`);
       assert.ok(s.title.length > 0, `song ${s.number} has empty title`);
@@ -41,6 +41,12 @@ describe("songService", () => {
     const songs = await loadSongs();
     const results = searchSongs(songs, "sweet hour of prayer");
     assert.ok(results.some((s) => /sweet hour of prayer/i.test(s.title)));
+  });
+
+  test("normalizes punctuation and apostrophes in search", async () => {
+    const songs = await loadSongs();
+    const results = searchSongs(songs, "were marching to zion");
+    assert.ok(results.some((s) => /marching to zion/i.test(s.title)));
   });
 
   test("returns all songs for empty query", async () => {

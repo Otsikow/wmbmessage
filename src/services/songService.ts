@@ -30,6 +30,15 @@ async function fetchRemoteSongs(): Promise<Song[]> {
   return sortByNumber(data);
 }
 
+async function loadNodeSongs(): Promise<Song[]> {
+  const mod = await import("../../public/data/songs.json");
+  const data = (mod.default ?? mod) as Song[];
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error("Node songs payload is empty");
+  }
+  return sortByNumber(data);
+}
+
 export async function loadSongs(): Promise<Song[]> {
   if (cache) return cache;
   if (inflight) return inflight;
@@ -44,9 +53,25 @@ export async function loadSongs(): Promise<Song[]> {
         "[songService] Falling back to bundled songs dataset:",
         err,
       );
-      const fallback = sortByNumber(BUNDLED_SONGS);
-      cache = fallback;
-      return fallback;
+
+      // In Node (tests / tools), there is no browser fetch for /public assets.
+      // Load the same canonical songs dataset directly from disk.
+      if (typeof window === "undefined") {
+        try {
+          const nodeSongs = await loadNodeSongs();
+          cache = nodeSongs;
+          return nodeSongs;
+        } catch (nodeErr) {
+          console.warn(
+            "[songService] Node songs fallback failed, using bundled dataset:",
+            nodeErr,
+          );
+        }
+      }
+
+      const bundledFallback = sortByNumber(BUNDLED_SONGS);
+      cache = bundledFallback;
+      return bundledFallback;
     } finally {
       inflight = null;
     }
@@ -56,8 +81,18 @@ export async function loadSongs(): Promise<Song[]> {
 }
 
 export interface SongSearchOptions {
-  /** Max results to return; default 200 */
+  /** Max results to return; default is unbounded */
   limit?: number;
+}
+
+function normalizeForSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -69,8 +104,8 @@ export function searchSongs(
   query: string,
   options: SongSearchOptions = {},
 ): Song[] {
-  const { limit = 200 } = options;
-  const q = query.trim().toLowerCase();
+  const { limit = Number.POSITIVE_INFINITY } = options;
+  const q = normalizeForSearch(query);
   if (!q) return songs.slice(0, limit);
 
   const numberMatch: Song[] = [];
@@ -85,11 +120,13 @@ export function searchSongs(
       numberMatch.push(song);
       continue;
     }
-    if (song.title.toLowerCase().includes(q)) {
+    const normalizedTitle = normalizeForSearch(song.title);
+    if (normalizedTitle.includes(q)) {
       titleMatch.push(song);
       continue;
     }
-    if (song.searchText.includes(q)) {
+    const normalizedLyrics = normalizeForSearch(song.searchText);
+    if (normalizedLyrics.includes(q)) {
       lyricsMatch.push(song);
     }
   }
