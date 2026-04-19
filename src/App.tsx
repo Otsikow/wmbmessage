@@ -50,6 +50,7 @@ import ReadingPlanDetail from "./pages/ReadingPlanDetail";
 import ReadingSession from "./pages/ReadingSession";
 import PrayerBoard from "./pages/PrayerBoard";
 import CreatePrayer from "./pages/CreatePrayer";
+import Songs from "./pages/Songs";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -128,6 +129,12 @@ function App() {
                                   <Route
                                     path="/"
                                     element={withSectionBoundary("Home", <Index />)}
+                                  />
+
+                                  {/* Songs */}
+                                  <Route
+                                    path="/songs"
+                                    element={withSectionBoundary("Songs", <Songs />)}
                                   />
 
                                   {/* Main Navigation Routes */}
