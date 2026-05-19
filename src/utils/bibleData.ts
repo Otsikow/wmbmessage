@@ -83,6 +83,12 @@ export async function getChapterVerses(
     }
   }
 
+  // The sample dataset only contains cherry-picked verses, not full chapters.
+  // Return empty so callers fall back to the remote per-chapter Bible API.
+  if (cachedFromSample) {
+    return [];
+  }
+
   const key = buildChapterKey(book, chapter);
   const matches = chapterIndex.get(key);
   return matches ? [...matches] : [];
