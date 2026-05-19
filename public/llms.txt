@@ -1,0 +1,27 @@
+# MessageGuide
+
+> Bible study and William Marrion Branham sermons reader, with daily verses, cross-references, prayer board, testimonies, songs, and Message church directory.
+
+## Pages
+
+- [Home](/): Overview of MessageGuide features.
+- [About](/about): What MessageGuide is and who it serves.
+- [Bible](/bible): Read scripture by book and chapter.
+- [Reader](/reader): Focused Bible reading view.
+- [Messages](/messages): WMB sermon library.
+- [WMB Sermons](/wmb-sermons): Browse William Branham's sermons.
+- [Message Reader](/message-reader): Read full sermon transcripts.
+- [Cross References](/cross-references): Scripture-to-sermon connections.
+- [Songs](/songs): Hymn and song book.
+- [Daily Verse](/daily): Daily scripture and quote.
+- [Events](/events): Community events.
+- [Prayer Board](/prayer-board): Community prayer requests.
+- [Testimonies](/testimonies): Shared testimonies.
+- [Message Churches](/message-churches): Directory of Message churches.
+- [Reading Plans](/plans): Structured Bible reading plans.
+- [Help](/help): Help and support.
+
+## Optional
+
+- [Privacy](/privacy)
+- [Terms](/terms)
