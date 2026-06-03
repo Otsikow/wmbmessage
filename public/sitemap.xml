@@ -8,7 +8,8 @@
   <url><loc>https://messageguide.org/wmb-sermons</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://messageguide.org/message-reader</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://messageguide.org/cross-references</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://messageguide.org/songs</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+ <url><loc>https://messageguide.org/songs</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+ <url><loc>https://messageguide.org/study-notes</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://messageguide.org/daily</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://messageguide.org/search</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://messageguide.org/calendar</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>

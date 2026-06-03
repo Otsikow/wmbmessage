@@ -14,7 +14,10 @@ import {
   Building2,
   Gavel,
   CalendarCheck,
+  FileText,
 } from "lucide-react";
+
+import StudyNotesAdmin from "@/components/admin/StudyNotesAdmin";
 
 import Header from "@/components/Header";
 import BibleManager from "@/components/BibleManager";
@@ -254,6 +257,9 @@ export default function Admin() {
             <TabsTrigger value="message-churches">
               <Building2 className="mr-1 h-4 w-4" /> Churches
             </TabsTrigger>
+            <TabsTrigger value="study-notes">
+              <FileText className="mr-1 h-4 w-4" /> Study Notes
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -335,6 +341,10 @@ export default function Admin() {
 
           <TabsContent value="message-churches">
             <MessageChurchAdmin />
+          </TabsContent>
+
+          <TabsContent value="study-notes">
+            <StudyNotesAdmin />
           </TabsContent>
         </Tabs>
       </main>

@@ -359,6 +359,48 @@ export type Database = {
         }
         Relationships: []
       }
+      message_study_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          excerpt: string | null
+          id: string
+          search_tsv: unknown
+          status: string
+          tags: string[]
+          title: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          search_tsv?: unknown
+          status?: string
+          tags?: string[]
+          title: string
+          topic?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          search_tsv?: unknown
+          status?: string
+          tags?: string[]
+          title?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: string | null

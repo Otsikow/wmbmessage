@@ -26,6 +26,7 @@ export default function More() {
         { icon: LibraryIcon, label: "My Library", path: "/library" },
         { icon: Target, label: "Reading Plans", path: "/plans" },
         { icon: FileText, label: "My Notes", path: "/notes" },
+        { icon: FileText, label: "Message Study Notes", path: "/study-notes" },
         { icon: MessageSquare, label: "WMB Sermons", path: "/wmb-sermons" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
       ],
