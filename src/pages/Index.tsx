@@ -64,6 +64,14 @@ const Index = () => {
             <SongsPromo />
           </SectionErrorBoundary>
 
+          {/* Study Notes - prominent CTA for the Message Study library */}
+          <SectionErrorBoundary
+            section="Study Notes"
+            description="The Study Notes promo could not load."
+          >
+            <StudyNotesPromo />
+          </SectionErrorBoundary>
+
           {/* Community Section - Prayer, Testimonies, Events */}
           <SectionErrorBoundary
             section="Community"
