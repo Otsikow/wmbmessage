@@ -342,6 +342,10 @@ export default function Admin() {
           <TabsContent value="message-churches">
             <MessageChurchAdmin />
           </TabsContent>
+
+          <TabsContent value="study-notes">
+            <StudyNotesAdmin />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
