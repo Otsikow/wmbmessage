@@ -1,23 +1,10 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { formatStudyNote, type StudyBlock } from "@/lib/studyNoteFormatter";
-import { BookOpen, Quote, Sparkles, Heart, Lightbulb, BookMarked } from "lucide-react";
+import { Quote, Sparkles, Heart, Lightbulb, BookMarked } from "lucide-react";
+import { linkifyScriptures, ScriptureRefLink } from "@/lib/linkifyScripture";
 
-function Highlighted({ text, query }: { text: string; query?: string }) {
-  if (!query || !query.trim()) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} className="bg-primary/20 text-foreground rounded px-0.5">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </>
-  );
+function Rich({ text, query }: { text: string; query?: string }): ReactNode {
+  return linkifyScriptures(text, query);
 }
 
 function renderBlock(block: StudyBlock, idx: number, query?: string) {
@@ -31,7 +18,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
       const Tag = (`h${block.level + 1}` as "h2" | "h3" | "h4");
       return (
         <Tag key={idx} className={sizes[block.level]}>
-          <Highlighted text={block.text} query={query} />
+          <Rich text={block.text} query={query} />
         </Tag>
       );
     }
@@ -39,15 +26,14 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
       return (
         <div
           key={idx}
-          className="my-4 rounded-lg border-l-4 border-primary bg-primary/5 dark:bg-primary/10 p-4 shadow-sm"
+          className="my-4 rounded-lg border-l-4 border-primary bg-primary/5 dark:bg-primary/10 p-4 shadow-sm hover:bg-primary/10 transition-colors"
         >
-          <div className="flex items-center gap-2 text-primary font-semibold mb-1">
-            <BookOpen className="h-4 w-4" />
-            <span><Highlighted text={block.reference} query={query} /></span>
+          <div className="mb-1">
+            <ScriptureRefLink reference={block.reference} query={query} />
           </div>
           {block.text && (
             <p className="text-foreground/90 italic leading-relaxed">
-              <Highlighted text={block.text} query={query} />
+              <Rich text={block.text} query={query} />
             </p>
           )}
         </div>
@@ -60,7 +46,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
         >
           <Quote className="h-5 w-5 text-amber-700 dark:text-amber-400 mb-2" />
           <blockquote className="text-foreground/90 leading-relaxed italic">
-            <Highlighted text={block.text} query={query} />
+            <Rich text={block.text} query={query} />
           </blockquote>
           <figcaption className="mt-2 text-sm text-amber-800 dark:text-amber-300 font-medium">
             — {block.attribution || "Brother Branham"}
@@ -74,7 +60,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
           className="my-3 inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground"
         >
           <BookMarked className="h-4 w-4" />
-          <Highlighted text={block.text} query={query} />
+          <Rich text={block.text} query={query} />
         </div>
       );
     case "key-point":
@@ -85,7 +71,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
         >
           <Lightbulb className="h-5 w-5 shrink-0 text-primary mt-0.5" />
           <p className="text-foreground font-medium leading-relaxed">
-            <Highlighted text={block.text} query={query} />
+            <Rich text={block.text} query={query} />
           </p>
         </div>
       );
@@ -99,7 +85,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
             <Heart className="h-4 w-4" /> Prayer
           </div>
           <p className="text-foreground/90 leading-relaxed">
-            <Highlighted text={block.text} query={query} />
+            <Rich text={block.text} query={query} />
           </p>
         </div>
       );
@@ -113,7 +99,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
             <Sparkles className="h-4 w-4" /> Reflection
           </div>
           <p className="text-foreground/90 leading-relaxed">
-            <Highlighted text={block.text} query={query} />
+            <Rich text={block.text} query={query} />
           </p>
         </div>
       );
@@ -121,13 +107,13 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
       return block.ordered ? (
         <ol key={idx} className="my-3 ml-6 list-decimal space-y-1.5 text-foreground/90">
           {block.items.map((it, i) => (
-            <li key={i}><Highlighted text={it} query={query} /></li>
+            <li key={i}><Rich text={it} query={query} /></li>
           ))}
         </ol>
       ) : (
         <ul key={idx} className="my-3 ml-6 list-disc space-y-1.5 text-foreground/90">
           {block.items.map((it, i) => (
-            <li key={i}><Highlighted text={it} query={query} /></li>
+            <li key={i}><Rich text={it} query={query} /></li>
           ))}
         </ul>
       );
@@ -135,7 +121,7 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
     default:
       return (
         <p key={idx} className="my-3 leading-relaxed text-foreground/90">
-          <Highlighted text={block.text} query={query} />
+          <Rich text={block.text} query={query} />
         </p>
       );
   }
