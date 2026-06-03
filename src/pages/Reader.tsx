@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -79,13 +79,7 @@ export default function Reader() {
   const { toast } = useToast();
   const scriptureFontOptions = useScriptureFontOptions();
 
-  const searchParams = useMemo(() => {
-    if (typeof window === "undefined") {
-      return new URLSearchParams();
-    }
-
-    return new URLSearchParams(window.location.search);
-  }, []);
+  const [searchParams] = useSearchParams();
 
   const initialLocation = useMemo(() => {
     const availableBooks = new Set(BIBLE_BOOKS.map((b) => b.name));
@@ -244,6 +238,55 @@ export default function Reader() {
       description: `Read ${currentBook} ${currentChapter}`,
     });
   }, [currentBook, currentChapter, recordActivity]);
+
+  // Sync state when the URL query params change (e.g. clicking a scripture
+  // deep-link while already on the reader). This lets links like
+  // /bible?book=John&chapter=3&verse=16 jump to the exact verse every time.
+  useEffect(() => {
+    const bookParam = searchParams.get("book");
+    const chapterParam = searchParams.get("chapter");
+    const verseParam = searchParams.get("verse");
+    if (!bookParam || !chapterParam) return;
+
+    const bookData = BIBLE_BOOKS.find((b) => b.name === bookParam);
+    if (!bookData) return;
+
+    const chapterNumber = Math.min(
+      Math.max(parseInt(chapterParam, 10) || 1, 1),
+      bookData.chapters,
+    );
+    const verseNumber = verseParam ? parseInt(verseParam, 10) : NaN;
+    const verse =
+      !Number.isNaN(verseNumber) && verseNumber > 0 ? verseNumber : undefined;
+
+    setCurrentBook((prev) => (prev === bookParam ? prev : bookParam));
+    setCurrentChapter((prev) =>
+      prev === chapterNumber ? prev : chapterNumber,
+    );
+    setSelectedVerses(verse ? [verse] : []);
+    setFocusedVerse(verse);
+  }, [searchParams]);
+
+  // Scroll the focused verse into view once the chapter is loaded.
+  useEffect(() => {
+    if (!focusedVerse || loading) return;
+    if (!verses.some((v) => v.number === focusedVerse)) return;
+
+    const container = versesContainerRef.current;
+    if (!container) return;
+
+    const target = container.querySelector<HTMLElement>(
+      `[data-verse-number="${focusedVerse}"]`,
+    );
+    if (!target) return;
+
+    // Wait one frame so layout (and any sticky header) is settled.
+    const id = window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [focusedVerse, loading, verses, currentBook, currentChapter]);
+
 
   const handleCrossReferenceClick = (verseNumber: number) => {
     setSelectedVerses((prev) =>
@@ -827,31 +870,37 @@ export default function Reader() {
                   className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}
                 >
                   {verses.map((verse) => (
-                    <VerseCard
+                    <div
                       key={verse.number}
-                      book={currentBook}
-                      chapter={currentChapter}
-                      verse={verse}
-                      highlight={
-                        getVerseHighlight(verse.number)
-                          ? {
-                              color: getVerseHighlight(verse.number)!.color,
-                              note: getVerseHighlight(verse.number)!.note,
-                            }
-                          : undefined
-                      }
-                      isBookmarked={isVerseBookmarked(verse.number)}
-                      isSelected={selectedVerses.includes(verse.number)}
-                      isFocused={focusedVerse === verse.number}
-                      onHighlight={handleHighlight}
-                      onRemoveHighlight={handleRemoveHighlight}
-                      onToggleBookmark={handleToggleBookmark}
-                      onViewCrossReferences={handleCrossReferenceClick}
-                      onSelect={handleVerseSelect}
-                      onAddNote={handleAddNote}
-                      onSermonCrossRef={handleSermonCrossRefClick}
-                      fontClass={readerFontClass}
-                    />
+                      id={`verse-${verse.number}`}
+                      data-verse-number={verse.number}
+                      className="scroll-mt-24"
+                    >
+                      <VerseCard
+                        book={currentBook}
+                        chapter={currentChapter}
+                        verse={verse}
+                        highlight={
+                          getVerseHighlight(verse.number)
+                            ? {
+                                color: getVerseHighlight(verse.number)!.color,
+                                note: getVerseHighlight(verse.number)!.note,
+                              }
+                            : undefined
+                        }
+                        isBookmarked={isVerseBookmarked(verse.number)}
+                        isSelected={selectedVerses.includes(verse.number)}
+                        isFocused={focusedVerse === verse.number}
+                        onHighlight={handleHighlight}
+                        onRemoveHighlight={handleRemoveHighlight}
+                        onToggleBookmark={handleToggleBookmark}
+                        onViewCrossReferences={handleCrossReferenceClick}
+                        onSelect={handleVerseSelect}
+                        onAddNote={handleAddNote}
+                        onSermonCrossRef={handleSermonCrossRefClick}
+                        fontClass={readerFontClass}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
