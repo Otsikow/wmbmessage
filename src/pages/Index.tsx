@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SongsPromo from "@/components/SongsPromo";
+import StudyNotesPromo from "@/components/StudyNotesPromo";
 import Navigation from "@/components/Navigation";
 import DailyVerseCard from "@/components/DailyVerseCard";
 import FeaturedSermons from "@/components/FeaturedSermons";
@@ -61,6 +62,14 @@ const Index = () => {
             description="The Songs promo could not load."
           >
             <SongsPromo />
+          </SectionErrorBoundary>
+
+          {/* Study Notes - prominent CTA for the Message Study library */}
+          <SectionErrorBoundary
+            section="Study Notes"
+            description="The Study Notes promo could not load."
+          >
+            <StudyNotesPromo />
           </SectionErrorBoundary>
 
           {/* Community Section - Prayer, Testimonies, Events */}
