@@ -164,10 +164,10 @@ export default function Profile() {
             if (data.avatar_url.startsWith("http")) {
               setAvatarUrl(data.avatar_url);
             } else {
-              const { data: publicUrlData } = supabase.storage
+              const { data: signed } = await supabase.storage
                 .from(AVATAR_BUCKET)
-                .getPublicUrl(data.avatar_url);
-              setAvatarUrl(publicUrlData?.publicUrl ?? null);
+                .createSignedUrl(data.avatar_url, 60 * 60);
+              setAvatarUrl(signed?.signedUrl ?? null);
             }
           } else {
             setAvatarUrl(null);
@@ -353,10 +353,10 @@ export default function Profile() {
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage
+      const { data: signed } = await supabase.storage
         .from(AVATAR_BUCKET)
-        .getPublicUrl(filePath);
-      const publicUrl = publicUrlData?.publicUrl ?? null;
+        .createSignedUrl(filePath, 60 * 60);
+      const publicUrl = signed?.signedUrl ?? null;
 
       const { error: updateError } = await supabase
         .from("profiles")
