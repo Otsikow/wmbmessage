@@ -300,8 +300,44 @@ function StudyNoteDetail({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{`${note.title} — MessageGuide Study Notes`}</title>
+        <meta name="description" content={description} />
+        <meta
+          name="keywords"
+          content={[note.topic, ...note.tags, ...scriptures].join(", ")}
+        />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="MessageGuide" />
+        <meta property="og:title" content={note.title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="article:section" content={note.topic} />
+        {note.tags.map((t) => (
+          <meta key={`tag-${t}`} property="article:tag" content={t} />
+        ))}
+        {scriptures.map((s) => (
+          <meta key={`scrip-${s}`} property="article:tag" content={s} />
+        ))}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={note.title} />
+        <meta name="twitter:description" content={description} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: note.title,
+            about: note.topic,
+            keywords: [...note.tags, ...scriptures].join(", "),
+            url: canonicalUrl,
+            publisher: { "@type": "Organization", name: "MessageGuide" },
+          })}
+        </script>
+      </Helmet>
       <Header showBackButton />
       <main className="container mx-auto max-w-3xl px-4 py-6 md:py-10 print:py-0">
+
         <div className="mb-6 print:hidden">
           <Link
             to="/study-notes"
