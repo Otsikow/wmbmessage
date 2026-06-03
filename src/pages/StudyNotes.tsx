@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Search, BookOpen, ChevronRight, Tag, Share2, Printer, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -10,7 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
-import { buildExcerpt } from "@/lib/studyNoteFormatter";
+import { buildExcerpt, extractScriptureRefs } from "@/lib/studyNoteFormatter";
+import { useToast } from "@/hooks/use-toast";
+
+const SUPABASE_PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const APP_BASE_URL = "https://messageguide.org";
+
+function buildShareUrl(id: string): string {
+  return `${SUPABASE_PROJECT_URL}/functions/v1/share-study-note?id=${id}`;
+}
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
   const preview = note.excerpt || buildExcerpt(note.body, 220);
