@@ -870,31 +870,37 @@ export default function Reader() {
                   className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}
                 >
                   {verses.map((verse) => (
-                    <VerseCard
+                    <div
                       key={verse.number}
-                      book={currentBook}
-                      chapter={currentChapter}
-                      verse={verse}
-                      highlight={
-                        getVerseHighlight(verse.number)
-                          ? {
-                              color: getVerseHighlight(verse.number)!.color,
-                              note: getVerseHighlight(verse.number)!.note,
-                            }
-                          : undefined
-                      }
-                      isBookmarked={isVerseBookmarked(verse.number)}
-                      isSelected={selectedVerses.includes(verse.number)}
-                      isFocused={focusedVerse === verse.number}
-                      onHighlight={handleHighlight}
-                      onRemoveHighlight={handleRemoveHighlight}
-                      onToggleBookmark={handleToggleBookmark}
-                      onViewCrossReferences={handleCrossReferenceClick}
-                      onSelect={handleVerseSelect}
-                      onAddNote={handleAddNote}
-                      onSermonCrossRef={handleSermonCrossRefClick}
-                      fontClass={readerFontClass}
-                    />
+                      id={`verse-${verse.number}`}
+                      data-verse-number={verse.number}
+                      className="scroll-mt-24"
+                    >
+                      <VerseCard
+                        book={currentBook}
+                        chapter={currentChapter}
+                        verse={verse}
+                        highlight={
+                          getVerseHighlight(verse.number)
+                            ? {
+                                color: getVerseHighlight(verse.number)!.color,
+                                note: getVerseHighlight(verse.number)!.note,
+                              }
+                            : undefined
+                        }
+                        isBookmarked={isVerseBookmarked(verse.number)}
+                        isSelected={selectedVerses.includes(verse.number)}
+                        isFocused={focusedVerse === verse.number}
+                        onHighlight={handleHighlight}
+                        onRemoveHighlight={handleRemoveHighlight}
+                        onToggleBookmark={handleToggleBookmark}
+                        onViewCrossReferences={handleCrossReferenceClick}
+                        onSelect={handleVerseSelect}
+                        onAddNote={handleAddNote}
+                        onSermonCrossRef={handleSermonCrossRefClick}
+                        fontClass={readerFontClass}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
