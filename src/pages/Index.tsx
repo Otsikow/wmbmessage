@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SongsPromo from "@/components/SongsPromo";
+import StudyNotesPromo from "@/components/StudyNotesPromo";
 import Navigation from "@/components/Navigation";
 import DailyVerseCard from "@/components/DailyVerseCard";
 import FeaturedSermons from "@/components/FeaturedSermons";
