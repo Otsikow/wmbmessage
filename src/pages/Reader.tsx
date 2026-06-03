@@ -239,6 +239,55 @@ export default function Reader() {
     });
   }, [currentBook, currentChapter, recordActivity]);
 
+  // Sync state when the URL query params change (e.g. clicking a scripture
+  // deep-link while already on the reader). This lets links like
+  // /bible?book=John&chapter=3&verse=16 jump to the exact verse every time.
+  useEffect(() => {
+    const bookParam = searchParams.get("book");
+    const chapterParam = searchParams.get("chapter");
+    const verseParam = searchParams.get("verse");
+    if (!bookParam || !chapterParam) return;
+
+    const bookData = BIBLE_BOOKS.find((b) => b.name === bookParam);
+    if (!bookData) return;
+
+    const chapterNumber = Math.min(
+      Math.max(parseInt(chapterParam, 10) || 1, 1),
+      bookData.chapters,
+    );
+    const verseNumber = verseParam ? parseInt(verseParam, 10) : NaN;
+    const verse =
+      !Number.isNaN(verseNumber) && verseNumber > 0 ? verseNumber : undefined;
+
+    setCurrentBook((prev) => (prev === bookParam ? prev : bookParam));
+    setCurrentChapter((prev) =>
+      prev === chapterNumber ? prev : chapterNumber,
+    );
+    setSelectedVerses(verse ? [verse] : []);
+    setFocusedVerse(verse);
+  }, [searchParams]);
+
+  // Scroll the focused verse into view once the chapter is loaded.
+  useEffect(() => {
+    if (!focusedVerse || loading) return;
+    if (!verses.some((v) => v.number === focusedVerse)) return;
+
+    const container = versesContainerRef.current;
+    if (!container) return;
+
+    const target = container.querySelector<HTMLElement>(
+      `[data-verse-number="${focusedVerse}"]`,
+    );
+    if (!target) return;
+
+    // Wait one frame so layout (and any sticky header) is settled.
+    const id = window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [focusedVerse, loading, verses, currentBook, currentChapter]);
+
+
   const handleCrossReferenceClick = (verseNumber: number) => {
     setSelectedVerses((prev) =>
       prev.includes(verseNumber)
