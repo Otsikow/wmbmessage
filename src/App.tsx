@@ -51,6 +51,7 @@ import ReadingSession from "./pages/ReadingSession";
 import PrayerBoard from "./pages/PrayerBoard";
 import CreatePrayer from "./pages/CreatePrayer";
 import Songs from "./pages/Songs";
+import StudyNotes from "./pages/StudyNotes";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
@@ -135,6 +136,16 @@ function App() {
                                   <Route
                                     path="/songs"
                                     element={withSectionBoundary("Songs", <Songs />)}
+                                  />
+
+                                  {/* Message Study Notes */}
+                                  <Route
+                                    path="/study-notes"
+                                    element={withSectionBoundary("Study Notes", <StudyNotes />)}
+                                  />
+                                  <Route
+                                    path="/study-notes/:id"
+                                    element={withSectionBoundary("Study Note", <StudyNotes />)}
                                   />
 
                                   {/* Main Navigation Routes */}
