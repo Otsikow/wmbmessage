@@ -79,13 +79,7 @@ export default function Reader() {
   const { toast } = useToast();
   const scriptureFontOptions = useScriptureFontOptions();
 
-  const searchParams = useMemo(() => {
-    if (typeof window === "undefined") {
-      return new URLSearchParams();
-    }
-
-    return new URLSearchParams(window.location.search);
-  }, []);
+  const [searchParams] = useSearchParams();
 
   const initialLocation = useMemo(() => {
     const availableBooks = new Set(BIBLE_BOOKS.map((b) => b.name));
