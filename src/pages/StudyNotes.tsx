@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Search, BookOpen, ChevronRight, Tag, Share2, Printer, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -10,7 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
-import { buildExcerpt } from "@/lib/studyNoteFormatter";
+import { buildExcerpt, extractScriptureRefs } from "@/lib/studyNoteFormatter";
+import { useToast } from "@/hooks/use-toast";
+
+const SUPABASE_PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const APP_BASE_URL = "https://messageguide.org";
+
+function buildShareUrl(id: string): string {
+  return `${SUPABASE_PROJECT_URL}/functions/v1/share-study-note?id=${id}`;
+}
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
   const preview = note.excerpt || buildExcerpt(note.body, 220);
@@ -191,6 +200,7 @@ function StudyNotesList() {
 
 function StudyNoteDetail({ id }: { id: string }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [note, setNote] = useState<StudyNote | null | undefined>(undefined);
   const [related, setRelated] = useState<StudyNote[]>([]);
 
@@ -222,17 +232,40 @@ function StudyNoteDetail({ id }: { id: string }) {
     };
   }, [id]);
 
+  const scriptures = useMemo(
+    () => (note ? extractScriptureRefs(note.body) : []),
+    [note],
+  );
+
+  const shareUrl = useMemo(() => (note ? buildShareUrl(note.id) : ""), [note]);
+  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.id}` : "";
+  const description = useMemo(() => {
+    if (!note) return "";
+    const base = (note.excerpt && note.excerpt.trim()) || buildExcerpt(note.body, 220);
+    const verses = scriptures.length ? ` Scriptures: ${scriptures.slice(0, 5).join(", ")}.` : "";
+    return `${base} Topic: ${note.topic}.${verses}`.slice(0, 300);
+  }, [note, scriptures]);
+
   const onShare = async () => {
-    const url = window.location.href;
-    if (navigator.share && note) {
+    if (!note) return;
+    if (navigator.share) {
       try {
-        await navigator.share({ title: note.title, url });
+        await navigator.share({
+          title: note.title,
+          text: description,
+          url: shareUrl,
+        });
         return;
       } catch {
         /* user cancelled */
       }
     }
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: "Link copied", description: "Share link copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: shareUrl, variant: "destructive" });
+    }
   };
 
   if (note === undefined) {
@@ -267,8 +300,44 @@ function StudyNoteDetail({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{`${note.title} — MessageGuide Study Notes`}</title>
+        <meta name="description" content={description} />
+        <meta
+          name="keywords"
+          content={[note.topic, ...note.tags, ...scriptures].join(", ")}
+        />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="MessageGuide" />
+        <meta property="og:title" content={note.title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="article:section" content={note.topic} />
+        {note.tags.map((t) => (
+          <meta key={`tag-${t}`} property="article:tag" content={t} />
+        ))}
+        {scriptures.map((s) => (
+          <meta key={`scrip-${s}`} property="article:tag" content={s} />
+        ))}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={note.title} />
+        <meta name="twitter:description" content={description} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: note.title,
+            about: note.topic,
+            keywords: [...note.tags, ...scriptures].join(", "),
+            url: canonicalUrl,
+            publisher: { "@type": "Organization", name: "MessageGuide" },
+          })}
+        </script>
+      </Helmet>
       <Header showBackButton />
       <main className="container mx-auto max-w-3xl px-4 py-6 md:py-10 print:py-0">
+
         <div className="mb-6 print:hidden">
           <Link
             to="/study-notes"
