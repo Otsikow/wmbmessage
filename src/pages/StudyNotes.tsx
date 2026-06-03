@@ -200,6 +200,7 @@ function StudyNotesList() {
 
 function StudyNoteDetail({ id }: { id: string }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [note, setNote] = useState<StudyNote | null | undefined>(undefined);
   const [related, setRelated] = useState<StudyNote[]>([]);
 
@@ -231,17 +232,40 @@ function StudyNoteDetail({ id }: { id: string }) {
     };
   }, [id]);
 
+  const scriptures = useMemo(
+    () => (note ? extractScriptureRefs(note.body) : []),
+    [note],
+  );
+
+  const shareUrl = useMemo(() => (note ? buildShareUrl(note.id) : ""), [note]);
+  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.id}` : "";
+  const description = useMemo(() => {
+    if (!note) return "";
+    const base = (note.excerpt && note.excerpt.trim()) || buildExcerpt(note.body, 220);
+    const verses = scriptures.length ? ` Scriptures: ${scriptures.slice(0, 5).join(", ")}.` : "";
+    return `${base} Topic: ${note.topic}.${verses}`.slice(0, 300);
+  }, [note, scriptures]);
+
   const onShare = async () => {
-    const url = window.location.href;
-    if (navigator.share && note) {
+    if (!note) return;
+    if (navigator.share) {
       try {
-        await navigator.share({ title: note.title, url });
+        await navigator.share({
+          title: note.title,
+          text: description,
+          url: shareUrl,
+        });
         return;
       } catch {
         /* user cancelled */
       }
     }
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: "Link copied", description: "Share link copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: shareUrl, variant: "destructive" });
+    }
   };
 
   if (note === undefined) {
