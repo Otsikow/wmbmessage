@@ -141,6 +141,28 @@ export function formatStudyNote(input: string): StudyBlock[] {
       continue;
     }
 
+    // Special prefixed lines (must run before heading detection)
+    if (isMessageRefLine(line)) {
+      blocks.push({ type: "message-ref", text: line.replace(/^(message|sermon|reference)[:\s]+/i, "").trim() || line });
+      i++;
+      continue;
+    }
+    if (isKeyPointLine(line)) {
+      blocks.push({ type: "key-point", text: line.replace(/^(key point|important|note|remember)[:\s]+/i, "").trim() });
+      i++;
+      continue;
+    }
+    if (isPrayerLine(line)) {
+      blocks.push({ type: "prayer", text: line.replace(/^prayer[:\s]+/i, "").trim() });
+      i++;
+      continue;
+    }
+    if (isReflectionLine(line)) {
+      blocks.push({ type: "reflection", text: line.replace(/^(reflection|reflect|meditate)[:\s]+/i, "").trim() });
+      i++;
+      continue;
+    }
+
     // Heading
     const headingLevel = isHeadingLine(line);
     if (headingLevel) {
