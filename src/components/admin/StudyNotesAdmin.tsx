@@ -364,6 +364,47 @@ export default function StudyNotesAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!viewNote} onOpenChange={(open) => !open && setViewNote(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="pr-8 text-2xl">{viewNote?.title}</DialogTitle>
+          </DialogHeader>
+          {viewNote && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={viewNote.status === "published" ? "default" : "secondary"}>
+                  {viewNote.status}
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <Tag className="h-3 w-3" />
+                  {viewNote.topic}
+                </Badge>
+                {viewNote.tags.map((t) => (
+                  <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
+                ))}
+              </div>
+              <div className="rounded-md border bg-background p-5">
+                <StudyNoteContent body={viewNote.body} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setViewNote(null)}>Close</Button>
+            {viewNote && (
+              <Button
+                onClick={() => {
+                  const n = viewNote;
+                  setViewNote(null);
+                  openEdit(n);
+                }}
+              >
+                <Edit3 className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
