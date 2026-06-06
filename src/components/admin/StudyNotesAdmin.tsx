@@ -60,6 +60,7 @@ export default function StudyNotesAdmin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [viewNote, setViewNote] = useState<StudyNote | null>(null);
 
   const fetchNotes = async () => {
     setLoading(true);
