@@ -231,12 +231,20 @@ export default function StudyNotesAdmin() {
                       {n.excerpt || buildExcerpt(n.body, 180)}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(n)}>
+                  <div className="flex shrink-0 flex-wrap gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setViewNote(n)} title="View post">
+                      <Eye className="h-4 w-4" />
+                      <span className="ml-1 text-xs">View</span>
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(n)} title="Edit">
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => togglePublish(n)}>
-                      <Eye className="h-4 w-4" />
+                    <Button size="sm" variant="ghost" onClick={() => togglePublish(n)} title={n.status === "published" ? "Unpublish" : "Publish"}>
+                      {n.status === "published" ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                       <span className="ml-1 text-xs">
                         {n.status === "published" ? "Unpublish" : "Publish"}
                       </span>
@@ -246,6 +254,7 @@ export default function StudyNotesAdmin() {
                       variant="ghost"
                       onClick={() => handleDelete(n)}
                       className="text-destructive hover:text-destructive"
+                      title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
