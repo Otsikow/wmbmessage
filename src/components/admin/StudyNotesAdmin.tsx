@@ -27,7 +27,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit3, Trash2, Eye, FileText } from "lucide-react";
+import { Plus, Search, Edit3, Trash2, Eye, FileText, EyeOff, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote, type StudyNoteStatus } from "@/types/studyNotes";
@@ -60,6 +60,7 @@ export default function StudyNotesAdmin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [viewNote, setViewNote] = useState<StudyNote | null>(null);
 
   const fetchNotes = async () => {
     setLoading(true);
@@ -230,12 +231,20 @@ export default function StudyNotesAdmin() {
                       {n.excerpt || buildExcerpt(n.body, 180)}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(n)}>
+                  <div className="flex shrink-0 flex-wrap gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setViewNote(n)} title="View post">
+                      <Eye className="h-4 w-4" />
+                      <span className="ml-1 text-xs">View</span>
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(n)} title="Edit">
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => togglePublish(n)}>
-                      <Eye className="h-4 w-4" />
+                    <Button size="sm" variant="ghost" onClick={() => togglePublish(n)} title={n.status === "published" ? "Unpublish" : "Publish"}>
+                      {n.status === "published" ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                       <span className="ml-1 text-xs">
                         {n.status === "published" ? "Unpublish" : "Publish"}
                       </span>
@@ -245,6 +254,7 @@ export default function StudyNotesAdmin() {
                       variant="ghost"
                       onClick={() => handleDelete(n)}
                       className="text-destructive hover:text-destructive"
+                      title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -351,6 +361,47 @@ export default function StudyNotesAdmin() {
             <Button onClick={() => handleSave("published")} disabled={saving}>
               {form.status === "published" ? "Update & Keep Published" : "Publish"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewNote} onOpenChange={(open) => !open && setViewNote(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="pr-8 text-2xl">{viewNote?.title}</DialogTitle>
+          </DialogHeader>
+          {viewNote && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={viewNote.status === "published" ? "default" : "secondary"}>
+                  {viewNote.status}
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <Tag className="h-3 w-3" />
+                  {viewNote.topic}
+                </Badge>
+                {viewNote.tags.map((t) => (
+                  <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
+                ))}
+              </div>
+              <div className="rounded-md border bg-background p-5">
+                <StudyNoteContent body={viewNote.body} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setViewNote(null)}>Close</Button>
+            {viewNote && (
+              <Button
+                onClick={() => {
+                  const n = viewNote;
+                  setViewNote(null);
+                  openEdit(n);
+                }}
+              >
+                <Edit3 className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
