@@ -2,6 +2,7 @@ export type StudyNoteStatus = "draft" | "published";
 
 export interface StudyNote {
   id: string;
+  slug: string;
   title: string;
   topic: string;
   body: string;
