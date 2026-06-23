@@ -58,9 +58,11 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
           <blockquote className="text-foreground/90 leading-relaxed italic">
             <Rich text={block.text} query={query} />
           </blockquote>
-          <figcaption className="mt-2 text-sm text-amber-800 dark:text-amber-300 font-medium">
-            — {block.attribution || "Brother Branham"}
-          </figcaption>
+          {block.attribution && (
+            <figcaption className="mt-2 text-sm text-amber-800 dark:text-amber-300 font-medium">
+              — {block.attribution}
+            </figcaption>
+          )}
         </figure>
       );
     case "message-ref":
