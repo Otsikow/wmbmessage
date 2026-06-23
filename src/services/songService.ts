@@ -88,8 +88,73 @@ function buildSectionsFromRawText(rawText: string, chorus: string | null): SongS
   return sections;
 }
 
+/**
+ * Pick a stanza size that splits `lineCount` lines evenly when possible.
+ * Hymns are typically grouped in 4- or 8-line stanzas, so we prefer those.
+ */
+function pickStanzaSize(lineCount: number): number {
+  if (lineCount <= 6) return lineCount;
+  if (lineCount % 4 === 0) return 4;
+  if (lineCount % 8 === 0) return 8;
+  if (lineCount % 6 === 0) return 6;
+  if (lineCount % 5 === 0) return 5;
+  if (lineCount % 3 === 0) return 3;
+  return 4;
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
+/**
+ * Many songs in the dataset arrive as a single un-separated block of lines.
+ * Split each parsed section into uniform 4/8-line stanzas so the reader can
+ * label them Verse 1, Verse 2, … and visually separate the chorus.
+ */
+function expandSections(sections: SongSection[]): SongSection[] {
+  const out: SongSection[] = [];
+
+  for (const section of sections) {
+    const lines = section.lines;
+
+    if (section.type === "chorus") {
+      // Chorus marker often swallows the entire song in the source data.
+      // Treat the first 4 lines as the actual chorus; split the rest into verses.
+      if (lines.length <= 6) {
+        out.push(section);
+        continue;
+      }
+      out.push({ type: "chorus", label: "CHORUS", lines: lines.slice(0, 4) });
+      const rest = lines.slice(4);
+      const verseSize = pickStanzaSize(rest.length);
+      for (const stanza of chunk(rest, verseSize)) {
+        out.push({ type: "verse", label: null, lines: stanza });
+      }
+      continue;
+    }
+
+    if (lines.length <= 6) {
+      out.push(section);
+      continue;
+    }
+
+    const verseSize = pickStanzaSize(lines.length);
+    for (const stanza of chunk(lines, verseSize)) {
+      out.push({ type: "verse", label: null, lines: stanza });
+    }
+  }
+
+  return out;
+}
+
 function normalizeSong(song: Song): Song {
-  const rebuiltSections = buildSectionsFromRawText(song.rawText, song.chorus);
+  const rebuiltSections = expandSections(
+    buildSectionsFromRawText(song.rawText, song.chorus),
+  );
   if (rebuiltSections.length === 0) return song;
 
   const firstChorus = rebuiltSections.find((section) => section.type === "chorus");
