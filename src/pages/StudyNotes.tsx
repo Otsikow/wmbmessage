@@ -247,8 +247,8 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     [note],
   );
 
-  const shareUrl = useMemo(() => (note ? buildShareUrl(note.id) : ""), [note]);
-  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.id}` : "";
+  const shareUrl = useMemo(() => (note ? buildShareUrl(note.slug || note.id) : ""), [note]);
+  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.slug || note.id}` : "";
   const description = useMemo(() => {
     if (!note) return "";
     const base = (note.excerpt && note.excerpt.trim()) || buildExcerpt(note.body, 220);
