@@ -335,7 +335,7 @@ function StudyNoteDetail({ id }: { id: string }) {
           })}
         </script>
       </Helmet>
-      <Header showBackButton />
+      <Header showBackButton pageTitle={note.title} />
       <main className="container mx-auto max-w-3xl px-4 py-6 md:py-10 print:py-0">
 
         <div className="mb-6 print:hidden">
