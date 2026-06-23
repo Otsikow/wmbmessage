@@ -29,66 +29,6 @@ function normalizeLines(text: string): string[] {
     .filter(Boolean);
 }
 
-function buildSectionsFromRawText(rawText: string, chorus: string | null): SongSection[] {
-  const blocks = rawText
-    .split(/\n\s*\n+/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  const chorusSignature = chorus
-    ? normalizeLines(chorus).join("\n").toLowerCase()
-    : null;
-
-  const sections: SongSection[] = [];
-  let pendingMarker: { type: SongSectionType; label: string } | null = null;
-
-  for (const block of blocks) {
-    const blockLines = normalizeLines(block);
-    if (blockLines.length === 0) continue;
-
-    const markerMatch = blockLines[0].match(SECTION_MARKER_REGEX);
-    if (markerMatch) {
-      const markerType = markerMatch[1].toLowerCase() as SongSectionType;
-      const label = blockLines[0].toUpperCase();
-      const remainingLines = blockLines.slice(1);
-
-      if (remainingLines.length === 0) {
-        pendingMarker = { type: markerType, label };
-        continue;
-      }
-
-      sections.push({
-        type: markerType,
-        label,
-        lines: remainingLines,
-      });
-      pendingMarker = null;
-      continue;
-    }
-
-    if (pendingMarker) {
-      sections.push({
-        type: pendingMarker.type,
-        label: pendingMarker.label,
-        lines: blockLines,
-      });
-      pendingMarker = null;
-      continue;
-    }
-
-    const blockSignature = blockLines.join("\n").toLowerCase();
-    const isChorusBlock = chorusSignature !== null && blockSignature === chorusSignature;
-
-    sections.push({
-      type: isChorusBlock ? "chorus" : "verse",
-      label: isChorusBlock ? "CHORUS" : null,
-      lines: blockLines,
-    });
-  }
-
-  return sections;
-}
-
 /**
  * Pick a stanza size that splits `lineCount` lines evenly when possible.
  * Hymns are typically grouped in 4- or 8-line stanzas, so we prefer those.
@@ -111,40 +51,115 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+function lineKey(line: string): string {
+  return line
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
- * Many songs in the dataset arrive as a single un-separated block of lines.
- * Split each parsed section into uniform 4/8-line stanzas so the reader can
- * label them Verse 1, Verse 2, … and visually separate the chorus.
+ * Split a flat list of verse lines into stanzas. Prefer detecting a repeating
+ * opening phrase that begins each verse (very common in our songbook, e.g.
+ * "Fear not, little flock,"). Fall back to even chunking when no repeat exists.
  */
-function expandSections(sections: SongSection[]): SongSection[] {
+function splitVerseLines(lines: string[]): string[][] {
+  if (lines.length <= 6) return [lines];
+
+  const counts = new Map<string, number>();
+  for (const l of lines) {
+    const k = lineKey(l);
+    if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+
+  const starts: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const k = lineKey(lines[i]);
+    if (k && (counts.get(k) ?? 0) >= 2) starts.push(i);
+  }
+
+  if (starts.length >= 2) {
+    // Anything before the first repeated start is treated as an intro stanza.
+    const boundaries = starts[0] > 0 ? [0, ...starts] : starts;
+    const out: string[][] = [];
+    for (let i = 0; i < boundaries.length; i++) {
+      const end = i + 1 < boundaries.length ? boundaries[i + 1] : lines.length;
+      const stanza = lines.slice(boundaries[i], end);
+      if (stanza.length) out.push(stanza);
+    }
+    return out;
+  }
+
+  const size = pickStanzaSize(lines.length);
+  return chunk(lines, size);
+}
+
+/**
+ * Parse rawText into sections, respecting inline CHORUS / REFRAIN / BRIDGE /
+ * VERSE markers wherever they appear — not just at the start of a block.
+ */
+function buildSectionsFromRawText(rawText: string, _chorus: string | null): SongSection[] {
+  const allLines = rawText.split("\n").map((l) => l.trim());
+
+  type Segment = { type: SongSectionType | null; label: string | null; lines: string[] };
+  const segments: Segment[] = [];
+  let current: Segment = { type: null, label: null, lines: [] };
+
+  const flush = () => {
+    if (current.lines.length || current.type) segments.push(current);
+    current = { type: null, label: null, lines: [] };
+  };
+
+  for (const line of allLines) {
+    if (!line) {
+      flush();
+      continue;
+    }
+    const m = line.match(SECTION_MARKER_REGEX);
+    if (m) {
+      flush();
+      current.type = m[1].toLowerCase() as SongSectionType;
+      current.label = line.toUpperCase();
+      continue;
+    }
+    current.lines.push(line);
+  }
+  flush();
+
   const out: SongSection[] = [];
+  for (const seg of segments) {
+    if (seg.lines.length === 0) continue;
 
-  for (const section of sections) {
-    const lines = section.lines;
-
-    if (section.type === "chorus") {
-      // Chorus marker often swallows the entire song in the source data.
-      // Treat the first 4 lines as the actual chorus; split the rest into verses.
-      if (lines.length <= 6) {
-        out.push(section);
-        continue;
-      }
-      out.push({ type: "chorus", label: "CHORUS", lines: lines.slice(0, 4) });
-      const rest = lines.slice(4);
-      const verseSize = pickStanzaSize(rest.length);
-      for (const stanza of chunk(rest, verseSize)) {
-        out.push({ type: "verse", label: null, lines: stanza });
+    if (seg.type === "chorus" || seg.type === "refrain" || seg.type === "bridge") {
+      // A marker like CHORUS in the source PDF often swallows everything that
+      // follows. Treat the first stanza as the chorus and split the rest into
+      // verses using the repeating-opening heuristic above.
+      const chorusLen = seg.lines.length <= 6 ? seg.lines.length : 4;
+      out.push({
+        type: seg.type,
+        label: seg.label ?? seg.type.toUpperCase(),
+        lines: seg.lines.slice(0, chorusLen),
+      });
+      const rest = seg.lines.slice(chorusLen);
+      if (rest.length) {
+        for (const stanza of splitVerseLines(rest)) {
+          out.push({ type: "verse", label: null, lines: stanza });
+        }
       }
       continue;
     }
 
-    if (lines.length <= 6) {
-      out.push(section);
+    if (seg.type === "verse") {
+      for (const stanza of splitVerseLines(seg.lines)) {
+        out.push({ type: "verse", label: seg.label, lines: stanza });
+      }
       continue;
     }
 
-    const verseSize = pickStanzaSize(lines.length);
-    for (const stanza of chunk(lines, verseSize)) {
+    // Untagged segment: split into verses.
+    for (const stanza of splitVerseLines(seg.lines)) {
       out.push({ type: "verse", label: null, lines: stanza });
     }
   }
@@ -153,10 +168,9 @@ function expandSections(sections: SongSection[]): SongSection[] {
 }
 
 function normalizeSong(song: Song): Song {
-  const rebuiltSections = expandSections(
-    buildSectionsFromRawText(song.rawText, song.chorus),
-  );
+  const rebuiltSections = buildSectionsFromRawText(song.rawText, song.chorus);
   const title = toTitleCase(song.title);
+
 
   if (rebuiltSections.length === 0) {
     return title === song.title ? song : { ...song, title };
