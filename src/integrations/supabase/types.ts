@@ -367,6 +367,7 @@ export type Database = {
           excerpt: string | null
           id: string
           search_tsv: unknown
+          slug: string
           status: string
           tags: string[]
           title: string
@@ -380,6 +381,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           search_tsv?: unknown
+          slug: string
           status?: string
           tags?: string[]
           title: string
@@ -393,6 +395,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           search_tsv?: unknown
+          slug?: string
           status?: string
           tags?: string[]
           title?: string
@@ -893,6 +896,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      slugify: { Args: { input: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
