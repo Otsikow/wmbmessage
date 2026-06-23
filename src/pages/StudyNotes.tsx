@@ -271,7 +271,7 @@ function StudyNoteDetail({ id }: { id: string }) {
   if (note === undefined) {
     return (
       <div className="min-h-screen bg-background">
-        <Header showBackButton />
+      <Header showBackButton pageTitle={note.title} />
         <main className="container mx-auto max-w-3xl px-4 py-8">
           <Skeleton className="h-10 w-3/4 mb-4" />
           <Skeleton className="h-4 w-1/3 mb-8" />
