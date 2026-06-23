@@ -193,7 +193,15 @@ export function formatStudyNote(input: string): StudyBlock[] {
         text += " " + next.replace(/[”"]$/, "");
         j++;
       }
-      blocks.push({ type: "quote", text, attribution });
+      // If this quote immediately follows a scripture reference and has no
+      // explicit Branham/WMB attribution, treat it as the verse text itself
+      // rather than a Brother Branham quote.
+      const prev = blocks[blocks.length - 1];
+      if (!attribution && prev && prev.type === "scripture") {
+        prev.text = prev.text ? `${prev.text} ${text}`.trim() : text;
+      } else {
+        blocks.push({ type: "quote", text, attribution });
+      }
       i = j;
       continue;
     }
