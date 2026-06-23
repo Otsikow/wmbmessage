@@ -25,7 +25,7 @@ function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
   const preview = note.excerpt || buildExcerpt(note.body, 220);
   const slug = note.slug || note.id;
   return (
-    <Link to={`/study-notes/${note.id}`} className="block group">
+    <Link to={`/study-notes/${slug}`} className="block group">
       <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-3">
