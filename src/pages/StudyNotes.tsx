@@ -407,6 +407,6 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
 
 export default function StudyNotes() {
   const { id } = useParams<{ id: string }>();
-  if (id) return <StudyNoteDetail id={id} />;
+  if (id) return <StudyNoteDetail idOrSlug={id} />;
   return <StudyNotesList />;
 }
