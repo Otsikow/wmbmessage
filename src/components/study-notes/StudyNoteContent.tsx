@@ -22,22 +22,32 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
         </Tag>
       );
     }
-    case "scripture":
+    case "scripture": {
+      const hasBody = !!block.text && block.text.trim().length > 0;
+      if (!hasBody) {
+        return (
+          <div
+            key={idx}
+            className="my-1.5 inline-flex items-center rounded-md border-l-2 border-primary bg-primary/5 dark:bg-primary/10 px-2.5 py-1 mr-2 hover:bg-primary/10 transition-colors"
+          >
+            <ScriptureRefLink reference={block.reference} query={query} />
+          </div>
+        );
+      }
       return (
         <div
           key={idx}
-          className="my-4 rounded-lg border-l-4 border-primary bg-primary/5 dark:bg-primary/10 p-4 shadow-sm hover:bg-primary/10 transition-colors"
+          className="my-2 rounded-md border-l-2 border-primary bg-primary/5 dark:bg-primary/10 px-3 py-2 hover:bg-primary/10 transition-colors"
         >
-          <div className="mb-1">
+          <div className="mb-0.5">
             <ScriptureRefLink reference={block.reference} query={query} />
           </div>
-          {block.text && (
-            <p className="text-foreground/90 italic leading-relaxed">
-              <Rich text={block.text} query={query} />
-            </p>
-          )}
+          <p className="text-foreground/90 italic leading-snug text-sm md:text-base">
+            <Rich text={block.text!} query={query} />
+          </p>
         </div>
       );
+    }
     case "quote":
       return (
         <figure
