@@ -156,12 +156,17 @@ function normalizeSong(song: Song): Song {
   const rebuiltSections = expandSections(
     buildSectionsFromRawText(song.rawText, song.chorus),
   );
-  if (rebuiltSections.length === 0) return song;
+  const title = toTitleCase(song.title);
+
+  if (rebuiltSections.length === 0) {
+    return title === song.title ? song : { ...song, title };
+  }
 
   const firstChorus = rebuiltSections.find((section) => section.type === "chorus");
 
   return {
     ...song,
+    title,
     sections: rebuiltSections,
     chorus: firstChorus ? firstChorus.lines.join("\n") : null,
   };
