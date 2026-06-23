@@ -288,6 +288,9 @@ export default function Songs() {
   const [query, setQuery] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // On mobile, toggle between the list and the reader so the song
+  // isn't pushed below the full list when selected.
+  const [mobileView, setMobileView] = useState<"list" | "reader">("list");
 
   useEffect(() => {
     let cancelled = false;
@@ -299,7 +302,11 @@ export default function Songs() {
         const initial =
           (requested && data.find((s) => s.id === requested || String(s.number) === requested)) ||
           data[0];
-        if (initial) setSelectedId(initial.id);
+        if (initial) {
+          setSelectedId(initial.id);
+          // If a song was requested via URL, open the reader on mobile too.
+          if (requested) setMobileView("reader");
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -325,14 +332,35 @@ export default function Songs() {
   const handleSelect = (song: Song) => {
     setSelectedId(song.id);
     setSearchParams({ song: String(song.number) }, { replace: true });
+    setMobileView("reader");
+    // Bring the reader content into view on mobile.
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
+
+  const handleBackToList = () => {
+    setMobileView("list");
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const showListOnMobile = mobileView === "list";
+  const showReaderOnMobile = mobileView === "reader";
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <Header />
 
       <main className="flex-1 pb-20 md:pb-8">
-        <div className="border-b border-border/50 bg-card/30 backdrop-blur">
+        {/* Search bar — hidden on mobile while the reader is open to maximise reading space */}
+        <div
+          className={cn(
+            "border-b border-border/50 bg-card/30 backdrop-blur",
+            showReaderOnMobile && "hidden md:block",
+          )}
+        >
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
             <div className="mb-3 flex items-center gap-2">
               <Music className="h-5 w-5 text-primary" />
@@ -354,6 +382,26 @@ export default function Songs() {
             </div>
           </div>
         </div>
+
+        {/* Mobile-only back bar when reading a song */}
+        {showReaderOnMobile && selected && (
+          <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/50 bg-background/95 px-3 py-2 backdrop-blur md:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToList}
+              className="gap-1.5 px-2"
+              aria-label="Back to song list"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              All songs
+            </Button>
+            <span className="ml-auto truncate text-xs font-medium text-muted-foreground">
+              #{selected.number}
+            </span>
+          </div>
+        )}
 
         {error && (
           <div className="mx-auto max-w-2xl px-4 py-8 text-center">
@@ -381,7 +429,12 @@ export default function Songs() {
           <div className="mx-auto max-w-7xl px-0 sm:px-6">
             <div className="grid gap-0 md:grid-cols-[280px_1fr] md:gap-6 lg:grid-cols-[320px_1fr]">
               {/* Index */}
-              <aside className="border-b border-border/50 md:border-b-0 md:border-r md:pr-2">
+              <aside
+                className={cn(
+                  "border-b border-border/50 md:block md:border-b-0 md:border-r md:pr-2",
+                  showListOnMobile ? "block" : "hidden",
+                )}
+              >
                 <ScrollArea className="md:h-[calc(100dvh-220px)]">
                   <SongIndex
                     songs={filtered}
@@ -392,7 +445,12 @@ export default function Songs() {
               </aside>
 
               {/* Reader */}
-              <section className="min-h-[40vh]">
+              <section
+                className={cn(
+                  "min-h-[40vh] md:block",
+                  showReaderOnMobile ? "block" : "hidden",
+                )}
+              >
                 {selected ? (
                   <SongReader song={selected} />
                 ) : (
