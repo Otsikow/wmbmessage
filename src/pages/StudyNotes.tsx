@@ -199,7 +199,7 @@ function StudyNotesList() {
   );
 }
 
-function StudyNoteDetail({ id }: { id: string }) {
+function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [note, setNote] = useState<StudyNote | null | undefined>(undefined);
@@ -208,16 +208,25 @@ function StudyNoteDetail({ id }: { id: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          idOrSlug,
+        );
+      const query = supabase
         .from("message_study_notes" as any)
         .select("*")
-        .eq("id", id)
-        .eq("status", "published")
-        .maybeSingle();
+        .eq("status", "published");
+      const { data } = isUuid
+        ? await query.eq("id", idOrSlug).maybeSingle()
+        : await query.eq("slug", idOrSlug).maybeSingle();
       if (cancelled) return;
       const n = (data as unknown as StudyNote) || null;
       setNote(n);
       if (n) {
+        // If the URL used a UUID but a slug exists, replace with the slug URL.
+        if (isUuid && n.slug) {
+          navigate(`/study-notes/${n.slug}`, { replace: true });
+        }
         const { data: rel } = await supabase
           .from("message_study_notes" as any)
           .select("*")
@@ -231,7 +240,7 @@ function StudyNoteDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [idOrSlug, navigate]);
 
   const scriptures = useMemo(
     () => (note ? extractScriptureRefs(note.body) : []),
