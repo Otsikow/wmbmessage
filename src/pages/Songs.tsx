@@ -94,17 +94,123 @@ function SectionBlock({ section, index }: { section: SongSection; index: number 
 }
 
 function SongReader({ song }: { song: Song }) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
   let verseCount = 0;
+
+  const handleShare = async () => {
+    const url = buildShareUrl(`/songs?song=${song.number}`);
+    const text = songToPlainText(song);
+    const shareData = {
+      title: `Song ${song.number} — ${song.title}`,
+      text,
+      url,
+    };
+
+    if (typeof navigator !== "undefined" && (navigator as Navigator).share) {
+      try {
+        await (navigator as Navigator).share(shareData);
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${shareData.title}\n${url}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: "Link copied", description: "Song link copied to your clipboard." });
+    } catch {
+      toast({
+        title: "Couldn't copy link",
+        description: "Try downloading the PDF instead.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyLyrics = async () => {
+    try {
+      await navigator.clipboard.writeText(songToPlainText(song));
+      toast({ title: "Lyrics copied", description: "Full lyrics copied to clipboard." });
+    } catch {
+      toast({
+        title: "Couldn't copy lyrics",
+        description: "Please try again or download the PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    try {
+      downloadSongPdf(song);
+      toast({ title: "PDF ready", description: `Song ${song.number} downloaded.` });
+    } catch (err) {
+      console.error("PDF export failed", err);
+      toast({
+        title: "Download failed",
+        description: "Couldn't generate the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <article className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
       <header className="mb-6 border-b border-border/50 pb-4">
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <Hash className="h-3 w-3" />
-          Song {song.number}
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Hash className="h-3 w-3" />
+            Song {song.number}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPdf}
+              className="gap-1.5"
+              aria-label={`Download song ${song.number} as PDF`}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  aria-label={`Share song ${song.number}`}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Share</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={handleShare}>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share link
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCopyLyrics}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy lyrics
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadPdf}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <h1 className="font-serif text-3xl font-bold leading-tight sm:text-4xl">
           {song.title}
         </h1>
+        <p className="sr-only">From the {BRAND_NAME} song book.</p>
       </header>
 
       <div className="space-y-4">
