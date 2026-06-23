@@ -25,12 +25,12 @@ const BIBLE_BOOKS = [
 ];
 
 const SCRIPTURE_RE = new RegExp(
-  `^\\s*((?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:-\\d+)?)?(?:\\s*,\\s*\\d+(?:-\\d+)?)*)\\s*[-–:]?\\s*(.*)$`,
+  `^\\s*((?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?(?:\\s*,\\s*\\d+(?:\\s*[-–—]\\s*\\d+)?)*)\\s*[:]?\\s*(.*)$`,
   "i",
 );
 
 const SCRIPTURE_INLINE_RE = new RegExp(
-  `\\b(?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:-\\d+)?)?\\b`,
+  `\\b(?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?\\b`,
   "gi",
 );
 
@@ -122,7 +122,7 @@ export function formatStudyNote(input: string): StudyBlock[] {
     // Scripture line: starts with a Bible reference
     const scriptureMatch = line.match(SCRIPTURE_RE);
     if (scriptureMatch && scriptureMatch[1]) {
-      const ref = scriptureMatch[1].trim();
+      const ref = scriptureMatch[1].trim().replace(/\s*[-–—]\s*/g, "-");
       let text = scriptureMatch[2]?.trim() || "";
       // Continue capturing wrapped verse lines (indented or continuation)
       let j = i + 1;

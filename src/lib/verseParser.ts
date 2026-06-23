@@ -12,7 +12,7 @@ export function parseVerseReference(reference: string): ParsedReference | null {
   const cleaned = reference.trim();
   
   // Match patterns like "John 3:16", "Genesis 1:1-3", "Romans 8:28"
-  const pattern = /^(\d?\s?[A-Za-z]+)\s+(\d+)(?::(\d+))?(?:-(\d+))?$/;
+  const pattern = /^(\d?\s?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\s+(\d+)(?::(\d+))?(?:\s*[-–—]\s*(\d+))?$/;
   const match = cleaned.match(pattern);
   
   if (!match) return null;

@@ -17,7 +17,7 @@ const SORTED_BOOKS = Array.from(new Set(BOOK_NAMES)).sort(
 // Matches things like "John 3:16", "Genesis 1:1-3", "1 Corinthians 13",
 // optionally followed by additional ",4" or ",5-6" verse lists.
 const SCRIPTURE_INLINE_RE = new RegExp(
-  `\\b(?:${SORTED_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:-\\d+)?(?:\\s*,\\s*\\d+(?:-\\d+)?)*)?\\b`,
+  `\\b(?:${SORTED_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?(?:\\s*,\\s*\\d+(?:\\s*[-–—]\\s*\\d+)?)*)?\\b`,
   "gi",
 );
 
