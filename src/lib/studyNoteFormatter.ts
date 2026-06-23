@@ -25,12 +25,12 @@ const BIBLE_BOOKS = [
 ];
 
 const SCRIPTURE_RE = new RegExp(
-  `^\\s*((?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:-\\d+)?)?(?:\\s*,\\s*\\d+(?:-\\d+)?)*)\\s*[-–:]?\\s*(.*)$`,
+  `^\\s*((?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?(?:\\s*,\\s*\\d+(?:\\s*[-–—]\\s*\\d+)?)*)\\s*[:]?\\s*(.*)$`,
   "i",
 );
 
 const SCRIPTURE_INLINE_RE = new RegExp(
-  `\\b(?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:-\\d+)?)?\\b`,
+  `\\b(?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?\\b`,
   "gi",
 );
 
