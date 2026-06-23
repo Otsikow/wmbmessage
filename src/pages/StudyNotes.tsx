@@ -381,7 +381,7 @@ function StudyNoteDetail({ id }: { id: string }) {
               {related.map((r) => (
                 <Link
                   key={r.id}
-                  to={`/study-notes/${r.id}`}
+                  to={`/study-notes/${r.slug || r.id}`}
                   className="block rounded-lg border p-4 hover:border-primary hover:bg-accent/40 transition"
                 >
                   <div className="font-medium text-foreground">{r.title}</div>
