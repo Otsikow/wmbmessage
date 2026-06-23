@@ -1,13 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Music, Hash } from "lucide-react";
+import { Search, Music, Hash, Download, Share2, Copy, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { loadSongs, searchSongs } from "@/services/songService";
 import type { Song, SongSection } from "@/types/songs";
+import { downloadSongPdf, songToPlainText } from "@/lib/songExport";
+import { buildShareUrl, BRAND_NAME } from "@/lib/share";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
