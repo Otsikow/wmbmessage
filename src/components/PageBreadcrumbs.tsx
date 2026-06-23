@@ -69,7 +69,13 @@ const formatSegment = (segment: string, previous?: string) => {
     .join(" ");
 };
 
-export function PageBreadcrumbs({ className }: { className?: string }) {
+export function PageBreadcrumbs({
+  className,
+  title,
+}: {
+  className?: string;
+  title?: string;
+}) {
   const location = useLocation();
 
   const breadcrumbs = useMemo(() => {
@@ -85,20 +91,21 @@ export function PageBreadcrumbs({ className }: { className?: string }) {
 
     segments.forEach((segment, index) => {
       pathAccumulator += `/${segment}`;
-      const label = formatSegment(segment, segments[index - 1]);
+      const isLast = index === segments.length - 1;
+      const label = isLast && title ? title : formatSegment(segment, segments[index - 1]);
       const isVirtualDaySegment = segment === "day" && Boolean(segments[index + 1]);
 
       crumbs.push({
         label,
         href:
-          index === segments.length - 1 || isVirtualDaySegment
+          isLast || isVirtualDaySegment
             ? undefined
             : pathAccumulator,
       });
     });
 
     return crumbs;
-  }, [location.pathname]);
+  }, [location.pathname, title]);
 
   if (breadcrumbs.length <= 1) {
     return null;

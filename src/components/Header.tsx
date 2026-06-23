@@ -14,10 +14,12 @@ import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 interface HeaderProps {
   showBackButton?: boolean;
   backButtonFallbackPath?: string;
+  pageTitle?: string;
 }
 export default function Header({
   showBackButton = false,
-  backButtonFallbackPath = "/"
+  backButtonFallbackPath = "/",
+  pageTitle,
 }: HeaderProps) {
   const {
     user
@@ -165,7 +167,7 @@ export default function Header({
 
         
 
-        <PageBreadcrumbs className="hidden sm:block" />
+        <PageBreadcrumbs title={pageTitle} className="hidden sm:block" />
       </div>
     </header>;
 }
