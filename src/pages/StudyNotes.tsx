@@ -23,8 +23,9 @@ function buildShareUrl(id: string): string {
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
   const preview = note.excerpt || buildExcerpt(note.body, 220);
+  const slug = note.slug || note.id;
   return (
-    <Link to={`/study-notes/${note.id}`} className="block group">
+    <Link to={`/study-notes/${slug}`} className="block group">
       <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-3">
@@ -198,7 +199,7 @@ function StudyNotesList() {
   );
 }
 
-function StudyNoteDetail({ id }: { id: string }) {
+function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [note, setNote] = useState<StudyNote | null | undefined>(undefined);
@@ -207,16 +208,25 @@ function StudyNoteDetail({ id }: { id: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          idOrSlug,
+        );
+      const query = supabase
         .from("message_study_notes" as any)
         .select("*")
-        .eq("id", id)
-        .eq("status", "published")
-        .maybeSingle();
+        .eq("status", "published");
+      const { data } = isUuid
+        ? await query.eq("id", idOrSlug).maybeSingle()
+        : await query.eq("slug", idOrSlug).maybeSingle();
       if (cancelled) return;
       const n = (data as unknown as StudyNote) || null;
       setNote(n);
       if (n) {
+        // If the URL used a UUID but a slug exists, replace with the slug URL.
+        if (isUuid && n.slug) {
+          navigate(`/study-notes/${n.slug}`, { replace: true });
+        }
         const { data: rel } = await supabase
           .from("message_study_notes" as any)
           .select("*")
@@ -230,15 +240,15 @@ function StudyNoteDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [idOrSlug, navigate]);
 
   const scriptures = useMemo(
     () => (note ? extractScriptureRefs(note.body) : []),
     [note],
   );
 
-  const shareUrl = useMemo(() => (note ? buildShareUrl(note.id) : ""), [note]);
-  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.id}` : "";
+  const shareUrl = useMemo(() => (note ? buildShareUrl(note.slug || note.id) : ""), [note]);
+  const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.slug || note.id}` : "";
   const description = useMemo(() => {
     if (!note) return "";
     const base = (note.excerpt && note.excerpt.trim()) || buildExcerpt(note.body, 220);
@@ -380,7 +390,7 @@ function StudyNoteDetail({ id }: { id: string }) {
               {related.map((r) => (
                 <Link
                   key={r.id}
-                  to={`/study-notes/${r.id}`}
+                  to={`/study-notes/${r.slug || r.id}`}
                   className="block rounded-lg border p-4 hover:border-primary hover:bg-accent/40 transition"
                 >
                   <div className="font-medium text-foreground">{r.title}</div>
@@ -397,6 +407,6 @@ function StudyNoteDetail({ id }: { id: string }) {
 
 export default function StudyNotes() {
   const { id } = useParams<{ id: string }>();
-  if (id) return <StudyNoteDetail id={id} />;
+  if (id) return <StudyNoteDetail idOrSlug={id} />;
   return <StudyNotesList />;
 }

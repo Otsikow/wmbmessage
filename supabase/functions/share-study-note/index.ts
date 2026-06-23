@@ -72,22 +72,28 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
-  const appPath = id ? `${APP_URL}/study-notes/${id}` : `${APP_URL}/study-notes`;
-
   if (!id) {
     return Response.redirect(`${APP_URL}/study-notes`, 302);
   }
 
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const { data, error } = await supabase
+  const query = supabase
     .from("message_study_notes")
-    .select("id,title,topic,body,excerpt,tags,status")
-    .eq("id", id)
-    .eq("status", "published")
-    .maybeSingle();
+    .select("id,slug,title,topic,body,excerpt,tags,status")
+    .eq("status", "published");
+  const { data, error } = isUuid
+    ? await query.eq("id", id).maybeSingle()
+    : await query.eq("slug", id).maybeSingle();
+
+  const appPath = data?.slug
+    ? `${APP_URL}/study-notes/${data.slug}`
+    : `${APP_URL}/study-notes/${id}`;
 
   if (error || !data) {
-    return Response.redirect(appPath, 302);
+    return Response.redirect(`${APP_URL}/study-notes`, 302);
   }
 
   const scriptures = extractScriptures(data.body);
