@@ -1,5 +1,6 @@
 import type { Song, SongSection, SongSectionType } from "@/types/songs";
 import { BUNDLED_SONGS } from "@/data/songs";
+import { toTitleCase } from "@/lib/titleCase";
 
 /**
  * Song service.
