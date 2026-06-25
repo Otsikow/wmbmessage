@@ -56,20 +56,20 @@ const Index = () => {
             <Hero />
           </SectionErrorBoundary>
 
-          {/* Songs - prominent CTA right after Hero */}
-          <SectionErrorBoundary
-            section="Songs"
-            description="The Songs promo could not load."
-          >
-            <SongsPromo />
-          </SectionErrorBoundary>
-
           {/* Study Notes - prominent CTA for the Message Study library */}
           <SectionErrorBoundary
             section="Study Notes"
             description="The Study Notes promo could not load."
           >
             <StudyNotesPromo />
+          </SectionErrorBoundary>
+
+          {/* Songs - prominent CTA after Study Notes */}
+          <SectionErrorBoundary
+            section="Songs"
+            description="The Songs promo could not load."
+          >
+            <SongsPromo />
           </SectionErrorBoundary>
 
           {/* Community Section - Prayer, Testimonies, Events */}
