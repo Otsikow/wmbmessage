@@ -235,7 +235,7 @@ export default function AdminModerationDashboard({ role }: AdminModerationDashbo
         payload.approved_by = user?.id ?? null;
       }
 
-      const { error } = await supabase.from('testimonies').update(payload).eq('id', id);
+      const { error } = await supabase.from('testimonies').update(payload as any).eq('id', id);
       if (error) throw error;
 
       setPendingTestimonies((prev) => prev.filter((item) => item.id !== id));
