@@ -151,13 +151,14 @@ function StudyNotesList() {
           />
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible sm:pb-0 scrollbar-hide">
           {topics.map((t) => (
             <Button
               key={t}
               size="sm"
               variant={topic === t ? "default" : "outline"}
               onClick={() => setTopic(t)}
+              className="shrink-0 rounded-full text-xs h-8 px-3 sm:text-sm sm:h-9 sm:px-4"
             >
               {t}
             </Button>
