@@ -97,10 +97,10 @@ function StudyNotesList() {
   }, []);
 
   const topics = useMemo(() => {
-    const set = new Set<string>(["All"]);
+    const set = new Set<string>();
     notes?.forEach((n) => set.add(n.topic));
     STUDY_NOTE_TOPICS.forEach((t) => set.add(t));
-    return Array.from(set);
+    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [notes]);
 
   const filtered = useMemo(() => {
