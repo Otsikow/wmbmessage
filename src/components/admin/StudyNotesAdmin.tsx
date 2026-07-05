@@ -372,20 +372,64 @@ export default function StudyNotesAdmin() {
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
               <TabsContent value="write">
-                <Label htmlFor="sn-body">Full Study Note Text</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="sn-body">Full Study Note Text</Label>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleImageUpload(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                      )}
+                      Insert image
+                    </Button>
+                  </div>
+                </div>
                 <Textarea
                   id="sn-body"
+                  ref={bodyRef}
                   value={form.body}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
+                  onPaste={(e) => {
+                    const item = Array.from(e.clipboardData.items).find((it) =>
+                      it.type.startsWith("image/"),
+                    );
+                    if (item) {
+                      const file = item.getAsFile();
+                      if (file) {
+                        e.preventDefault();
+                        handleImageUpload(file);
+                      }
+                    }
+                  }}
                   placeholder="Paste your entire study note here. Headings, Bible references (John 3:16), Brother Branham quotes, lists, key points and prayers will be auto-formatted."
-                  className="min-h-[400px] font-mono text-sm"
+                  className="mt-2 min-h-[400px] font-mono text-sm"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
                   Tips: ALL-CAPS or short Title-Case lines become headings. Lines
                   starting with a Bible reference become scripture boxes. Lines in
                   quotes followed by “Brother Branham” become quote cards. Use
                   “Key Point:”, “Prayer:”, “Reflection:” to create highlighted
-                  sections.
+                  sections. Insert images with the button above or paste them
+                  directly — they render as captioned figures using{" "}
+                  <code>![caption](url){"{center|left|right}"}</code>.
                 </p>
               </TabsContent>
               <TabsContent value="preview">
