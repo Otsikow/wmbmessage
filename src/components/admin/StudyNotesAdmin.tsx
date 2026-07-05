@@ -62,6 +62,54 @@ export default function StudyNotesAdmin() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [viewNote, setViewNote] = useState<StudyNote | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Only image files are allowed", variant: "destructive" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image too large (max 8MB)", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `study-notes/${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("user-uploads").upload(path, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) {
+      setUploading(false);
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    const { data: pub } = supabase.storage.from("user-uploads").getPublicUrl(path);
+    const url = pub.publicUrl;
+    const alt = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+    const snippet = `\n\n![${alt}](${url})\n\n`;
+    const ta = bodyRef.current;
+    if (ta) {
+      const start = ta.selectionStart ?? form.body.length;
+      const end = ta.selectionEnd ?? form.body.length;
+      const next = form.body.slice(0, start) + snippet + form.body.slice(end);
+      setForm((f) => ({ ...f, body: next }));
+      setTimeout(() => {
+        ta.focus();
+        const pos = start + snippet.length;
+        ta.setSelectionRange(pos, pos);
+      }, 0);
+    } else {
+      setForm((f) => ({ ...f, body: f.body + snippet }));
+    }
+    setUploading(false);
+    toast({ title: "Image inserted" });
+  };
 
   const fetchNotes = async () => {
     setLoading(true);
