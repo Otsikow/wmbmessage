@@ -122,6 +122,21 @@ export function formatStudyNote(input: string): StudyBlock[] {
       continue;
     }
 
+    // Image line: ![alt](url "optional caption") {left|right|center}
+    const imgMatch = line.match(IMAGE_RE);
+    if (imgMatch) {
+      const [, alt, src, caption, align] = imgMatch;
+      blocks.push({
+        type: "image",
+        src,
+        alt: alt || "",
+        caption: caption || undefined,
+        align: (align as "left" | "right" | "center" | undefined) || "center",
+      });
+      i++;
+      continue;
+    }
+
     // Scripture line: starts with a Bible reference
     const scriptureMatch = line.match(SCRIPTURE_RE);
     if (scriptureMatch && scriptureMatch[1]) {
