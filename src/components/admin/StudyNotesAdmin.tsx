@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit3, Trash2, Eye, FileText, EyeOff, Tag, ImagePlus, Loader2 } from "lucide-react";
-import { useRef } from "react";
+
 import { useToast } from "@/hooks/use-toast";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote, type StudyNoteStatus } from "@/types/studyNotes";
