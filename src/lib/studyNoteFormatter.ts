@@ -10,7 +10,10 @@ export type StudyBlock =
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "prayer"; text: string }
   | { type: "reflection"; text: string }
+  | { type: "image"; src: string; alt: string; caption?: string; align?: "left" | "right" | "center" }
   | { type: "paragraph"; text: string };
+
+const IMAGE_RE = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)(?:\s*\{(left|right|center)\})?\s*$/;
 
 const BIBLE_BOOKS = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -115,6 +118,21 @@ export function formatStudyNote(input: string): StudyBlock[] {
     const raw = lines[i];
     const line = raw.trim();
     if (!line) {
+      i++;
+      continue;
+    }
+
+    // Image line: ![alt](url "optional caption") {left|right|center}
+    const imgMatch = line.match(IMAGE_RE);
+    if (imgMatch) {
+      const [, alt, src, caption, align] = imgMatch;
+      blocks.push({
+        type: "image",
+        src,
+        alt: alt || "",
+        caption: caption || undefined,
+        align: (align as "left" | "right" | "center" | undefined) || "center",
+      });
       i++;
       continue;
     }

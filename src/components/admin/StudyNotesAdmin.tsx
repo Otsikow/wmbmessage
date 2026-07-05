@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit3, Trash2, Eye, FileText, EyeOff, Tag } from "lucide-react";
+import { Plus, Search, Edit3, Trash2, Eye, FileText, EyeOff, Tag, ImagePlus, Loader2 } from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote, type StudyNoteStatus } from "@/types/studyNotes";
@@ -61,6 +62,54 @@ export default function StudyNotesAdmin() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [viewNote, setViewNote] = useState<StudyNote | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Only image files are allowed", variant: "destructive" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image too large (max 8MB)", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `study-notes/${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("user-uploads").upload(path, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) {
+      setUploading(false);
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    const { data: pub } = supabase.storage.from("user-uploads").getPublicUrl(path);
+    const url = pub.publicUrl;
+    const alt = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+    const snippet = `\n\n![${alt}](${url})\n\n`;
+    const ta = bodyRef.current;
+    if (ta) {
+      const start = ta.selectionStart ?? form.body.length;
+      const end = ta.selectionEnd ?? form.body.length;
+      const next = form.body.slice(0, start) + snippet + form.body.slice(end);
+      setForm((f) => ({ ...f, body: next }));
+      setTimeout(() => {
+        ta.focus();
+        const pos = start + snippet.length;
+        ta.setSelectionRange(pos, pos);
+      }, 0);
+    } else {
+      setForm((f) => ({ ...f, body: f.body + snippet }));
+    }
+    setUploading(false);
+    toast({ title: "Image inserted" });
+  };
 
   const fetchNotes = async () => {
     setLoading(true);
@@ -323,20 +372,64 @@ export default function StudyNotesAdmin() {
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
               <TabsContent value="write">
-                <Label htmlFor="sn-body">Full Study Note Text</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="sn-body">Full Study Note Text</Label>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleImageUpload(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                      )}
+                      Insert image
+                    </Button>
+                  </div>
+                </div>
                 <Textarea
                   id="sn-body"
+                  ref={bodyRef}
                   value={form.body}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
+                  onPaste={(e) => {
+                    const item = Array.from(e.clipboardData.items).find((it) =>
+                      it.type.startsWith("image/"),
+                    );
+                    if (item) {
+                      const file = item.getAsFile();
+                      if (file) {
+                        e.preventDefault();
+                        handleImageUpload(file);
+                      }
+                    }
+                  }}
                   placeholder="Paste your entire study note here. Headings, Bible references (John 3:16), Brother Branham quotes, lists, key points and prayers will be auto-formatted."
-                  className="min-h-[400px] font-mono text-sm"
+                  className="mt-2 min-h-[400px] font-mono text-sm"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
                   Tips: ALL-CAPS or short Title-Case lines become headings. Lines
                   starting with a Bible reference become scripture boxes. Lines in
                   quotes followed by “Brother Branham” become quote cards. Use
                   “Key Point:”, “Prayer:”, “Reflection:” to create highlighted
-                  sections.
+                  sections. Insert images with the button above or paste them
+                  directly — they render as captioned figures using{" "}
+                  <code>![caption](url){"{center|left|right}"}</code>.
                 </p>
               </TabsContent>
               <TabsContent value="preview">
