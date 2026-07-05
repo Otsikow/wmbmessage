@@ -10,7 +10,10 @@ export type StudyBlock =
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "prayer"; text: string }
   | { type: "reflection"; text: string }
+  | { type: "image"; src: string; alt: string; caption?: string; align?: "left" | "right" | "center" }
   | { type: "paragraph"; text: string };
+
+const IMAGE_RE = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)(?:\s*\{(left|right|center)\})?\s*$/;
 
 const BIBLE_BOOKS = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
