@@ -115,6 +115,31 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
           </p>
         </div>
       );
+    case "image": {
+      const alignClass =
+        block.align === "left"
+          ? "float-none md:float-left md:mr-6 md:mb-3 md:max-w-[45%]"
+          : block.align === "right"
+          ? "float-none md:float-right md:ml-6 md:mb-3 md:max-w-[45%]"
+          : "mx-auto";
+      return (
+        <figure key={idx} className={`my-6 ${alignClass}`}>
+          <div className="overflow-hidden rounded-xl border border-border bg-muted shadow-md">
+            <img
+              src={block.src}
+              alt={block.alt}
+              loading="lazy"
+              className="h-auto w-full object-cover"
+            />
+          </div>
+          {(block.caption || block.alt) && (
+            <figcaption className="mt-2 text-center text-sm italic text-muted-foreground">
+              {block.caption || block.alt}
+            </figcaption>
+          )}
+        </figure>
+      );
+    }
     case "list":
       return block.ordered ? (
         <ol key={idx} className="my-3 ml-6 list-decimal space-y-1.5 text-foreground/90">
