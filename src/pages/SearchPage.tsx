@@ -442,7 +442,7 @@ const SearchPage = () => {
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-1 gap-2 sm:grid-cols-3 mb-8">
+              <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-2 gap-2 sm:grid-cols-4 mb-8">
                 <TabsTrigger value="bible" className="gap-2">
                   <Book className="h-4 w-4" />
                   Bible ({filteredBibleResults.length})
@@ -450,6 +450,10 @@ const SearchPage = () => {
                 <TabsTrigger value="sermons" className="gap-2">
                   <BookOpen className="h-4 w-4" />
                   Sermons ({filteredSermonResults.length})
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes ({noteResults.length})
                 </TabsTrigger>
                 <TabsTrigger value="themes" className="gap-2">
                   <Sparkles className="h-4 w-4" />
