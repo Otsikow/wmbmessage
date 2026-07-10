@@ -1,9 +1,11 @@
+// Full KJV bundled locally as flat verse records (~31,100 verses).
+const LOCAL_KJV_PATH = "/data/kjv-bible.json";
 const REMOTE_KJV_URLS = [
-  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/kjv.json",
-  "https://cdn.jsdelivr.net/gh/thiagobodruk/bible@master/json/kjv.json",
+  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json",
+  "https://cdn.jsdelivr.net/gh/thiagobodruk/bible@master/json/en_kjv.json",
 ];
 const LOCAL_SAMPLE_PATH = "/sample-data/bible-verses-sample.json";
-const LOCAL_STORAGE_KEY = "messageguide:kjv:raw-v1";
+const LOCAL_STORAGE_KEY = "messageguide:kjv:raw-v2";
 const FETCH_TIMEOUT_MS = 15000;
 
 interface RemoteBibleBook {
