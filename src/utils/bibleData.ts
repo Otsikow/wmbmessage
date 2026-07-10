@@ -1,9 +1,11 @@
+// Full KJV bundled locally as flat verse records (~31,100 verses).
+const LOCAL_KJV_PATH = "/data/kjv-bible.json";
 const REMOTE_KJV_URLS = [
-  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/kjv.json",
-  "https://cdn.jsdelivr.net/gh/thiagobodruk/bible@master/json/kjv.json",
+  "https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json",
+  "https://cdn.jsdelivr.net/gh/thiagobodruk/bible@master/json/en_kjv.json",
 ];
 const LOCAL_SAMPLE_PATH = "/sample-data/bible-verses-sample.json";
-const LOCAL_STORAGE_KEY = "messageguide:kjv:raw-v1";
+const LOCAL_STORAGE_KEY = "messageguide:kjv:raw-v2";
 const FETCH_TIMEOUT_MS = 15000;
 
 interface RemoteBibleBook {
@@ -24,40 +26,46 @@ let cachedFromSample = false;
 let refreshAttempted = false;
 
 export async function loadKJVBibleVerses(): Promise<BibleVerseRecord[]> {
-  if (cachedVerses) {
-    if (!cachedFromSample) {
-      return cachedVerses;
-    }
-    if (cachedFromSample && !refreshAttempted) {
-      refreshAttempted = true;
-      const raw = await loadRawBibleData();
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as RemoteBibleBook[];
-          cachedVerses = flattenRemoteBible(parsed);
-          chapterIndex = null;
-          cachedFromSample = false;
-          return cachedVerses;
-        } catch (error) {
-          console.warn("Failed to parse refreshed KJV dataset:", error);
-        }
-      }
-    }
+  if (cachedVerses && !cachedFromSample) {
     return cachedVerses;
   }
 
+  // 1) Prefer the bundled flat KJV file — guaranteed complete (~31,100 verses).
+  try {
+    const response = await fetch(LOCAL_KJV_PATH, { cache: "force-cache" });
+    if (response.ok) {
+      const data = (await response.json()) as BibleVerseRecord[];
+      if (Array.isArray(data) && data.length > 1000) {
+        cachedVerses = data.map((v) => ({
+          book: v.book,
+          chapter: Number(v.chapter),
+          verse: Number(v.verse),
+          text: String(v.text).replace(/<[^>]*>/g, "").trim(),
+        }));
+        chapterIndex = null;
+        cachedFromSample = false;
+        return cachedVerses;
+      }
+    }
+  } catch (error) {
+    console.warn("Local flat KJV load failed:", error);
+  }
+
+  // 2) Fallback to remote nested KJV.
   const raw = await loadRawBibleData();
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as RemoteBibleBook[];
       cachedVerses = flattenRemoteBible(parsed);
       chapterIndex = null;
+      cachedFromSample = false;
       return cachedVerses;
     } catch (error) {
       console.warn("Failed to parse remote KJV dataset:", error);
     }
   }
 
+  // 3) Last-resort sample.
   const fallback = await loadLocalSampleVerses();
   cachedVerses = fallback;
   cachedFromSample = true;
@@ -139,7 +147,7 @@ async function loadRawBibleData(): Promise<string | null> {
       });
 
       if (response.ok) {
-        const raw = await response.text();
+        const raw = (await response.text()).replace(/^\uFEFF/, "");
         if (raw && typeof window !== "undefined") {
           try {
             window.localStorage?.setItem(LOCAL_STORAGE_KEY, raw);
