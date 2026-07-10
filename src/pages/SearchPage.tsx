@@ -61,6 +61,7 @@ const SearchPage = () => {
   const [themeResults, setThemeResults] = useState<ThemeSearchResult[]>(
     defaultThemeResults,
   );
+  const [allNotes, setAllNotes] = useState<StudyNote[]>([]);
   const [pendingScrollQuery, setPendingScrollQuery] = useState<string | null>(
     null,
   );
