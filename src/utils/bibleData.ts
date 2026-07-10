@@ -26,40 +26,46 @@ let cachedFromSample = false;
 let refreshAttempted = false;
 
 export async function loadKJVBibleVerses(): Promise<BibleVerseRecord[]> {
-  if (cachedVerses) {
-    if (!cachedFromSample) {
-      return cachedVerses;
-    }
-    if (cachedFromSample && !refreshAttempted) {
-      refreshAttempted = true;
-      const raw = await loadRawBibleData();
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as RemoteBibleBook[];
-          cachedVerses = flattenRemoteBible(parsed);
-          chapterIndex = null;
-          cachedFromSample = false;
-          return cachedVerses;
-        } catch (error) {
-          console.warn("Failed to parse refreshed KJV dataset:", error);
-        }
-      }
-    }
+  if (cachedVerses && !cachedFromSample) {
     return cachedVerses;
   }
 
+  // 1) Prefer the bundled flat KJV file — guaranteed complete (~31,100 verses).
+  try {
+    const response = await fetch(LOCAL_KJV_PATH, { cache: "force-cache" });
+    if (response.ok) {
+      const data = (await response.json()) as BibleVerseRecord[];
+      if (Array.isArray(data) && data.length > 1000) {
+        cachedVerses = data.map((v) => ({
+          book: v.book,
+          chapter: Number(v.chapter),
+          verse: Number(v.verse),
+          text: String(v.text).replace(/<[^>]*>/g, "").trim(),
+        }));
+        chapterIndex = null;
+        cachedFromSample = false;
+        return cachedVerses;
+      }
+    }
+  } catch (error) {
+    console.warn("Local flat KJV load failed:", error);
+  }
+
+  // 2) Fallback to remote nested KJV.
   const raw = await loadRawBibleData();
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as RemoteBibleBook[];
       cachedVerses = flattenRemoteBible(parsed);
       chapterIndex = null;
+      cachedFromSample = false;
       return cachedVerses;
     } catch (error) {
       console.warn("Failed to parse remote KJV dataset:", error);
     }
   }
 
+  // 3) Last-resort sample.
   const fallback = await loadLocalSampleVerses();
   cachedVerses = fallback;
   cachedFromSample = true;
