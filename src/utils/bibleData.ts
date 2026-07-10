@@ -147,7 +147,7 @@ async function loadRawBibleData(): Promise<string | null> {
       });
 
       if (response.ok) {
-        const raw = await response.text();
+        const raw = (await response.text()).replace(/^\uFEFF/, "");
         if (raw && typeof window !== "undefined") {
           try {
             window.localStorage?.setItem(LOCAL_STORAGE_KEY, raw);
