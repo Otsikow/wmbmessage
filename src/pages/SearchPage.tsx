@@ -77,6 +77,37 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("message_study_notes" as any)
+        .select("*")
+        .eq("status", "published");
+      if (!cancelled && data) setAllNotes(data as unknown as StudyNote[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const noteResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [] as StudyNote[];
+    return allNotes.filter((n) => {
+      const hay = [
+        n.title,
+        n.topic,
+        n.excerpt || "",
+        n.body,
+        (n.tags || []).join(" "),
+      ]
+        .join(" \n ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [allNotes, searchQuery]);
+
 
   const placeholders: Record<SearchMode, string> = {
     keyword: "Search by keyword, verse, or message theme...",
