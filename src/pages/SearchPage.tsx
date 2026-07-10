@@ -29,7 +29,7 @@ import {
   type BibleSearchResult,
   type WMBSermonResult,
 } from "@/hooks/useBibleSearch";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImage from "@/assets/dove-peace.jpg";
 import { themeLibrary } from "@/data/themeLibrary";
 import {
@@ -37,6 +37,10 @@ import {
   highlightQuery,
   type ThemeSearchResult,
 } from "@/lib/themeSearch";
+import { supabase } from "@/integrations/supabase/client";
+import { buildExcerpt } from "@/lib/studyNoteFormatter";
+import type { StudyNote } from "@/types/studyNotes";
+import { FileText, Tag } from "lucide-react";
 
 type SearchMode = "keyword" | "verse" | "theme";
 
@@ -57,6 +61,7 @@ const SearchPage = () => {
   const [themeResults, setThemeResults] = useState<ThemeSearchResult[]>(
     defaultThemeResults,
   );
+  const [allNotes, setAllNotes] = useState<StudyNote[]>([]);
   const [pendingScrollQuery, setPendingScrollQuery] = useState<string | null>(
     null,
   );
@@ -71,6 +76,37 @@ const SearchPage = () => {
   const { searchBible, searchWMBSermons, loading } = useBibleSearch();
   const navigate = useNavigate();
   const resultsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("message_study_notes" as any)
+        .select("*")
+        .eq("status", "published");
+      if (!cancelled && data) setAllNotes(data as unknown as StudyNote[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const noteResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [] as StudyNote[];
+    return allNotes.filter((n) => {
+      const hay = [
+        n.title,
+        n.topic,
+        n.excerpt || "",
+        n.body,
+        (n.tags || []).join(" "),
+      ]
+        .join(" \n ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [allNotes, searchQuery]);
 
 
   const placeholders: Record<SearchMode, string> = {
@@ -406,7 +442,7 @@ const SearchPage = () => {
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-1 gap-2 sm:grid-cols-3 mb-8">
+              <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-2 gap-2 sm:grid-cols-4 mb-8">
                 <TabsTrigger value="bible" className="gap-2">
                   <Book className="h-4 w-4" />
                   Bible ({filteredBibleResults.length})
@@ -414,6 +450,10 @@ const SearchPage = () => {
                 <TabsTrigger value="sermons" className="gap-2">
                   <BookOpen className="h-4 w-4" />
                   Sermons ({filteredSermonResults.length})
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes ({noteResults.length})
                 </TabsTrigger>
                 <TabsTrigger value="themes" className="gap-2">
                   <Sparkles className="h-4 w-4" />
@@ -677,6 +717,64 @@ const SearchPage = () => {
                           ? "No sermons match the selected filters."
                           : "No sermons found. Try different keywords or explore a theme."
                         : "Enter a search term to find sermons"}
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4">
+                {noteResults.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {noteResults.map((n) => {
+                      const preview =
+                        n.excerpt || buildExcerpt(n.body, 220);
+                      const slug = n.slug || n.id;
+                      return (
+                        <Link
+                          key={n.id}
+                          to={`/study-notes/${slug}`}
+                          className="block group"
+                        >
+                          <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg">
+                            <CardContent className="p-6 space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {renderHighlightedText(n.title)}
+                                </h3>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="gap-1">
+                                  <Tag className="h-3 w-3" />
+                                  {renderHighlightedText(n.topic)}
+                                </Badge>
+                                {(n.tags || []).slice(0, 3).map((t) => (
+                                  <Badge
+                                    key={t}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {renderHighlightedText(t)}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-3 text-left">
+                                {renderHighlightedText(preview)}
+                              </p>
+                              <p className="text-xs font-medium text-primary">
+                                Read full note →
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      {searchQuery
+                        ? `No study notes match “${searchQuery}”.`
+                        : "Enter a search term to find study notes"}
                     </p>
                   </div>
                 )}
