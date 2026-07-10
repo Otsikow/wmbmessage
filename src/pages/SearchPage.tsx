@@ -29,7 +29,7 @@ import {
   type BibleSearchResult,
   type WMBSermonResult,
 } from "@/hooks/useBibleSearch";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImage from "@/assets/dove-peace.jpg";
 import { themeLibrary } from "@/data/themeLibrary";
 import {
@@ -37,6 +37,10 @@ import {
   highlightQuery,
   type ThemeSearchResult,
 } from "@/lib/themeSearch";
+import { supabase } from "@/integrations/supabase/client";
+import { buildExcerpt } from "@/lib/studyNoteFormatter";
+import type { StudyNote } from "@/types/studyNotes";
+import { FileText, Tag } from "lucide-react";
 
 type SearchMode = "keyword" | "verse" | "theme";
 
