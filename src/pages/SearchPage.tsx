@@ -722,6 +722,64 @@ const SearchPage = () => {
                 )}
               </TabsContent>
 
+              <TabsContent value="notes" className="space-y-4">
+                {noteResults.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {noteResults.map((n) => {
+                      const preview =
+                        n.excerpt || buildExcerpt(n.body, 220);
+                      const slug = n.slug || n.id;
+                      return (
+                        <Link
+                          key={n.id}
+                          to={`/study-notes/${slug}`}
+                          className="block group"
+                        >
+                          <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-lg">
+                            <CardContent className="p-6 space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {renderHighlightedText(n.title)}
+                                </h3>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="gap-1">
+                                  <Tag className="h-3 w-3" />
+                                  {renderHighlightedText(n.topic)}
+                                </Badge>
+                                {(n.tags || []).slice(0, 3).map((t) => (
+                                  <Badge
+                                    key={t}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {renderHighlightedText(t)}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-3 text-left">
+                                {renderHighlightedText(preview)}
+                              </p>
+                              <p className="text-xs font-medium text-primary">
+                                Read full note →
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      {searchQuery
+                        ? `No study notes match “${searchQuery}”.`
+                        : "Enter a search term to find study notes"}
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="themes" className="space-y-4">
                 {noThemeMatches ? (
                   <div className="text-center py-12">
