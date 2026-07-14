@@ -11,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
-import { buildExcerpt, extractScriptureRefs } from "@/lib/studyNoteFormatter";
+import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
 
-const SUPABASE_PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const APP_BASE_URL = "https://messageguide.org";
+const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
 
-function buildShareUrl(id: string): string {
-  return `${SUPABASE_PROJECT_URL}/functions/v1/share-study-note?id=${id}`;
+function buildShareUrl(slugOrId: string): string {
+  return `${APP_BASE_URL}/study-notes/${slugOrId}`;
 }
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
@@ -257,6 +257,12 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     return `${base} Topic: ${note.topic}.${verses}`.slice(0, 300);
   }, [note, scriptures]);
 
+  const shareImage = useMemo(() => {
+    if (!note) return DEFAULT_SHARE_IMAGE;
+    const found = extractFirstImageUrl(note.body);
+    return found || DEFAULT_SHARE_IMAGE;
+  }, [note]);
+
   const onShare = async () => {
     if (!note) return;
     if (navigator.share) {
@@ -324,6 +330,8 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         <meta property="og:title" content={note.title} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={shareImage} />
+        <meta property="og:image:alt" content={note.title} />
         <meta property="article:section" content={note.topic} />
         {note.tags.map((t) => (
           <meta key={`tag-${t}`} property="article:tag" content={t} />
@@ -334,6 +342,7 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={note.title} />
         <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={shareImage} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",

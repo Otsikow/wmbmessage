@@ -5,6 +5,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const APP_URL = "https://messageguide.org";
+const DEFAULT_SHARE_IMAGE = `${APP_URL}/logo-512.png`;
+
+const IMAGE_RE = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)(?:\s*\{(left|right|center)\})?\s*$/m;
+
+function extractFirstImage(body: string): string | null {
+  const lines = body.replace(/\r\n?/g, "\n").split("\n");
+  for (const raw of lines) {
+    const m = raw.trim().match(IMAGE_RE);
+    if (m) return m[2];
+  }
+  return null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,11 +113,14 @@ Deno.serve(async (req) => {
   const description = buildDescription(data, scriptures);
   const tags = Array.isArray(data.tags) ? data.tags : [];
 
+  const shareImage = extractFirstImage(data.body) || DEFAULT_SHARE_IMAGE;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: data.title,
     about: data.topic,
+    image: shareImage,
     keywords: [...tags, ...scriptures].join(", "),
     url: appPath,
     publisher: { "@type": "Organization", name: "MessageGuide" },
@@ -126,6 +141,8 @@ Deno.serve(async (req) => {
 <meta property="og:title" content="${escapeHtml(data.title)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:url" content="${appPath}" />
+<meta property="og:image" content="${escapeHtml(shareImage)}" />
+<meta property="og:image:alt" content="${escapeHtml(data.title)}" />
 <meta property="article:section" content="${escapeHtml(data.topic)}" />
 ${tags.map((t: string) => `<meta property="article:tag" content="${escapeHtml(t)}" />`).join("\n")}
 ${scriptures.map((s) => `<meta property="article:tag" content="${escapeHtml(s)}" />`).join("\n")}
@@ -133,6 +150,7 @@ ${scriptures.map((s) => `<meta property="article:tag" content="${escapeHtml(s)}"
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${escapeHtml(data.title)}" />
 <meta name="twitter:description" content="${escapeHtml(description)}" />
+<meta name="twitter:image" content="${escapeHtml(shareImage)}" />
 
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 
