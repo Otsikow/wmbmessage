@@ -330,6 +330,8 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         <meta property="og:title" content={note.title} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={shareImage} />
+        <meta property="og:image:alt" content={note.title} />
         <meta property="article:section" content={note.topic} />
         {note.tags.map((t) => (
           <meta key={`tag-${t}`} property="article:tag" content={t} />
@@ -340,6 +342,7 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={note.title} />
         <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={shareImage} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
