@@ -11,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
-import { buildExcerpt, extractScriptureRefs } from "@/lib/studyNoteFormatter";
+import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
 
-const SUPABASE_PROJECT_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const APP_BASE_URL = "https://messageguide.org";
+const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
 
-function buildShareUrl(id: string): string {
-  return `${SUPABASE_PROJECT_URL}/functions/v1/share-study-note?id=${id}`;
+function buildShareUrl(slugOrId: string): string {
+  return `${APP_BASE_URL}/study-notes/${slugOrId}`;
 }
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
