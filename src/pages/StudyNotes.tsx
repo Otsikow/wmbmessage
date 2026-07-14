@@ -16,9 +16,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
+const SHARE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-study-note`;
 
+// Share links must go through the edge function so social crawlers
+// (WhatsApp, Facebook, Twitter) — which don't run JS — receive the
+// per-note Open Graph image and description. The edge function redirects
+// humans to the clean messageguide.org URL.
 function buildShareUrl(slugOrId: string): string {
-  return `${APP_BASE_URL}/study-notes/${slugOrId}`;
+  return `${SHARE_FUNCTION_URL}?id=${encodeURIComponent(slugOrId)}`;
 }
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
