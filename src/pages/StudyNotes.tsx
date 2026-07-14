@@ -257,6 +257,12 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     return `${base} Topic: ${note.topic}.${verses}`.slice(0, 300);
   }, [note, scriptures]);
 
+  const shareImage = useMemo(() => {
+    if (!note) return DEFAULT_SHARE_IMAGE;
+    const found = extractFirstImageUrl(note.body);
+    return found || DEFAULT_SHARE_IMAGE;
+  }, [note]);
+
   const onShare = async () => {
     if (!note) return;
     if (navigator.share) {
