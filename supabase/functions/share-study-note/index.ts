@@ -5,6 +5,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const APP_URL = "https://messageguide.org";
+const DEFAULT_SHARE_IMAGE = `${APP_URL}/logo-512.png`;
+
+const IMAGE_RE = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)(?:\s*\{(left|right|center)\})?\s*$/m;
+
+function extractFirstImage(body: string): string | null {
+  const lines = body.replace(/\r\n?/g, "\n").split("\n");
+  for (const raw of lines) {
+    const m = raw.trim().match(IMAGE_RE);
+    if (m) return m[2];
+  }
+  return null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
