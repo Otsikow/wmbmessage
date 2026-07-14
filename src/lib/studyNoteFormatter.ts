@@ -283,3 +283,12 @@ export function buildExcerpt(input: string, max = 200): string {
   if (text.length <= max) return text;
   return text.slice(0, max).replace(/\s+\S*$/, "") + "…";
 }
+
+export function extractFirstImageUrl(input: string): string | null {
+  const lines = input.replace(/\r\n?/g, "\n").split("\n");
+  for (const raw of lines) {
+    const m = raw.trim().match(IMAGE_RE);
+    if (m) return m[2];
+  }
+  return null;
+}
