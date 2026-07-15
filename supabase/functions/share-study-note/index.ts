@@ -53,6 +53,13 @@ function extractScriptures(text: string): string[] {
   return out;
 }
 
+const CRAWLER_UA_RE = /(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|slack-imgproxy|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|embedly|quora link preview|redditbot|vkshare|w3c_validator|preview|unfurl|crawler|spider|bot)/i;
+
+export function isCrawlerUserAgent(ua: string | null | undefined): boolean {
+  if (!ua) return false;
+  return CRAWLER_UA_RE.test(ua);
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -106,6 +113,15 @@ Deno.serve(async (req) => {
 
   if (error || !data) {
     return Response.redirect(`${APP_URL}/study-notes`, 302);
+  }
+
+  // Human browsers: immediate 302 to canonical article URL.
+  const ua = req.headers.get("user-agent");
+  if (!isCrawlerUserAgent(ua)) {
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, Location: appPath, "Cache-Control": "no-store" },
+    });
   }
 
   const scriptures = extractScriptures(data.body);
