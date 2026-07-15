@@ -53,6 +53,13 @@ function extractScriptures(text: string): string[] {
   return out;
 }
 
+const CRAWLER_UA_RE = /(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|slack-imgproxy|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|embedly|quora link preview|redditbot|vkshare|w3c_validator|preview|unfurl|crawler|spider|bot)/i;
+
+export function isCrawlerUserAgent(ua: string | null | undefined): boolean {
+  if (!ua) return false;
+  return CRAWLER_UA_RE.test(ua);
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
