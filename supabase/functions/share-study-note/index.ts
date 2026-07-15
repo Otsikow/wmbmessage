@@ -115,6 +115,15 @@ Deno.serve(async (req) => {
     return Response.redirect(`${APP_URL}/study-notes`, 302);
   }
 
+  // Human browsers: immediate 302 to canonical article URL.
+  const ua = req.headers.get("user-agent");
+  if (!isCrawlerUserAgent(ua)) {
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, Location: appPath, "Cache-Control": "no-store" },
+    });
+  }
+
   const scriptures = extractScriptures(data.body);
   const title = `${data.title} — MessageGuide Study Notes`;
   const description = buildDescription(data, scriptures);
