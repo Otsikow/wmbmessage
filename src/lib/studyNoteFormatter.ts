@@ -15,7 +15,7 @@ export type StudyBlock =
 
 const IMAGE_RE = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)(?:\s*\{(left|right|center)\})?\s*$/;
 
-const BIBLE_BOOKS = [
+const BIBLE_BOOKS_CANONICAL = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
   "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra",
   "Nehemiah","Esther","Job","Psalm","Psalms","Proverbs","Ecclesiastes","Song of Solomon",
@@ -26,6 +26,15 @@ const BIBLE_BOOKS = [
   "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
   "1 John","2 John","3 John","Jude","Revelation","Revelations",
 ];
+
+const _ROMAN: Record<string, string> = { "1": "I", "2": "II", "3": "III" };
+const _ORD: Record<string, string> = { "1": "1st", "2": "2nd", "3": "3rd" };
+const BIBLE_BOOKS = BIBLE_BOOKS_CANONICAL.flatMap((name) => {
+  const m = name.match(/^([123])\s+(.*)$/);
+  if (!m) return [name];
+  const [, n, rest] = m;
+  return [name, `${_ROMAN[n]} ${rest}`, `${_ROMAN[n]}. ${rest}`, `${_ORD[n]} ${rest}`];
+}).sort((a, b) => b.length - a.length);
 
 const SCRIPTURE_RE = new RegExp(
   `^\\s*((?:${BIBLE_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?)?(?:\\s*,\\s*\\d+(?:\\s*[-–—]\\s*\\d+)?)*)\\s*[:]?\\s*(.*)$`,
