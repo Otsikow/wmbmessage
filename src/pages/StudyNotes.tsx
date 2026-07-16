@@ -279,8 +279,9 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
       const n = (data as unknown as StudyNote) || null;
       setNote(n);
       if (n) {
-        // If the URL used a UUID but a slug exists, replace with the slug URL.
-        if (isUuid && n.slug) {
+        // Redirect to canonical slug URL when the incoming path was a UUID
+        // or a non-canonical/prefix match.
+        if ((isUuid || key !== n.slug) && n.slug) {
           navigate(`/study-notes/${n.slug}`, { replace: true });
         }
         const { data: rel } = await supabase
