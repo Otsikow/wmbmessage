@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Search, BookOpen, ChevronRight, Tag, Share2, Printer, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,36 @@ const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
 
 function buildShareUrl(slugOrId: string): string {
   return `${APP_BASE_URL}/study-notes/${encodeURIComponent(slugOrId)}`;
+}
+
+function safeDecode(value: string): string {
+  let decoded = value;
+  for (let i = 0; i < 2; i += 1) {
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      break;
+    }
+  }
+  return decoded;
+}
+
+function extractStudyNoteLookupKey(rawValue: string): string {
+  let raw = safeDecode(rawValue).trim();
+
+  const embeddedStudyNotePath = raw.match(
+    /(?:https?:\/\/(?:www\.)?messageguide\.org)?\/study-notes\/(.+)$/i,
+  );
+  if (embeddedStudyNotePath?.[1]) raw = embeddedStudyNotePath[1];
+
+  raw = raw.split(/[?#]/)[0].replace(/^\/+|\/+$/g, "");
+  const parts = raw.split(/[\/\s]+/).filter(Boolean);
+  const nestedIndex = parts.findIndex((part) => part.toLowerCase() === "study-notes");
+  const key = nestedIndex >= 0 ? parts[nestedIndex + 1] : parts[0];
+
+  return (key || "").replace(/[^\w-]+$/g, "").toLowerCase();
 }
 
 function normalizeImageUrl(src: string | null): string {
@@ -244,12 +274,15 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Normalize: decode, trim, drop anything after whitespace, lowercase.
-      // Handles cases where a user copied a share string that appended the
-      // title/description after the URL (e.g. "…/a-paradox Based on the…").
-      let key = idOrSlug;
-      try { key = decodeURIComponent(idOrSlug); } catch { /* ignore */ }
-      key = key.trim().split(/\s+/)[0].replace(/[^\w-]+$/g, "").toLowerCase();
+      // Normalize malformed copied share strings back to the real slug.
+      // Handles appended titles/descriptions, extra path segments, and pasted
+      // full MessageGuide URLs after /study-notes/.
+      const key = extractStudyNoteLookupKey(idOrSlug);
+
+      if (!key) {
+        if (!cancelled) setNote(null);
+        return;
+      }
 
       const isUuid =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -323,7 +356,6 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     if (navigator.share) {
       const shareData: ShareData = {
         title: note.title,
-        text: description,
         url: shareUrl,
       };
 
@@ -487,7 +519,9 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
 }
 
 export default function StudyNotes() {
-  const { id } = useParams<{ id: string }>();
-  if (id) return <StudyNoteDetail idOrSlug={id} />;
+  const { id, "*": splat } = useParams<{ id?: string; "*"?: string }>();
+  const location = useLocation();
+  const detailPath = id ? [id, splat].filter(Boolean).join("/") : splat;
+  if (detailPath) return <StudyNoteDetail idOrSlug={detailPath || location.pathname} />;
   return <StudyNotesList />;
 }
