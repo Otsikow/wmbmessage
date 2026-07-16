@@ -16,14 +16,44 @@ import { useToast } from "@/hooks/use-toast";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
-const SHARE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-study-note`;
 
-// Share links must go through the edge function so social crawlers
-// (WhatsApp, Facebook, Twitter) — which don't run JS — receive the
-// per-note Open Graph image and description. The edge function redirects
-// humans to the clean messageguide.org URL.
 function buildShareUrl(slugOrId: string): string {
-  return `${SHARE_FUNCTION_URL}?id=${encodeURIComponent(slugOrId)}`;
+  return `${APP_BASE_URL}/study-notes/${encodeURIComponent(slugOrId)}`;
+}
+
+function normalizeImageUrl(src: string | null): string {
+  if (!src) return DEFAULT_SHARE_IMAGE;
+  try {
+    return new URL(src, APP_BASE_URL).toString();
+  } catch {
+    return DEFAULT_SHARE_IMAGE;
+  }
+}
+
+function fileSafeTitle(title: string): string {
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "messageguide-study-note"
+  );
+}
+
+async function buildShareImageFile(imageUrl: string, title: string): Promise<File | null> {
+  if (imageUrl === DEFAULT_SHARE_IMAGE) return null;
+
+  try {
+    const response = await fetch(imageUrl, { mode: "cors" });
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+    if (!blob.type.startsWith("image/")) return null;
+
+    const extension = blob.type.split("/")[1]?.split("+")[0] || "jpg";
+    return new File([blob], `${fileSafeTitle(title)}.${extension}`, { type: blob.type });
+  } catch {
+    return null;
+  }
 }
 
 function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
@@ -264,19 +294,34 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
 
   const shareImage = useMemo(() => {
     if (!note) return DEFAULT_SHARE_IMAGE;
-    const found = extractFirstImageUrl(note.body);
-    return found || DEFAULT_SHARE_IMAGE;
+    return normalizeImageUrl(extractFirstImageUrl(note.body));
   }, [note]);
 
   const onShare = async () => {
     if (!note) return;
     if (navigator.share) {
+      const shareData: ShareData = {
+        title: note.title,
+        text: description,
+        url: shareUrl,
+      };
+
       try {
-        await navigator.share({
-          title: note.title,
-          text: description,
-          url: shareUrl,
-        });
+        const imageFile = await buildShareImageFile(shareImage, note.title);
+        const richShareData: ShareData | null = imageFile
+          ? { ...shareData, files: [imageFile] }
+          : null;
+
+        if (
+          richShareData &&
+          typeof navigator.canShare === "function" &&
+          navigator.canShare(richShareData)
+        ) {
+          await navigator.share(richShareData);
+          return;
+        }
+
+        await navigator.share(shareData);
         return;
       } catch {
         /* user cancelled */
