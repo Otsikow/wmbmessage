@@ -267,6 +267,7 @@ function StudyNotesList() {
 
 function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [note, setNote] = useState<StudyNote | null | undefined>(undefined);
   const [related, setRelated] = useState<StudyNote[]>([]);
@@ -314,8 +315,9 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
       if (n) {
         // Redirect to canonical slug URL when the incoming path was a UUID
         // or a non-canonical/prefix match.
-        if ((isUuid || key !== n.slug) && n.slug) {
-          navigate(`/study-notes/${n.slug}`, { replace: true });
+        const canonicalPath = n.slug ? `/study-notes/${n.slug}` : "";
+        if (canonicalPath && (isUuid || key !== n.slug || location.pathname !== canonicalPath)) {
+          navigate(canonicalPath, { replace: true });
         }
         const { data: rel } = await supabase
           .from("message_study_notes" as any)
@@ -330,7 +332,7 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     return () => {
       cancelled = true;
     };
-  }, [idOrSlug, navigate]);
+  }, [idOrSlug, location.pathname, navigate]);
 
   const scriptures = useMemo(
     () => (note ? extractScriptureRefs(note.body) : []),
