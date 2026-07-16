@@ -144,7 +144,7 @@ function App() {
                                     element={withSectionBoundary("Study Notes", <StudyNotes />)}
                                   />
                                   <Route
-                                    path="/study-notes/:id"
+                                    path="/study-notes/:id/*"
                                     element={withSectionBoundary("Study Note", <StudyNotes />)}
                                   />
 
