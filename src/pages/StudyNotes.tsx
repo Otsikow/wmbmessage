@@ -244,23 +244,44 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Normalize: decode, trim, drop anything after whitespace, lowercase.
+      // Handles cases where a user copied a share string that appended the
+      // title/description after the URL (e.g. "…/a-paradox Based on the…").
+      let key = idOrSlug;
+      try { key = decodeURIComponent(idOrSlug); } catch { /* ignore */ }
+      key = key.trim().split(/\s+/)[0].replace(/[^\w-]+$/g, "").toLowerCase();
+
       const isUuid =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          idOrSlug,
+          key,
         );
-      const query = supabase
-        .from("message_study_notes" as any)
-        .select("*")
-        .eq("status", "published");
-      const { data } = isUuid
-        ? await query.eq("id", idOrSlug).maybeSingle()
-        : await query.eq("slug", idOrSlug).maybeSingle();
+      const base = () =>
+        supabase
+          .from("message_study_notes" as any)
+          .select("*")
+          .eq("status", "published");
+
+      let { data } = isUuid
+        ? await base().eq("id", key).maybeSingle()
+        : await base().eq("slug", key).maybeSingle();
+
+      // Fallback: prefix match on slug (recovers truncated / trailing-text URLs).
+      if (!data && !isUuid && key) {
+        const { data: pref } = await base()
+          .ilike("slug", `${key}%`)
+          .order("slug", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        data = pref as any;
+      }
+
       if (cancelled) return;
       const n = (data as unknown as StudyNote) || null;
       setNote(n);
       if (n) {
-        // If the URL used a UUID but a slug exists, replace with the slug URL.
-        if (isUuid && n.slug) {
+        // Redirect to canonical slug URL when the incoming path was a UUID
+        // or a non-canonical/prefix match.
+        if ((isUuid || key !== n.slug) && n.slug) {
           navigate(`/study-notes/${n.slug}`, { replace: true });
         }
         const { data: rel } = await supabase
