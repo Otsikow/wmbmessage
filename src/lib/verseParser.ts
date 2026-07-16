@@ -7,10 +7,22 @@ export interface ParsedReference {
   endVerse?: number;
 }
 
+const ROMAN_PREFIX: Record<string, string> = {
+  i: "1", ii: "2", iii: "3",
+  "i.": "1", "ii.": "2", "iii.": "3",
+  "1st": "1", "2nd": "2", "3rd": "3",
+};
+
 export function parseVerseReference(reference: string): ParsedReference | null {
   // Clean up the reference
-  const cleaned = reference.trim();
-  
+  let cleaned = reference.trim();
+
+  // Normalize Roman-numeral / ordinal book prefixes: "II Corinthians" -> "2 Corinthians"
+  cleaned = cleaned.replace(
+    /^(i{1,3}\.?|1st|2nd|3rd)\s+/i,
+    (_m, p) => `${ROMAN_PREFIX[p.toLowerCase()] ?? p} `,
+  );
+
   // Match patterns like "John 3:16", "Genesis 1:1-3", "Romans 8:28"
   const pattern = /^(\d?\s?[A-Za-z]+(?:\s+of\s+[A-Za-z]+)?)\s+(\d+)(?::(\d+))?(?:\s*[-–—]\s*(\d+))?$/;
   const match = cleaned.match(pattern);
