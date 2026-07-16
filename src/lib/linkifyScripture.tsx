@@ -4,17 +4,35 @@ import { BookOpen } from "lucide-react";
 import { parseVerseReference } from "@/lib/verseParser";
 import { BIBLE_BOOKS } from "@/hooks/useBibleData";
 
-const BOOK_NAMES = BIBLE_BOOKS.map((b) => b.name).concat([
-  "Psalm",
-  "Revelations",
-]);
+// Expand each canonical name to include Roman-numeral prefix variants
+// (e.g. "2 Corinthians" -> also "II Corinthians", "II. Corinthians", "2nd Corinthians").
+const ROMAN_MAP: Record<string, string> = { "1": "I", "2": "II", "3": "III" };
+const ORDINAL_MAP: Record<string, string> = { "1": "1st", "2": "2nd", "3": "3rd" };
 
-// Sort by length desc so multi-word books (e.g. "Song of Solomon") match first
+function expandBookVariants(name: string): string[] {
+  const m = name.match(/^([123])\s+(.*)$/);
+  if (!m) return [name];
+  const [, n, rest] = m;
+  const roman = ROMAN_MAP[n];
+  const ord = ORDINAL_MAP[n];
+  return [
+    name,
+    `${roman} ${rest}`,
+    `${roman}. ${rest}`,
+    `${ord} ${rest}`,
+  ];
+}
+
+const BOOK_NAMES = BIBLE_BOOKS.map((b) => b.name)
+  .concat(["Psalm", "Revelations"])
+  .flatMap(expandBookVariants);
+
+// Sort by length desc so multi-word / prefixed books match first
 const SORTED_BOOKS = Array.from(new Set(BOOK_NAMES)).sort(
   (a, b) => b.length - a.length,
 );
 
-// Matches things like "John 3:16", "Genesis 1:1-3", "1 Corinthians 13",
+// Matches things like "John 3:16", "Genesis 1:1-3", "II Corinthians 4:7-18",
 // optionally followed by additional ",4" or ",5-6" verse lists.
 const SCRIPTURE_INLINE_RE = new RegExp(
   `\\b(?:${SORTED_BOOKS.join("|")})\\s+\\d+(?::\\d+(?:\\s*[-–—]\\s*\\d+)?(?:\\s*,\\s*\\d+(?:\\s*[-–—]\\s*\\d+)?)*)?\\b`,
