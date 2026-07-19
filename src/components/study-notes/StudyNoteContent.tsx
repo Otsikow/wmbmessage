@@ -1,10 +1,76 @@
 import { ReactNode, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { formatStudyNote, type StudyBlock } from "@/lib/studyNoteFormatter";
 import { Quote, Sparkles, Heart, Lightbulb, BookMarked } from "lucide-react";
-import { linkifyScriptures, ScriptureRefLink } from "@/lib/linkifyScripture";
+import { linkifyScriptures } from "@/lib/linkifyScripture";
+import { ScriptureRefLink } from "@/lib/linkifyScripture";
+
+// Matches markdown links [label](url) and bare http(s) URLs
+const MD_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s)]+)/g;
+
+function renderLink(href: string, label: string, key: string): ReactNode {
+  try {
+    const url = new URL(href);
+    const isInternal =
+      url.hostname === "messageguide.org" ||
+      url.hostname === "www.messageguide.org" ||
+      url.hostname.endsWith(".lovable.app");
+    if (isInternal) {
+      const to = url.pathname + url.search + url.hash;
+      return (
+        <Link
+          key={key}
+          to={to}
+          className="text-primary font-medium underline decoration-primary/40 underline-offset-2 hover:decoration-primary transition-colors"
+        >
+          {label}
+        </Link>
+      );
+    }
+  } catch {
+    /* fall through to external */
+  }
+  return (
+    <a
+      key={key}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary font-medium underline decoration-primary/40 underline-offset-2 hover:decoration-primary transition-colors"
+    >
+      {label}
+    </a>
+  );
+}
 
 function Rich({ text, query }: { text: string; query?: string }): ReactNode {
-  return linkifyScriptures(text, query);
+  if (!text) return text;
+  const out: ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+  const re = new RegExp(MD_LINK_RE.source, MD_LINK_RE.flags);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIndex) {
+      out.push(
+        <span key={`t-${key++}`}>
+          {linkifyScriptures(text.slice(lastIndex, m.index), query)}
+        </span>,
+      );
+    }
+    const label = m[1] ?? m[3] ?? m[0];
+    const href = m[2] ?? m[3] ?? "";
+    out.push(renderLink(href, label, `l-${key++}`));
+    lastIndex = m.index + m[0].length;
+  }
+  if (lastIndex < text.length) {
+    out.push(
+      <span key={`t-${key++}`}>
+        {linkifyScriptures(text.slice(lastIndex), query)}
+      </span>,
+    );
+  }
+  return <>{out}</>;
 }
 
 function renderBlock(block: StudyBlock, idx: number, query?: string) {
