@@ -53,23 +53,28 @@ function isHeadingLine(line: string): 1 | 2 | 3 | null {
     const hashes = trimmed.match(/^#+/)?.[0].length ?? 1;
     return Math.min(hashes, 3) as 1 | 2 | 3;
   }
+  // Explicit section/chapter/part/lesson prefix — always a heading regardless of length
+  if (/^(section|chapter|part|lesson|point|step)\s+[\dIVX]+\s*[:.\-)]/i.test(trimmed)) {
+    return 2;
+  }
   // ALL CAPS short lines = heading
-  if (trimmed.length <= 80 && /^[A-Z0-9 ,'":!?&\-]+$/.test(trimmed) && /[A-Z]/.test(trimmed)) {
+  if (trimmed.length <= 100 && /^[A-Z0-9 ,'":!?&\-]+$/.test(trimmed) && /[A-Z]/.test(trimmed)) {
     const wordCount = trimmed.split(/\s+/).length;
-    if (wordCount <= 10) return 1;
-    if (wordCount <= 15) return 2;
+    if (wordCount <= 12) return 1;
+    if (wordCount <= 18) return 2;
   }
   // Title case short line ending without punctuation
   if (
-    trimmed.length <= 70 &&
+    trimmed.length <= 90 &&
     !/[.!?]$/.test(trimmed) &&
     /^[A-Z]/.test(trimmed) &&
-    trimmed.split(/\s+/).length <= 10
+    trimmed.split(/\s+/).length <= 14
   ) {
     return 2;
   }
   return null;
 }
+
 
 function isQuoteLine(line: string): boolean {
   const t = line.trim();
