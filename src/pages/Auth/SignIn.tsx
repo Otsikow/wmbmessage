@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import { validateSignInInput } from "@/lib/validation/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { lovable } from "@/integrations/lovable";
+import { getOAuthCallbackUrl, storeReturnPath } from "@/lib/authRedirect";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -19,6 +19,8 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,9 +98,28 @@ export default function SignIn() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!isSupabaseConfigured) {
+      toast({
+        title: "Service unavailable",
+        description: "Google sign-in is temporarily unavailable. Please try again soon.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      storeReturnPath(
+        (location.state as { from?: string } | null)?.from ??
+          new URLSearchParams(location.search).get("next") ??
+          "/"
+      );
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: getOAuthCallbackUrl(),
+          queryParams: { prompt: "select_account" },
+        },
       });
 
       if (error) throw error;
@@ -113,6 +134,7 @@ export default function SignIn() {
       });
     }
   };
+
 
   return (
     <AuthLayout
