@@ -55,6 +55,8 @@ import StudyNotes from "./pages/StudyNotes";
 
 // Auth Pages
 import SignIn from "./pages/Auth/SignIn";
+import AuthCallback from "./pages/Auth/AuthCallback";
+
 import SignUp from "./pages/Auth/SignUp";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
@@ -290,6 +292,11 @@ function App() {
                                     element={withSectionBoundary("Sign in", <SignIn />)}
                                   />
                                   <Route
+                                    path="/auth/callback"
+                                    element={withSectionBoundary("Signing in", <AuthCallback />)}
+                                  />
+                                  <Route
+
                                     path="/auth/sign-up"
                                     element={withSectionBoundary("Sign up", <SignUp />)}
                                   />
