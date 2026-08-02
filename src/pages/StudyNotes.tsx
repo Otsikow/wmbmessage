@@ -341,6 +341,16 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     [note],
   );
 
+  const seriesNav = useMemo(
+    () => (note ? buildSeriesNavigation(note, related) : null),
+    [note, related],
+  );
+  const topicRecs = useMemo(
+    () => (note && !seriesNav ? buildTopicRecommendations(note, related, 4) : []),
+    [note, related, seriesNav],
+  );
+
+
   const shareUrl = useMemo(() => (note ? buildShareUrl(note.slug || note.id) : ""), [note]);
   const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.slug || note.id}` : "";
   const description = useMemo(() => {
