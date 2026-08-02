@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, BookOpen, ChevronRight, Tag, Share2, Printer, ArrowLeft } from "lucide-react";
+import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
 import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
+import { buildSeriesNavigation, buildTopicRecommendations } from "@/lib/studyNoteSeries";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
@@ -319,13 +320,14 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         if (canonicalPath && (isUuid || key !== n.slug || location.pathname !== canonicalPath)) {
           navigate(canonicalPath, { replace: true });
         }
+        // Load the full same-topic set (no arbitrary limit) so numbered
+        // series can be ordered deterministically client-side.
         const { data: rel } = await supabase
           .from("message_study_notes" as any)
           .select("*")
           .eq("status", "published")
           .eq("topic", n.topic)
-          .neq("id", n.id)
-          .limit(4);
+          .order("title", { ascending: true });
         if (!cancelled) setRelated(((rel as unknown as StudyNote[]) || []));
       }
     })();
@@ -338,6 +340,16 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
     () => (note ? extractScriptureRefs(note.body) : []),
     [note],
   );
+
+  const seriesNav = useMemo(
+    () => (note ? buildSeriesNavigation(note, related) : null),
+    [note, related],
+  );
+  const topicRecs = useMemo(
+    () => (note && !seriesNav ? buildTopicRecommendations(note, related, 4) : []),
+    [note, related, seriesNav],
+  );
+
 
   const shareUrl = useMemo(() => (note ? buildShareUrl(note.slug || note.id) : ""), [note]);
   const canonicalUrl = note ? `${APP_BASE_URL}/study-notes/${note.slug || note.id}` : "";
@@ -498,11 +510,99 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
 
         <StudyNoteContent body={note.body} />
 
-        {related.length > 0 && (
+        {seriesNav && seriesNav.total > 1 && (
+          <section
+            className="mt-12 border-t pt-8 print:hidden"
+            aria-label={`${seriesNav.seriesTitle} series navigation`}
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+              <h2 className="text-xl font-semibold">Related study notes</h2>
+              <span className="text-sm text-muted-foreground">
+                Part {seriesNav.current} of {seriesNav.items[seriesNav.items.length - 1].part}
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {seriesNav.previous ? (
+                <Link
+                  to={`/study-notes/${seriesNav.previous.slug || seriesNav.previous.id}`}
+                  aria-label={`Previous part: ${seriesNav.previous.title}`}
+                  title={seriesNav.previous.title}
+                  className="flex items-start gap-3 rounded-lg border p-4 hover:border-primary hover:bg-accent/40 transition"
+                >
+                  <ChevronLeft className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                      Previous part
+                    </span>
+                    <span className="block font-medium text-foreground break-words">
+                      Part {seriesNav.previous.part}
+                    </span>
+                    <span className="block text-xs text-muted-foreground break-words">
+                      {seriesNav.previous.title}
+                    </span>
+                  </span>
+                </Link>
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
+              )}
+
+              {seriesNav.next && (
+                <Link
+                  to={`/study-notes/${seriesNav.next.slug || seriesNav.next.id}`}
+                  aria-label={`Next part: ${seriesNav.next.title}`}
+                  title={seriesNav.next.title}
+                  className="flex items-start gap-3 rounded-lg border-2 border-primary bg-primary/5 p-4 hover:bg-primary/10 transition sm:text-right sm:flex-row-reverse"
+                >
+                  <ArrowRight className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <span className="min-w-0">
+                    <span className="block text-xs uppercase tracking-wide text-primary font-semibold">
+                      Next part
+                    </span>
+                    <span className="block font-medium text-foreground break-words">
+                      Part {seriesNav.next.part}
+                    </span>
+                    <span className="block text-xs text-muted-foreground break-words">
+                      {seriesNav.next.title}
+                    </span>
+                  </span>
+                </Link>
+              )}
+            </div>
+
+            <nav className="mt-4" aria-label="All parts in this series">
+              <ul className="flex flex-wrap gap-2">
+                {seriesNav.items.map((item) => (
+                  <li key={item.id}>
+                    {item.isCurrent ? (
+                      <span
+                        aria-current="page"
+                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground"
+                      >
+                        {item.part}
+                      </span>
+                    ) : (
+                      <Link
+                        to={`/study-notes/${item.slug || item.id}`}
+                        aria-label={`Go to ${item.title}`}
+                        title={item.title}
+                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 text-sm text-foreground hover:border-primary hover:bg-accent/40 transition"
+                      >
+                        {item.part}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </section>
+        )}
+
+        {!seriesNav && topicRecs.length > 0 && (
           <section className="mt-12 border-t pt-8 print:hidden">
             <h2 className="text-xl font-semibold mb-4">Related study notes</h2>
             <div className="grid gap-3 md:grid-cols-2">
-              {related.map((r) => (
+              {topicRecs.map((r) => (
                 <Link
                   key={r.id}
                   to={`/study-notes/${r.slug || r.id}`}
