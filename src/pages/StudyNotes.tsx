@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, BookOpen, ChevronRight, Tag, Share2, Printer, ArrowLeft } from "lucide-react";
+import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
 import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
 import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
+import { buildSeriesNavigation, buildTopicRecommendations } from "@/lib/studyNoteSeries";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
@@ -319,13 +320,14 @@ function StudyNoteDetail({ idOrSlug }: { idOrSlug: string }) {
         if (canonicalPath && (isUuid || key !== n.slug || location.pathname !== canonicalPath)) {
           navigate(canonicalPath, { replace: true });
         }
+        // Load the full same-topic set (no arbitrary limit) so numbered
+        // series can be ordered deterministically client-side.
         const { data: rel } = await supabase
           .from("message_study_notes" as any)
           .select("*")
           .eq("status", "published")
           .eq("topic", n.topic)
-          .neq("id", n.id)
-          .limit(4);
+          .order("title", { ascending: true });
         if (!cancelled) setRelated(((rel as unknown as StudyNote[]) || []));
       }
     })();
