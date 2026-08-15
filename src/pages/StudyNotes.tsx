@@ -218,18 +218,45 @@ function StudyNotesList() {
           />
         </div>
 
-        <div className="mb-6 flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible sm:pb-0 scrollbar-hide">
+        {/* Mobile: horizontal scrollable topic pills */}
+        <div
+          className="mb-6 flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide sm:hidden"
+          aria-label="Filter study notes by topic"
+        >
           {topics.map((t) => (
             <Button
               key={t}
               size="sm"
               variant={topic === t ? "default" : "outline"}
               onClick={() => setTopic(t)}
-              className="shrink-0 rounded-full text-xs h-8 px-3 sm:text-sm sm:h-9 sm:px-4"
+              className="shrink-0 rounded-full text-xs h-8 px-3"
+              aria-pressed={topic === t}
             >
               {t}
             </Button>
           ))}
+        </div>
+
+        {/* Desktop: compact filter toolbar */}
+        <div className="mb-6 hidden sm:flex sm:items-center sm:gap-3 h-10">
+          <label htmlFor="topic-select" className="text-sm font-medium text-foreground">
+            Topic
+          </label>
+          <Select value={topic} onValueChange={setTopic}>
+            <SelectTrigger id="topic-select" className="w-[220px] h-9 text-sm" aria-label="Select a topic">
+              <SelectValue placeholder="Select topic" />
+            </SelectTrigger>
+            <SelectContent>
+              {topics.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            {topics.length - 1} topics
+          </span>
         </div>
 
         {error && (
