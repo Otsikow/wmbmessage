@@ -15,6 +15,7 @@ import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
 import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
 import { buildSeriesNavigation, buildTopicRecommendations } from "@/lib/studyNoteSeries";
+import { useStudyNoteSearch, type StudyNoteSummary } from "@/hooks/useStudyNoteSearch";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
