@@ -19,14 +19,28 @@ export function normalizeText(value: string): string {
     .replace(/\s+/g, " ");
 }
 
-/** Build a prefix-matching Postgres tsquery from free text. */
-export function buildTsQuery(query: string): string {
-  const tokens = normalizeText(query)
+export function tokenize(query: string): string[] {
+  return normalizeText(query)
     .split(" ")
     .map((t) => t.replace(/[:]/g, " ").trim())
     .flatMap((t) => t.split(/\s+/))
     .filter(Boolean);
-  return tokens.map((t) => `${t}:*`).join(" & ");
+}
+
+/**
+ * Build Postgres tsqueries from free text.
+ * `phrase` keeps multi-word queries adjacent (strict, high precision);
+ * `all` requires every word anywhere in the note (broader fallback).
+ * The final token is prefix-matched so partial words work while typing.
+ */
+export function buildTsQueries(query: string): { phrase: string; all: string } {
+  const tokens = tokenize(query);
+  if (tokens.length === 0) return { phrase: "", all: "" };
+  const prefixed = tokens.map((t, i) => (i === tokens.length - 1 ? `${t}:*` : t));
+  return {
+    phrase: prefixed.join(" <-> "),
+    all: tokens.map((t) => `${t}:*`).join(" & "),
+  };
 }
 
 function escapeIlike(value: string): string {
