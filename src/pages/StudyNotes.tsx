@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
