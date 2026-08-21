@@ -1,0 +1,200 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { StudyNote } from "@/types/studyNotes";
+
+export type StudyNoteSummary = Pick<
+  StudyNote,
+  "id" | "slug" | "title" | "topic" | "tags" | "excerpt" | "created_at" | "updated_at"
+>;
+
+const LIST_COLUMNS =
+  "id, slug, title, topic, tags, excerpt, created_at, updated_at";
+
+/** Normalise for comparison: lowercase, strip punctuation, collapse spaces. */
+export function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}:]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** Build a prefix-matching Postgres tsquery from free text. */
+export function buildTsQuery(query: string): string {
+  const tokens = normalizeText(query)
+    .split(" ")
+    .map((t) => t.replace(/[:]/g, " ").trim())
+    .flatMap((t) => t.split(/\s+/))
+    .filter(Boolean);
+  return tokens.map((t) => `${t}:*`).join(" & ");
+}
+
+function escapeIlike(value: string): string {
+  return value.replace(/[%_,()]/g, " ").trim();
+}
+
+export function scoreNote(note: StudyNoteSummary, rawQuery: string): number {
+  const q = normalizeText(rawQuery);
+  if (!q) return 0;
+  const words = q.split(" ").filter(Boolean);
+  const title = normalizeText(note.title);
+  const topic = normalizeText(note.topic);
+  const tags = normalizeText((note.tags || []).join(" "));
+  const excerpt = normalizeText(note.excerpt || "");
+
+  if (title === q) return 100;
+  if (title.includes(q)) return 85;
+  // Sermon / message title style matches (all words present in title)
+  if (words.every((w) => title.includes(w))) return 70;
+  if (tags.includes(q) || topic.includes(q)) return 60;
+  if (words.every((w) => `${tags} ${topic}`.includes(w))) return 50;
+  // Scripture references usually live in the excerpt/body
+  if (excerpt.includes(q)) return 40;
+  if (words.every((w) => excerpt.includes(w))) return 30;
+  return 20; // matched in body via full-text search
+}
+
+interface Options {
+  query: string;
+  topic: string; // "All" for every topic
+  debounceMs?: number;
+}
+
+interface Result {
+  notes: StudyNoteSummary[] | null;
+  loading: boolean;
+  error: string | null;
+  isSearching: boolean;
+  allTopics: string[];
+}
+
+export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options): Result {
+  const [debounced, setDebounced] = useState(query);
+  const [notes, setNotes] = useState<StudyNoteSummary[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [allTopics, setAllTopics] = useState<string[]>([]);
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(query), debounceMs);
+    return () => clearTimeout(id);
+  }, [query, debounceMs]);
+
+  const trimmed = debounced.trim();
+
+  useEffect(() => {
+    const id = ++requestId.current;
+    let cancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const applyTopic = <T,>(builder: T): T =>
+          topic && topic !== "All" ? ((builder as any).eq("topic", topic) as T) : builder;
+
+        let rows: StudyNoteSummary[] = [];
+
+        if (!trimmed) {
+          const { data, error } = await applyTopic(
+            supabase
+              .from("message_study_notes" as any)
+              .select(LIST_COLUMNS)
+              .eq("status", "published"),
+          ).order("title", { ascending: true });
+          if (error) throw error;
+          rows = (data as unknown as StudyNoteSummary[]) || [];
+        } else {
+          const ts = buildTsQuery(trimmed);
+          const like = escapeIlike(trimmed);
+
+          const ftsPromise = ts
+            ? applyTopic(
+                supabase
+                  .from("message_study_notes" as any)
+                  .select(LIST_COLUMNS)
+                  .eq("status", "published")
+                  .textSearch("search_tsv", ts),
+              ).limit(200)
+            : Promise.resolve({ data: [], error: null } as any);
+
+          const likePromise = like
+            ? applyTopic(
+                supabase
+                  .from("message_study_notes" as any)
+                  .select(LIST_COLUMNS)
+                  .eq("status", "published")
+                  .or(
+                    [
+                      `title.ilike.%${like}%`,
+                      `topic.ilike.%${like}%`,
+                      `excerpt.ilike.%${like}%`,
+                    ].join(","),
+                  ),
+              ).limit(100)
+            : Promise.resolve({ data: [], error: null } as any);
+
+          const [ftsRes, likeRes] = await Promise.all([ftsPromise, likePromise]);
+          if (ftsRes.error && likeRes.error) throw ftsRes.error;
+
+          const merged = new Map<string, StudyNoteSummary>();
+          for (const row of [
+            ...(((ftsRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[]),
+            ...(((likeRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[]),
+          ]) {
+            merged.set(row.id, row);
+          }
+
+          rows = Array.from(merged.values()).sort((a, b) => {
+            const diff = scoreNote(b, trimmed) - scoreNote(a, trimmed);
+            if (diff !== 0) return diff;
+            return a.title.localeCompare(b.title);
+          });
+        }
+
+        if (cancelled || id !== requestId.current) return;
+        setNotes(rows);
+        setError(null);
+      } catch (err) {
+        if (cancelled || id !== requestId.current) return;
+        setError(err instanceof Error ? err.message : "Search failed");
+        setNotes([]);
+      } finally {
+        if (!cancelled && id === requestId.current) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trimmed, topic]);
+
+  // Topic list is independent of the current query/filter.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("message_study_notes" as any)
+        .select("topic")
+        .eq("status", "published");
+      if (cancelled || !data) return;
+      const set = new Set<string>();
+      (data as unknown as { topic: string }[]).forEach((r) => r.topic && set.add(r.topic));
+      setAllTopics(Array.from(set).sort((a, b) => a.localeCompare(b)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return useMemo(
+    () => ({
+      notes,
+      loading,
+      error,
+      isSearching: trimmed.length > 0,
+      allTopics,
+    }),
+    [notes, loading, error, trimmed, allTopics],
+  );
+}
