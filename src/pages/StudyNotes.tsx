@@ -88,8 +88,8 @@ async function buildShareImageFile(imageUrl: string, title: string): Promise<Fil
   }
 }
 
-function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
-  const preview = note.excerpt || buildExcerpt(note.body, 220);
+function NoteListItem({ note, query }: { note: StudyNoteSummary; query: string }) {
+  const preview = note.excerpt || "";
   const slug = note.slug || note.id;
   return (
     <Link to={`/study-notes/${slug}`} className="block group">
