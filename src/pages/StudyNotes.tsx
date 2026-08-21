@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, BookOpen, ChevronRight, ChevronLeft, Tag, Share2, Printer, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
 import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
 import { buildSeriesNavigation, buildTopicRecommendations } from "@/lib/studyNoteSeries";
+import { useStudyNoteSearch, type StudyNoteSummary } from "@/hooks/useStudyNoteSearch";
 
 const APP_BASE_URL = "https://messageguide.org";
 const DEFAULT_SHARE_IMAGE = `${APP_BASE_URL}/logo-512.png`;
@@ -88,8 +89,8 @@ async function buildShareImageFile(imageUrl: string, title: string): Promise<Fil
   }
 }
 
-function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
-  const preview = note.excerpt || buildExcerpt(note.body, 220);
+function NoteListItem({ note, query }: { note: StudyNoteSummary; query: string }) {
+  const preview = note.excerpt || "";
   const slug = note.slug || note.id;
   return (
     <Link to={`/study-notes/${slug}`} className="block group">
@@ -124,14 +125,29 @@ function NoteListItem({ note, query }: { note: StudyNote; query: string }) {
 }
 
 function Highlight({ text, query }: { text: string; query: string }) {
-  if (!query.trim()) return <>{text}</>;
-  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  const terms = useMemo(() => {
+    const q = query.trim();
+    if (!q) return [] as string[];
+    const words = q.split(/\s+/).filter((w) => w.length > 1);
+    return Array.from(new Set([q, ...words])).sort((a, b) => b.length - a.length);
+  }, [query]);
+
+  if (terms.length === 0) return <>{text}</>;
+
+  const re = new RegExp(
+    `(${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "gi",
+  );
   const parts = text.split(re);
+  const lowered = new Set(terms.map((t) => t.toLowerCase()));
+
   return (
     <>
       {parts.map((p, i) =>
-        p.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} className="bg-primary/20 rounded px-0.5">{p}</mark>
+        lowered.has(p.toLowerCase()) ? (
+          <mark key={i} className="bg-primary/20 text-foreground rounded px-0.5">
+            {p}
+          </mark>
         ) : (
           <span key={i}>{p}</span>
         ),
@@ -141,53 +157,54 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 function StudyNotesList() {
-  const [notes, setNotes] = useState<StudyNote[] | null>(null);
-  const [query, setQuery] = useState("");
-  const [topic, setTopic] = useState<string>("All");
-  const [error, setError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQuery = searchParams.get("search") ?? "";
+  const urlTopic = searchParams.get("topic") ?? "all";
 
+  const [query, setQuery] = useState(urlQuery);
+  const topic = urlTopic === "all" ? "All" : urlTopic;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep the URL in sync with the (debounced) query so refreshes/links work.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("message_study_notes" as any)
-        .select("*")
-        .eq("status", "published")
-        .order("title", { ascending: true });
-      if (cancelled) return;
-      if (error) setError(error.message);
-      else setNotes((data as unknown as StudyNote[]) || []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const id = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      if (query.trim()) next.set("search", query.trim());
+      else next.delete("search");
+      if (next.toString() !== searchParams.toString()) {
+        setSearchParams(next, { replace: true });
+      }
+    }, 300);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  const setTopic = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === "All") next.delete("topic");
+    else next.set("topic", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const { notes, loading, error, isSearching, allTopics } = useStudyNoteSearch({
+    query,
+    topic,
+    debounceMs: 300,
+  });
 
   const topics = useMemo(() => {
-    const set = new Set<string>();
-    notes?.forEach((n) => set.add(n.topic));
+    const set = new Set<string>(allTopics);
     STUDY_NOTE_TOPICS.forEach((t) => set.add(t));
     return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [notes]);
+  }, [allTopics]);
 
-  const filtered = useMemo(() => {
-    if (!notes) return [];
-    const q = query.trim().toLowerCase();
-    return notes.filter((n) => {
-      if (topic !== "All" && n.topic !== topic) return false;
-      if (!q) return true;
-      const haystack = [
-        n.title,
-        n.topic,
-        n.excerpt || "",
-        n.body,
-        n.tags.join(" "),
-      ]
-        .join(" \n ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [notes, query, topic]);
+  const results = notes ?? [];
+  const trimmedQuery = query.trim();
+
+  const clearSearch = () => {
+    setQuery("");
+    searchInputRef.current?.focus();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,17 +227,36 @@ function StudyNotesList() {
         <div className="relative mb-4">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title, topic, scripture (e.g. John 1:1), quote, or keyword…"
-            className="h-12 pl-10 text-base"
-            aria-label="Search study notes"
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && query) {
+                e.preventDefault();
+                clearSearch();
+              }
+            }}
+            placeholder="Search all study notes — title, topic, scripture (e.g. John 1:1), quote, or keyword…"
+            className="h-12 pl-10 pr-12 text-base [&::-webkit-search-cancel-button]:appearance-none"
+            aria-label="Search all study notes"
+            aria-describedby="study-notes-result-count"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Mobile: horizontal scrollable topic pills */}
         <div
-          className="mb-6 flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide sm:hidden"
+          className="mb-4 flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide sm:hidden"
           aria-label="Filter study notes by topic"
         >
           {topics.map((t) => (
@@ -232,24 +268,24 @@ function StudyNotesList() {
               className="shrink-0 rounded-full text-xs h-8 px-3"
               aria-pressed={topic === t}
             >
-              {t}
+              {t === "All" ? "All Topics" : t}
             </Button>
           ))}
         </div>
 
         {/* Desktop: compact filter toolbar */}
-        <div className="mb-6 hidden sm:flex sm:items-center sm:gap-3 h-10">
+        <div className="mb-4 hidden sm:flex sm:items-center sm:gap-3 h-10">
           <label htmlFor="topic-select" className="text-sm font-medium text-foreground">
             Topic
           </label>
           <Select value={topic} onValueChange={setTopic}>
-            <SelectTrigger id="topic-select" className="w-[220px] h-9 text-sm" aria-label="Select a topic">
-              <SelectValue placeholder="Select topic" />
+            <SelectTrigger id="topic-select" className="w-[220px] h-9 text-sm" aria-label="Filter by topic">
+              <SelectValue placeholder="All Topics" />
             </SelectTrigger>
             <SelectContent>
               {topics.map((t) => (
                 <SelectItem key={t} value={t}>
-                  {t}
+                  {t === "All" ? "All Topics" : t}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -263,31 +299,54 @@ function StudyNotesList() {
           <p className="text-sm text-destructive">Unable to load study notes: {error}</p>
         )}
 
-        {!notes ? (
+        <p
+          id="study-notes-result-count"
+          aria-live="polite"
+          className="mb-3 text-sm text-muted-foreground"
+        >
+          {loading
+            ? "Searching…"
+            : isSearching
+              ? `${results.length} ${results.length === 1 ? "result" : "results"} for “${trimmedQuery}”${
+                  topic !== "All" ? ` in ${topic}` : ""
+                }`
+              : `${results.length} ${results.length === 1 ? "note" : "notes"}${
+                  topic !== "All" ? ` in ${topic}` : ""
+                }`}
+        </p>
+
+        {loading && notes === null ? (
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-40 w-full rounded-lg" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : results.length === 0 ? (
           <div className="rounded-lg border border-dashed p-10 text-center">
             <p className="text-muted-foreground">
-              {query
-                ? `No study notes match “${query}”. Try a different keyword.`
+              {isSearching
+                ? `No study notes found for “${trimmedQuery}”${topic !== "All" ? ` in ${topic}` : ""}.`
                 : "No study notes have been published yet. Check back soon."}
             </p>
+            {isSearching && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Button variant="outline" size="sm" onClick={clearSearch}>
+                  Clear search
+                </Button>
+                {topic !== "All" && (
+                  <Button size="sm" onClick={() => setTopic("All")}>
+                    Search all topics
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         ) : (
-          <>
-            <p className="mb-3 text-sm text-muted-foreground">
-              {filtered.length} {filtered.length === 1 ? "note" : "notes"}
-            </p>
-            <div className="grid gap-4 md:grid-cols-2">
-              {filtered.map((n) => (
-                <NoteListItem key={n.id} note={n} query={query} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-4 md:grid-cols-2">
+            {results.map((n) => (
+              <NoteListItem key={n.id} note={n} query={trimmedQuery} />
+            ))}
+          </div>
         )}
       </main>
     </div>
