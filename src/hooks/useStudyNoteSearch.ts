@@ -119,18 +119,17 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
           if (error) throw error;
           rows = (data as unknown as StudyNoteSummary[]) || [];
         } else {
-          const ts = buildTsQuery(trimmed);
+          const { phrase, all } = buildTsQueries(trimmed);
           const like = escapeIlike(trimmed);
 
-          const ftsPromise = ts
-            ? applyTopic(
-                supabase
-                  .from("message_study_notes" as any)
-                  .select(LIST_COLUMNS)
-                  .eq("status", "published")
-                  .textSearch("search_tsv", ts),
-              ).limit(200)
-            : Promise.resolve({ data: [], error: null } as any);
+          const fts = (tsQuery: string) =>
+            applyTopic(
+              supabase
+                .from("message_study_notes" as any)
+                .select(LIST_COLUMNS)
+                .eq("status", "published")
+                .textSearch("search_tsv", tsQuery),
+            ).limit(200);
 
           const likePromise = like
             ? applyTopic(
@@ -148,16 +147,28 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
               ).limit(100)
             : Promise.resolve({ data: [], error: null } as any);
 
-          const [ftsRes, likeRes] = await Promise.all([ftsPromise, likePromise]);
-          if (ftsRes.error && likeRes.error) throw ftsRes.error;
+          // Strict phrase pass first; only widen to "all words anywhere"
+          // when the phrase yields nothing.
+          const [ftsRes, likeRes] = await Promise.all([
+            phrase ? fts(phrase) : Promise.resolve({ data: [], error: null } as any),
+            likePromise,
+          ]);
+
+          let ftsRows = ((ftsRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[];
+          const likeRows = ((likeRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[];
+
+          if (ftsRows.length === 0 && likeRows.length === 0 && all && all !== phrase) {
+            const wide = await fts(all);
+            ftsRows = ((wide.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[];
+          }
+
+          if (cancelled || id !== requestId.current) return;
 
           const merged = new Map<string, StudyNoteSummary>();
-          for (const row of [
-            ...(((ftsRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[]),
-            ...(((likeRes.data as unknown as StudyNoteSummary[]) || []) as StudyNoteSummary[]),
-          ]) {
+          for (const row of [...ftsRows, ...likeRows]) {
             merged.set(row.id, row);
           }
+
 
           rows = Array.from(merged.values()).sort((a, b) => {
             const diff = scoreNote(b, trimmed) - scoreNote(a, trimmed);
