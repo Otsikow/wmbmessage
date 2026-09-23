@@ -48,17 +48,17 @@ export default function Header({
   return <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass animate-nav-slide-up">
       <div className="container flex flex-col gap-1 px-3 py-2 md:gap-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex min-w-0 items-center gap-1.5 md:gap-3">
             {showBackButton ? <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" /> : null}
-            <Link to="/" aria-label="Go to homepage" className="flex items-center space-x-1.5 md:space-x-3 group">
-              <img src={logoImage} alt="MessageGuide Logo" className="h-8 md:h-12 w-auto transition-transform duration-300 group-hover:scale-105" />
-              <span className="text-base md:text-xl font-bold text-gradient-blue-purple">
+            <Link to="/" aria-label="Go to homepage" className="flex min-w-0 items-center space-x-1.5 md:space-x-3 group">
+              <img src={logoImage} alt="MessageGuide Logo" className="h-7 sm:h-8 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" />
+              <span className="truncate text-[15px] sm:text-base md:text-xl font-bold text-gradient-blue-purple">
                 MessageGuide
               </span>
             </Link>
           </div>
 
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <ThemeToggle />
 
             <nav className="hidden lg:flex items-center space-x-1">
@@ -158,7 +158,7 @@ export default function Header({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu> : <Link to="/auth/sign-in" className="lg:hidden">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="px-2 sm:px-3">
                   Sign In
                 </Button>
               </Link>}
