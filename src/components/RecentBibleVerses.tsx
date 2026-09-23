@@ -108,7 +108,7 @@ export default function RecentBibleVerses() {
 
   return (
     <div className="relative w-full">
-      <div className="pointer-events-none absolute -inset-x-10 -top-8 -bottom-6 -z-10 bg-[radial-gradient(circle_at_12%_15%,rgba(59,130,246,0.08),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.06),transparent_30%),radial-gradient(circle_at_55%_82%,rgba(99,102,241,0.06),transparent_42%)] blur-3xl opacity-80 animate-[pulse_7s_ease-in-out_infinite]" />
+      <div className="pointer-events-none absolute inset-x-0 -top-8 -bottom-6 -z-10 bg-[radial-gradient(circle_at_12%_15%,rgba(59,130,246,0.08),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.06),transparent_30%),radial-gradient(circle_at_55%_82%,rgba(99,102,241,0.06),transparent_42%)] blur-3xl opacity-80 animate-[pulse_7s_ease-in-out_infinite]" />
       <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gradient-blue-purple">Recent Bible Verses</h2>
       <Carousel
         opts={{
@@ -154,8 +154,8 @@ export default function RecentBibleVerses() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden sm:flex" />
-        <CarouselNext className="hidden sm:flex" />
+        <CarouselPrevious className="hidden xl:flex" />
+        <CarouselNext className="hidden xl:flex" />
       </Carousel>
     </div>
   );
