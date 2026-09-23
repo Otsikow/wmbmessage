@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { consumeReturnPath } from "@/lib/authRedirect";
+import { getSanitizedAuthErrorMessage } from "@/lib/authErrors";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 
 const readUrlError = () => {
@@ -20,6 +21,9 @@ const readUrlError = () => {
   );
 };
 
+const wait = (milliseconds: number) =>
+  new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -31,7 +35,14 @@ export default function AuthCallback() {
     const finish = async () => {
       const urlError = readUrlError();
       if (urlError) {
-        if (!cancelled) setErrorMessage(urlError);
+        if (!cancelled) {
+          const denied = /access_denied|denied|cancel/i.test(urlError);
+          setErrorMessage(
+            denied
+              ? "Google sign-in was cancelled. You can return to sign in and try again."
+              : getSanitizedAuthErrorMessage(new Error(urlError), "oauth")
+          );
+        }
         return;
       }
 
@@ -40,13 +51,28 @@ export default function AuthCallback() {
         return;
       }
 
-      // supabase-js completes the PKCE exchange from the URL on load; poll briefly.
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const { data, error } = await supabase.auth.getSession();
+      try {
+        const code = new URLSearchParams(window.location.search).get("code");
+        let { data, error } = await supabase.auth.getSession();
+
+        if (!data.session && code) {
+          const exchange = await supabase.auth.exchangeCodeForSession(code);
+          data = exchange.data;
+          error = exchange.error;
+        }
+
+        for (let attempt = 0; !data.session && attempt < 20; attempt += 1) {
+          await wait(250);
+          const sessionResult = await supabase.auth.getSession();
+          data = sessionResult.data;
+          error = sessionResult.error;
+          if (error) break;
+        }
+
         if (cancelled) return;
 
         if (error) {
-          setErrorMessage(error.message);
+          setErrorMessage(getSanitizedAuthErrorMessage(error, "oauth"));
           return;
         }
 
@@ -55,7 +81,11 @@ export default function AuthCallback() {
           if (cancelled) return;
 
           if (userError || !userData.user) {
-            setErrorMessage(userError?.message ?? "We couldn't verify your account.");
+            setErrorMessage(
+              userError
+                ? getSanitizedAuthErrorMessage(userError, "oauth")
+                : "We couldn't verify your account. Please return to sign in and try again."
+            );
             return;
           }
 
@@ -64,11 +94,11 @@ export default function AuthCallback() {
           return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
-
-      if (!cancelled) {
-        setErrorMessage("We couldn't complete the sign-in. Please try again.");
+        setErrorMessage("Google did not return a valid sign-in session. Please return to sign in and try again.");
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(getSanitizedAuthErrorMessage(error, "oauth"));
+        }
       }
     };
 
