@@ -6,7 +6,13 @@ const RETURN_PATH_KEY = "mg:auth:return-path";
 export const sanitizeReturnPath = (value: string | null | undefined): string | null => {
   if (!value) return null;
   if (!value.startsWith("/") || value.startsWith("//")) return null;
-  if (value.includes("\\") || /[\u0000-\u001F\u007F]/.test(value)) return null;
+  if (
+    value.includes("\\") ||
+    Array.from(value).some((character) => {
+      const code = character.charCodeAt(0);
+      return code <= 31 || code === 127;
+    })
+  ) return null;
 
   try {
     const origin = window.location.origin;

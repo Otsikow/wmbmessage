@@ -42,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const supabase = getSupabaseClient();
 
-    if ((supabase as any).__disabled) {
+    if ("__disabled" in supabase && supabase.__disabled) {
       console.warn("Supabase client is disabled; skipping auth session checks.");
       setLoading(false);
       return;
