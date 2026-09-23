@@ -431,11 +431,11 @@ export default function Songs() {
               {/* Index */}
               <aside
                 className={cn(
-                  "border-b border-border/50 md:block md:border-b-0 md:border-r md:pr-2",
+                  "border-b border-border/50 md:block md:border-b-0 md:border-r md:pr-2 md:sticky md:top-28 md:self-start md:h-[calc(100dvh-8rem)]",
                   showListOnMobile ? "block" : "hidden",
                 )}
               >
-                <ScrollArea className="md:h-[calc(100dvh-220px)]">
+                <ScrollArea className="md:h-full">
                   <SongIndex
                     songs={filtered}
                     selectedId={selectedId}
