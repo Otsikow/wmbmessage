@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudyNoteContent } from "@/components/study-notes/StudyNoteContent";
-import { STUDY_NOTE_TOPICS, type StudyNote } from "@/types/studyNotes";
+import { type StudyNote } from "@/types/studyNotes";
 import { buildExcerpt, extractScriptureRefs, extractFirstImageUrl } from "@/lib/studyNoteFormatter";
 import { useToast } from "@/hooks/use-toast";
 import { buildSeriesNavigation, buildTopicRecommendations } from "@/lib/studyNoteSeries";
@@ -186,17 +186,24 @@ function StudyNotesList() {
     setSearchParams(next, { replace: true });
   };
 
-  const { notes, loading, error, isSearching, allTopics } = useStudyNoteSearch({
+  const { notes, loading, error, isSearching, allTopics, topicsLoaded, topicsError } = useStudyNoteSearch({
     query,
     topic,
     debounceMs: 300,
   });
 
-  const topics = useMemo(() => {
-    const set = new Set<string>(allTopics);
-    STUDY_NOTE_TOPICS.forEach((t) => set.add(t));
-    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [allTopics]);
+  // Only topics that actually contain published notes — predefined but empty
+  // categories stay hidden until a note in them is published.
+  const topics = useMemo(() => deriveTopicOptions(allTopics), [allTopics]);
+
+  // Once the topic list has successfully loaded, a stale/invalid topic in the
+  // URL resets to All while preserving the search and other params.
+  useEffect(() => {
+    if (!shouldResetTopic({ topic, publishedTopics: allTopics, topicsLoaded, topicsError })) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("topic");
+    setSearchParams(next, { replace: true });
+  }, [topic, allTopics, topicsLoaded, topicsError, searchParams, setSearchParams]);
 
   const results = notes ?? [];
   const trimmedQuery = query.trim();
