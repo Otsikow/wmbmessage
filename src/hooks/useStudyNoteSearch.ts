@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { StudyNote } from "@/types/studyNotes";
+import { extractPublishedTopics } from "@/lib/studyNoteTopics";
 
 export type StudyNoteSummary = Pick<
   StudyNote,
@@ -80,6 +81,8 @@ interface Result {
   error: string | null;
   isSearching: boolean;
   allTopics: string[];
+  topicsLoaded: boolean;
+  topicsError: string | null;
 }
 
 export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options): Result {
@@ -88,6 +91,8 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allTopics, setAllTopics] = useState<string[]>([]);
+  const [topicsLoaded, setTopicsLoaded] = useState(false);
+  const [topicsError, setTopicsError] = useState<string | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -198,14 +203,23 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("message_study_notes" as any)
-        .select("topic")
+        .select("topic, status")
         .eq("status", "published");
-      if (cancelled || !data) return;
-      const set = new Set<string>();
-      (data as unknown as { topic: string }[]).forEach((r) => r.topic && set.add(r.topic));
-      setAllTopics(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      if (cancelled) return;
+      if (error) {
+        setTopicsError(error.message);
+        setTopicsLoaded(true);
+        return;
+      }
+      setAllTopics(
+        extractPublishedTopics(
+          (data as unknown as { topic: string; status: string }[]) || [],
+        ),
+      );
+      setTopicsError(null);
+      setTopicsLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -219,7 +233,9 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
       error,
       isSearching: trimmed.length > 0,
       allTopics,
+      topicsLoaded,
+      topicsError,
     }),
-    [notes, loading, error, trimmed, allTopics],
+    [notes, loading, error, trimmed, allTopics, topicsLoaded, topicsError],
   );
 }
