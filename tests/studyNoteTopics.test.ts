@@ -4,7 +4,7 @@ import {
   deriveTopicOptions,
   extractPublishedTopics,
   shouldResetTopic,
-} from "../src/hooks/useStudyNoteSearch";
+} from "@/hooks/useStudyNoteSearch";
 
 describe("extractPublishedTopics", () => {
   test("empty predefined topics never appear (only published rows count)", () => {
