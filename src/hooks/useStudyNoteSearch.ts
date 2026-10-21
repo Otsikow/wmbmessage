@@ -80,6 +80,47 @@ interface Result {
   error: string | null;
   isSearching: boolean;
   allTopics: string[];
+  topicsLoaded: boolean;
+  topicsError: string | null;
+}
+
+/**
+ * Extract the sorted, deduplicated list of topics that actually have at
+ * least one published note. Draft-only topics are excluded, so predefined
+ * categories with no published posts never appear and reappear automatically
+ * once a note in that topic is published.
+ */
+export function extractPublishedTopics(
+  rows: { topic: string | null; status?: string | null }[],
+): string[] {
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.status && row.status !== "published") continue;
+    if (row.topic) set.add(row.topic);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+/** Topic filter options: "All" plus every non-empty published topic. */
+export function deriveTopicOptions(publishedTopics: string[]): string[] {
+  return ["All", ...publishedTopics];
+}
+
+/**
+ * Decide whether a topic from the URL is stale (has no published notes) and
+ * must reset to "All". Never resets while the topic list is still loading or
+ * after the topic query failed — only on a successfully loaded list.
+ */
+export function shouldResetTopic(args: {
+  topic: string;
+  publishedTopics: string[];
+  topicsLoaded: boolean;
+  topicsError: string | null;
+}): boolean {
+  const { topic, publishedTopics, topicsLoaded, topicsError } = args;
+  if (!topicsLoaded || topicsError) return false;
+  if (topic === "All") return false;
+  return !publishedTopics.includes(topic);
 }
 
 export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options): Result {
@@ -88,6 +129,8 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allTopics, setAllTopics] = useState<string[]>([]);
+  const [topicsLoaded, setTopicsLoaded] = useState(false);
+  const [topicsError, setTopicsError] = useState<string | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -198,14 +241,23 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("message_study_notes" as any)
-        .select("topic")
+        .select("topic, status")
         .eq("status", "published");
-      if (cancelled || !data) return;
-      const set = new Set<string>();
-      (data as unknown as { topic: string }[]).forEach((r) => r.topic && set.add(r.topic));
-      setAllTopics(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      if (cancelled) return;
+      if (error) {
+        setTopicsError(error.message);
+        setTopicsLoaded(true);
+        return;
+      }
+      setAllTopics(
+        extractPublishedTopics(
+          (data as unknown as { topic: string; status: string }[]) || [],
+        ),
+      );
+      setTopicsError(null);
+      setTopicsLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -219,7 +271,9 @@ export function useStudyNoteSearch({ query, topic, debounceMs = 300 }: Options):
       error,
       isSearching: trimmed.length > 0,
       allTopics,
+      topicsLoaded,
+      topicsError,
     }),
-    [notes, loading, error, trimmed, allTopics],
+    [notes, loading, error, trimmed, allTopics, topicsLoaded, topicsError],
   );
 }
