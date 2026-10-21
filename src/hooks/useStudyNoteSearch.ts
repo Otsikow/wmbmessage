@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { StudyNote } from "@/types/studyNotes";
+import { extractPublishedTopics } from "@/lib/studyNoteTopics";
 
 export type StudyNoteSummary = Pick<
   StudyNote,
