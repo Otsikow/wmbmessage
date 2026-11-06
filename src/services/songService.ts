@@ -5,7 +5,7 @@ import { toTitleCase } from "@/lib/titleCase";
 /**
  * Song service.
  *
- * Primary source: /data/songs.json (the full 366-song dataset parsed from the
+ * Primary source: /data/songs.json (the full 385-song dataset parsed from the
  * official SV Fellowship Song Book PDF, served from /public so the bundle stays
  * small). If the fetch fails (offline / network error), we fall back to the
  * smaller bundled dataset baked into the JS so the Songs feature is always
