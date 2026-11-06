@@ -9,7 +9,7 @@
 }
 body:has(.home-editorial) { padding-bottom: 0; background: hsl(var(--background)); }
 body:has(.home-editorial) .animated-bg { display: none; }
-.home-editorial-overlay { font-family: "Source Sans 3", system-ui, sans-serif; }
+.home-editorial-overlay { font-family: "Source Sans 3", system-ui, sans-serif; background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); animation: none !important; }
 .home-editorial-overlay [role="menuitem"] { min-height: 44px; gap: 10px; }
 .home-editorial-overlay svg { width: 16px; height: 16px; }
 .home-editorial h1, .home-editorial h2, .home-editorial h3, .home-scripture blockquote, .home-footer-brand {
