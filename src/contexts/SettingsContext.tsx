@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "./AuthContext";
+import { resolveThemePreference } from "@/lib/themePreference";
 import {
   DEFAULT_SCRIPTURE_FONT,
   SCRIPTURE_FONT_STACKS,
@@ -85,9 +86,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     try {
       const saved = window.localStorage.getItem("app-settings");
-      return saved
-        ? sanitizeSettings({ ...defaultSettings, ...JSON.parse(saved) })
-        : sanitizeSettings(defaultSettings);
+      let parsed: Partial<AppSettings> = {};
+      try {
+        parsed = saved ? JSON.parse(saved) : {};
+      } catch {
+        // Corrupt settings must not prevent migrating a valid legacy theme.
+      }
+      return sanitizeSettings({
+        ...defaultSettings,
+        ...parsed,
+        theme: resolveThemePreference(parsed?.theme, window.localStorage.getItem("messageguide-theme"), window.matchMedia("(prefers-color-scheme: dark)").matches),
+      });
     } catch (error) {
       console.error("Failed to load saved settings from localStorage", error);
       return sanitizeSettings(defaultSettings);
@@ -193,6 +202,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       try {
         window.localStorage.setItem("app-settings", JSON.stringify(settings));
+        // Retire the old competing preference after migration.
+        window.localStorage.removeItem("messageguide-theme");
       } catch (error) {
         console.error("Failed to persist settings to localStorage", error);
       }
@@ -201,13 +212,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (typeof document !== "undefined") {
       const root = document.documentElement;
       const body = document.body;
-
-      // Apply theme
-      if (settings.theme === "dark") {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
 
       // Apply font sizing
       root.style.setProperty("--base-font-size", `${settings.fontSize}px`);
@@ -240,6 +244,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateSettings = async (updates: Partial<AppSettings>) => {
     const newSettings = sanitizeSettings({ ...settings, ...updates });
+    // Persist synchronously so a reload immediately after a toggle is safe.
+    try {
+      window.localStorage.setItem("app-settings", JSON.stringify(newSettings));
+    } catch (error) {
+      console.error("Failed to persist settings", error);
+    }
     setSettings(newSettings);
 
     // Save to Supabase if user is logged in
