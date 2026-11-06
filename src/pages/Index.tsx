@@ -28,7 +28,7 @@ const resources = [
 
 export default function Index() {
   const { user } = useAuth();
-  const { dailyContent } = useDailyContent();
+  const { dailyContent, loading: dailyLoading } = useDailyContent();
   const { todayAssignment } = useReadingPlans();
   const [dailyOpen, setDailyOpen] = useState(false);
   const hasVerse = Boolean(dailyContent?.verse_text?.trim() && dailyContent.verse_book && dailyContent.verse_chapter && dailyContent.verse_verse);
@@ -42,6 +42,10 @@ export default function Index() {
       <Helmet>
         <title>MessageGuide — Bible & Message Study</title>
         <meta name="description" content="Read the King James Bible, explore William Marrion Branham’s sermons, and browse the MessageGuide Study Library." />
+        <meta property="og:title" content="MessageGuide — Bible & Message Study" />
+        <meta property="og:description" content="Read the King James Bible, explore William Marrion Branham’s sermons, and browse the MessageGuide Study Library." />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Newsreader:ital,opsz,wght@1,6..72,400&family=Source+Sans+3:wght@400;600&display=swap" />
       </Helmet>
       <a className="home-skip" href="#home-main">Skip to content</a>
@@ -82,7 +86,7 @@ export default function Index() {
             <div className="home-context-links"><Link to="/message-churches/submit">Submit a church</Link><Link to="/daily">Daily quote &amp; calendar</Link><Link to="/calendar">Reading calendar</Link></div>
             <details className="home-daily-disclosure" onToggle={(event) => setDailyOpen(event.currentTarget.open)}>
               <summary>Daily Scripture &amp; Message inspiration</summary>
-              {dailyOpen && <SectionErrorBoundary section="Daily inspiration"><DailyVerseCard /></SectionErrorBoundary>}
+              {dailyOpen && (dailyContent ? <SectionErrorBoundary section="Daily inspiration"><DailyVerseCard /></SectionErrorBoundary> : <p className="home-state" role="status">{dailyLoading ? "Loading daily inspiration…" : "Daily inspiration is temporarily unavailable."}</p>)}
             </details>
           </section>
           {user && <section className="home-personal" aria-label="Your study">
