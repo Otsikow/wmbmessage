@@ -4,6 +4,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Homepage-only editorial theme. Other routes retain their existing tokens. */
+.home-editorial, .home-editorial-overlay {
+  --background: 42 42% 95%;
+  --foreground: 203 33% 14%;
+  --primary: 157 38% 20%;
+  --primary-foreground: 42 42% 95%;
+  --muted: 40 21% 90%;
+  --muted-foreground: 35 8% 36%;
+  --accent: 40 21% 90%;
+  --accent-foreground: 203 33% 14%;
+  --border: 35 18% 76%;
+  --input: 35 18% 76%;
+  --ring: 157 38% 20%;
+  --popover: 42 42% 95%;
+  --popover-foreground: 203 33% 14%;
+  --home-rule: 35 35% 50%;
+  --home-rule-soft: 35 18% 76%;
+  --radius: 0.25rem;
+}
+.dark .home-editorial, .dark .home-editorial-overlay {
+  --background: 183 25% 8%;
+  --foreground: 42 32% 92%;
+  --primary: 154 27% 73%;
+  --primary-foreground: 183 25% 8%;
+  --muted: 180 16% 15%;
+  --muted-foreground: 40 13% 71%;
+  --accent: 180 16% 15%;
+  --accent-foreground: 42 32% 92%;
+  --border: 165 10% 30%;
+  --input: 165 10% 30%;
+  --ring: 154 27% 73%;
+  --popover: 183 25% 8%;
+  --popover-foreground: 42 32% 92%;
+  --home-rule: 35 35% 61%;
+  --home-rule-soft: 165 10% 30%;
+}
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
