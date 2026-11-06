@@ -86,7 +86,6 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system">
         <AnimatedBackground />
         <ContextProviderBoundary
           contextName="Authentication"
@@ -98,6 +97,7 @@ function App() {
               description="Personalized reading preferences failed to load."
             >
               <SettingsProvider>
+                <ThemeProvider>
                 <ContextProviderBoundary
                   contextName="Calendar"
                   description="Calendar data could not be initialized."
@@ -380,11 +380,11 @@ function App() {
                     </ContextProviderBoundary>
                   </CalendarProvider>
               </ContextProviderBoundary>
+                </ThemeProvider>
             </SettingsProvider>
           </ContextProviderBoundary>
         </AuthProvider>
       </ContextProviderBoundary>
-      </ThemeProvider>
     </QueryClientProvider>
   );
 }
