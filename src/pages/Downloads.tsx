@@ -1,9 +1,12 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Download, FileText, BookOpen, Eye, FileDown } from "lucide-react";
+import { Download, FileText, BookOpen, Eye, FileDown, Presentation } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import BackButton from "@/components/BackButton";
+import { CHURCH_PRESENTER } from "@/lib/churchPresenter";
 
 type DownloadItem = {
   id: number;
@@ -46,6 +49,19 @@ const downloads: DownloadItem[] = [
 ];
 
 export default function Downloads() {
+  const location = useLocation();
+
+  // Land on the Church Presenter card when arriving from the home-page link.
+  useEffect(() => {
+    if (location.hash !== `#${CHURCH_PRESENTER.cardId}`) return;
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById(CHURCH_PRESENTER.cardId)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.hash]);
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="w-full py-6 sm:py-8">
@@ -62,6 +78,84 @@ export default function Downloads() {
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="space-y-4">
+              <Card
+                variant="glass"
+                hoverable
+                id={CHURCH_PRESENTER.cardId}
+                className="scroll-mt-32"
+              >
+                <CardHeader className="flex flex-row items-start gap-4 pb-4">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Presentation className="h-6 w-6" aria-hidden />
+                  </span>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-semibold">
+                        {CHURCH_PRESENTER.title}
+                      </h3>
+                      <Badge variant="secondary">{CHURCH_PRESENTER.type}</Badge>
+                      <Badge variant="secondary">Offline</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {CHURCH_PRESENTER.description}
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid gap-3 sm:grid-cols-2 text-xs sm:text-sm text-muted-foreground">
+                    <div>
+                      <p className="font-medium text-foreground">File size</p>
+                      <p>{CHURCH_PRESENTER.size}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Format</p>
+                      <p>{CHURCH_PRESENTER.format}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Includes</p>
+                      <p>{CHURCH_PRESENTER.contents}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Runs in</p>
+                      <p>{CHURCH_PRESENTER.browsers}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      How to use it
+                    </p>
+                    <ol className="grid gap-2 text-sm text-muted-foreground">
+                      {CHURCH_PRESENTER.steps.map((step, index) => (
+                        <li key={step} className="flex items-start gap-2">
+                          <span
+                            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary"
+                            aria-hidden
+                          >
+                            {index + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-wrap items-center gap-3">
+                  <Button asChild>
+                    <a
+                      href={CHURCH_PRESENTER.driveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Download Church Presenter (ZIP)"
+                    >
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Download Church Presenter (ZIP)
+                    </a>
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Opens Google Drive in a new tab
+                  </span>
+                </CardFooter>
+              </Card>
               {downloads.map((item) => {
                 const Icon = item.icon;
                 return (

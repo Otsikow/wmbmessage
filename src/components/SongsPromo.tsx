@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Music, Search, ArrowRight } from "lucide-react";
+import { Music, Search, ArrowRight, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -30,6 +30,13 @@ export default function SongsPromo() {
                 Hundreds of songs, fully searchable by number, title, or
                 lyrics — formatted for clear, singable reading.
               </p>
+              <Link
+                to="/downloads#church-presenter"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+              >
+                <FileDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                Offline Church Presenter for projectors
+              </Link>
             </div>
           </div>
 
