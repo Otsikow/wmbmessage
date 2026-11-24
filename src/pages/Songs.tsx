@@ -13,8 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { loadSongs, searchSongs, songPath, songQuery, songReference, songSectionLabel } from "@/services/songService";
+import { loadSongs, songPath, songQuery, songReference, songSectionLabel } from "@/services/songService";
 import type { Song, SongSection } from "@/types/songs";
+import {
+  arrangementLabel, arrangementOptions, browseSongs, buildSongCatalogue,
+  type SongCollection, type SongEntry, type SongOrder, type SongResult,
+} from "@/lib/songCatalogue";
 import { downloadSongPdf, songToPlainText } from "@/lib/songExport";
 import { buildShareUrl, BRAND_NAME } from "@/lib/share";
 import Header from "@/components/Header";
@@ -93,7 +97,12 @@ function SectionBlock({ section, index }: { section: SongSection; index: number 
   );
 }
 
-function SongReader({ song }: { song: Song }) {
+function SongReader({ entry, arrangement, onSelect }: {
+  entry: SongEntry;
+  arrangement: Song;
+  onSelect: (song: Song) => void;
+}) {
+  const song = { ...arrangement, title: entry.title };
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   let verseCount = 0;
@@ -211,6 +220,26 @@ function SongReader({ song }: { song: Song }) {
           {song.title}
         </h1>
         <p className="sr-only">From the {BRAND_NAME} song book.</p>
+        {entry.arrangements.length > 1 ? (
+          <label className="mt-4 grid max-w-full gap-1.5 text-sm font-medium sm:max-w-md">
+            <span id="song-arrangement-label">Arrangement</span>
+            <select
+              aria-labelledby="song-arrangement-label"
+              value={arrangement.id}
+              onChange={(event) => {
+                const selected = entry.arrangements.find((item) => item.id === event.target.value);
+                if (selected) onSelect(selected);
+              }}
+              className="min-h-11 min-w-0 rounded-md border bg-background px-3 text-sm"
+            >
+              {arrangementOptions(entry).map(({ song: option, label }) => (
+                <option key={option.id} value={option.id}>{label}</option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">{arrangementLabel(arrangement)}</p>
+        )}
       </header>
 
       <div className="space-y-4">
@@ -229,60 +258,60 @@ function SongReader({ song }: { song: Song }) {
   );
 }
 
-function SongIndex({
-  songs,
-  selectedId,
-  onSelect,
-}: {
-  songs: Song[];
-  selectedId: string | null;
+function SongIndex({ results, selectedEntryId, grouped, onSelect }: {
+  results: SongResult[];
+  selectedEntryId?: string;
+  grouped: boolean;
   onSelect: (song: Song) => void;
 }) {
-  if (!songs.length) {
-    return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        No songs match your search.
-      </div>
-    );
+  if (!results.length) {
+    return <p className="px-4 py-8 text-center text-sm text-muted-foreground">No songs match your search.</p>;
   }
+
+  const groups = new Map<string, SongResult[]>();
+  for (const result of results) {
+    const initial = result.entry.title.normalize("NFD").replace(/^[\p{P}\s]+/u, "").charAt(0).toUpperCase();
+    const label = grouped ? (/^\p{L}$/u.test(initial) ? initial : "#") : "";
+    const group = groups.get(label);
+    if (group) group.push(result);
+    else groups.set(label, [result]);
+  }
+
   return (
-    <ul className="space-y-1 p-2">
-      {songs.map((song) => {
-        const isActive = song.id === selectedId;
-        return (
-          <li key={song.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(song)}
-              aria-current={isActive ? "true" : undefined}
-              className={cn(
-                "group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-all min-h-[44px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "hover:bg-muted/60",
-              )}
-            >
-              <span
-                className={cn(
-                  "mt-0.5 inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-md px-1.5 text-xs font-bold tabular-nums",
-                  isActive
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-muted text-muted-foreground group-hover:bg-background",
-                )}
-              >
-                {song.number ?? <Music className="h-3.5 w-3.5" aria-hidden="true" />}
-              </span>
-              <span className="flex-1 text-sm font-medium leading-tight">
-                {song.title}
-                <span className={cn("mt-1 block text-xs", isActive ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                  {song.collection === "presenter" ? "Church Presenter" : "Fellowship Song Book"}
-                </span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-3 px-2 py-3">
+      {[...groups].map(([label, songs]) => (
+        <div key={label}>
+          {label && <h2 className="mb-1 border-b px-3 py-1.5 text-xs font-semibold text-muted-foreground">{label}</h2>}
+          <ul className="space-y-0.5">
+            {songs.map(({ entry, song }) => {
+              const active = entry.id === selectedEntryId;
+              const detail = entry.firstLine ?? (entry.arrangements.length > 1 ? `${entry.arrangements.length} arrangements` : null);
+              return (
+                <li key={entry.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(song)}
+                    aria-current={active ? "true" : undefined}
+                    className={cn(
+                      "flex min-h-12 w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors",
+                      active ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20" : "hover:bg-muted/60",
+                    )}
+                  >
+                    <span className="inline-flex h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-muted px-1 text-xs font-semibold tabular-nums text-muted-foreground">
+                      {song.number ?? <Music className="h-3.5 w-3.5" aria-hidden="true" />}
+                    </span>
+                    <span className="min-w-0 self-center break-words text-sm font-medium leading-snug">
+                      {entry.title}
+                      {detail && <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{detail}</span>}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -290,8 +319,8 @@ export default function Songs() {
   const [songs, setSongs] = useState<Song[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [collection, setCollection] = useState("all");
-  const [order, setOrder] = useState("title");
+  const [collection, setCollection] = useState<SongCollection>("all");
+  const [order, setOrder] = useState<SongOrder>("title");
   const [listLimit, setListLimit] = useState(80);
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -326,20 +355,13 @@ export default function Songs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!songs) return [];
-    const available = songs.filter((song) => collection === "all" || (song.collection ?? "fellowship") === collection);
-    const sorted = available.sort((a, b) =>
-      (order === "number" ? (a.number ?? Infinity) - (b.number ?? Infinity) : 0) ||
-      a.title.localeCompare(b.title),
-    );
-    return searchSongs(sorted, query);
-  }, [songs, query, collection, order]);
-
-  const selected = useMemo(
-    () => songs?.find((s) => s.id === selectedId) ?? null,
-    [songs, selectedId],
+  const catalogue = useMemo(() => buildSongCatalogue(songs ?? []), [songs]);
+  const filtered = useMemo(
+    () => browseSongs(catalogue, query, collection, order),
+    [catalogue, query, collection, order],
   );
+  const selectedEntry = selectedId ? catalogue.bySong.get(selectedId) : undefined;
+  const selected = selectedEntry?.arrangements.find((song) => song.id === selectedId);
 
   const handleSelect = (song: Song) => {
     setSelectedId(song.id);
@@ -378,7 +400,7 @@ export default function Songs() {
               <Music className="h-5 w-5 text-primary" />
               <h1 className="text-lg font-semibold">Song Book</h1>
               <span className="text-xs text-muted-foreground">
-                {songs ? `${songs.length} songs` : ""}
+                {songs ? `${catalogue.entries.length.toLocaleString()} songs` : ""}
               </span>
             </div>
             <div className="relative">
@@ -392,13 +414,13 @@ export default function Songs() {
                 aria-label="Search songs"
               />
             </div>
-            <div className="mt-3 flex flex-wrap items-end gap-3">
+            <div className="mt-3 grid grid-cols-2 content-end gap-3 sm:flex sm:flex-wrap sm:items-end">
               <label className="grid gap-1 text-sm">
                 Collection
                 <select
                   value={collection}
-                  onChange={(event) => { setCollection(event.target.value); setListLimit(80); }}
-                  className="h-10 rounded-md border bg-background px-2"
+                  onChange={(event) => { setCollection(event.target.value as SongCollection); setListLimit(80); }}
+                  className="h-11 min-w-0 rounded-md border bg-background px-2"
                 >
                   <option value="all">All songs</option>
                   <option value="presenter">Church Presenter</option>
@@ -409,14 +431,14 @@ export default function Songs() {
                 Sort by
                 <select
                   value={order}
-                  onChange={(event) => { setOrder(event.target.value); setListLimit(80); }}
-                  className="h-10 rounded-md border bg-background px-2"
+                  onChange={(event) => { setOrder(event.target.value as SongOrder); setListLimit(80); }}
+                  className="h-11 min-w-0 rounded-md border bg-background px-2"
                 >
                   <option value="title">Title A–Z</option>
                   <option value="number">Hymn number</option>
                 </select>
               </label>
-              {songs && <p role="status" className="pb-2 text-sm text-muted-foreground">{filtered.length.toLocaleString()} shown in results</p>}
+              {songs && <p role="status" className="col-span-2 text-sm text-muted-foreground sm:pb-2">{filtered.length.toLocaleString()} {filtered.length === 1 ? "song" : "songs"}</p>}
             </div>
             {songs && !songs.some((song) => song.collection === "presenter") && (
               <p role="status" className="mt-3 text-sm text-muted-foreground">
@@ -480,8 +502,9 @@ export default function Songs() {
               >
                 <ScrollArea className="md:h-full">
                   <SongIndex
-                    songs={filtered.slice(0, listLimit)}
-                    selectedId={selectedId}
+                    results={filtered.slice(0, listLimit)}
+                    selectedEntryId={selectedEntry?.id}
+                    grouped={!query.trim() && order === "title"}
                     onSelect={handleSelect}
                   />
                   {filtered.length > listLimit && (
@@ -499,8 +522,15 @@ export default function Songs() {
                   showReaderOnMobile ? "block" : "hidden",
                 )}
               >
-                {selected ? (
-                  <SongReader song={selected} />
+                {selected && selectedEntry ? (
+                  <SongReader
+                    entry={selectedEntry}
+                    arrangement={selected}
+                    onSelect={(arrangement) => {
+                      setSelectedId(arrangement.id);
+                      setSearchParams(songQuery(arrangement), { replace: true });
+                    }}
+                  />
                 ) : (
                   <div className="px-4 py-12 text-center text-muted-foreground">
                     Select a song to start.
