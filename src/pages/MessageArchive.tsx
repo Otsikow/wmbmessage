@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   archivePath,
   filterMessageCatalog,
+  findTranscriptParagraphs,
   highlightMessageText,
   loadMessageBatch,
   messageDateCode,
@@ -31,6 +32,124 @@ function Highlight({ text, query }: { text: string; query: string }) {
     : part);
 }
 
+function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessage; paragraph: string | null; query: string }) {
+  const [input, setInput] = useState("");
+  const [search, setSearch] = useState<(ReturnType<typeof findTranscriptParagraphs> & { index: number })>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const activeMatch = search?.paragraphs[search.index];
+  const matchCount = search?.paragraphs.length ?? 0;
+  const status = search && (matchCount
+    ? `Match ${search.index + 1} of ${matchCount}`
+    : "No matching paragraphs in this message.");
+
+  const focusSearch = () => {
+    inputRef.current?.focus({ preventScroll: true });
+    inputRef.current?.scrollIntoView({ behavior: "instant", block: "center" });
+  };
+
+  useEffect(() => {
+    if (paragraph === null) return;
+    const target = document.getElementById(`message-paragraph-${paragraph}`);
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "center" });
+  }, [paragraph]);
+
+  useEffect(() => {
+    if (activeMatch === undefined) return;
+    const target = document.getElementById(`message-paragraph-${activeMatch}`);
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [activeMatch, search]);
+
+  return (
+    <>
+      <form className="space-y-2 rounded-xl border bg-background/60 p-3 sm:p-4" onSubmit={(event) => {
+        event.preventDefault();
+        const value = input.trim();
+        setSearch(value ? { ...findTranscriptParagraphs(message, value), index: 0 } : undefined);
+      }}>
+        <label htmlFor="transcript-search" className="text-sm font-semibold">Find in this message</label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            ref={inputRef}
+            id="transcript-search"
+            type="search"
+            value={input}
+            onChange={(event) => {
+              setInput(event.target.value);
+              if (!event.target.value.trim()) setSearch(undefined);
+            }}
+            maxLength={1000}
+            placeholder="Paragraph number, words, or a quote"
+            aria-describedby="transcript-search-hint"
+            className="min-w-0 flex-1 text-base"
+          />
+          <Button type="submit">
+            <Search className="h-4 w-4" aria-hidden="true" />
+            Find
+          </Button>
+        </div>
+        <p id="transcript-search-hint" className="text-xs text-muted-foreground">
+          Enter a number to jump to a paragraph. Use quotation marks for an exact phrase.
+        </p>
+        <p role="status" className={status ? "text-sm text-muted-foreground" : "sr-only"}>{status}</p>
+      </form>
+      <ol className="space-y-4">
+        {message[2].map(([number, text], index) => {
+          const localMatch = index === activeMatch;
+          const current = localMatch || (!search && String(index) === paragraph);
+          return (
+            <li
+              key={index}
+              id={`message-paragraph-${index}`}
+              tabIndex={current ? -1 : undefined}
+              className={`grid scroll-mt-28 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-2 rounded-lg p-2 leading-relaxed ${current ? "bg-primary/10" : ""}`}
+            >
+              {localMatch && search && (
+                <div className="col-span-2 flex flex-wrap items-center gap-1 border-b border-primary/20 pb-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={focusSearch}>
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    Back to search
+                  </Button>
+                  {matchCount > 1 && (
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Previous match"
+                        disabled={search.index === 0}
+                        onClick={() => setSearch({ ...search, index: search.index - 1 })}
+                      >
+                        <ChevronLeft aria-hidden="true" />
+                      </Button>
+                      <span className="text-xs tabular-nums text-muted-foreground">{search.index + 1} / {matchCount}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Next match"
+                        disabled={search.index + 1 === matchCount}
+                        onClick={() => setSearch({ ...search, index: search.index + 1 })}
+                      >
+                        <ChevronRight aria-hidden="true" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <span className="select-none text-sm tabular-nums text-muted-foreground">¶ {number || index + 1}</span>
+              <p className="whitespace-pre-line break-words">
+                {current ? <Highlight text={text} query={localMatch ? search.query : query} /> : text}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 function Transcript({ entry, paragraph, query }: { entry: MessageEntry; paragraph: string | null; query: string }) {
   const [message, setMessage] = useState<ArchivedMessage>();
   const [error, setError] = useState(false);
@@ -51,13 +170,6 @@ function Transcript({ entry, paragraph, query }: { entry: MessageEntry; paragrap
     return () => controller.abort();
   }, [entry, retry]);
 
-  useEffect(() => {
-    if (!message || paragraph === null) return;
-    const match = document.getElementById(`message-paragraph-${paragraph}`);
-    match?.focus({ preventScroll: true });
-    match?.scrollIntoView({ block: "center" });
-  }, [message, paragraph]);
-
   return (
     <article className="mx-auto max-w-3xl space-y-6 rounded-2xl border bg-card p-5 sm:p-8">
       <header>
@@ -71,24 +183,8 @@ function Transcript({ entry, paragraph, query }: { entry: MessageEntry; paragrap
             Try again
           </Button>
         </div>
-      ) : message ? (
-        <ol className="space-y-4">
-          {message[2].map(([number, text], index) => {
-            const current = String(index) === paragraph;
-            return (
-              <li
-                key={index}
-                id={`message-paragraph-${index}`}
-                tabIndex={current ? -1 : undefined}
-                className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 rounded-lg p-2 leading-relaxed ${current ? "bg-primary/10" : ""}`}
-              >
-                <span className="select-none text-sm tabular-nums text-muted-foreground">¶ {number || index + 1}</span>
-                <p className="whitespace-pre-line">{current ? <Highlight text={text} query={query} /> : text}</p>
-              </li>
-            );
-          })}
-        </ol>
-      ) : <p role="status">Loading transcript…</p>}
+      ) : message ? <TranscriptBody message={message} paragraph={paragraph} query={query} />
+        : <p role="status">Loading transcript…</p>}
     </article>
   );
 }

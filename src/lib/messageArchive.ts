@@ -164,3 +164,18 @@ export function findMessageMatches(messages: ArchivedMessage[], query: string): 
 export function compareMessageMatches(a: MessageMatch, b: MessageMatch) {
   return a.rank - b.rank || a.code.localeCompare(b.code) || a.paragraph - b.paragraph;
 }
+
+export function findTranscriptParagraphs(message: ArchivedMessage, query: string) {
+  const number = /^(?:(?:paragraph|para\.?)\s+|¶\s*)?(\d+)$/i.exec(query.trim());
+  if (!number) {
+    return {
+      query,
+      paragraphs: findMessageMatches([message], query).map((match) => match.paragraph),
+    };
+  }
+
+  // The printed paragraph number can differ from its offset in the transcript.
+  const paragraphs = message[2].flatMap(([label], index) =>
+    Number(label || index + 1) === Number(number[1]) ? [index] : []);
+  return { query: "", paragraphs };
+}
