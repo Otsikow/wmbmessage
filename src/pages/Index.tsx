@@ -4,7 +4,6 @@ import SongsPromo from "@/components/SongsPromo";
 import ChurchPresenterPromo from "@/components/ChurchPresenterPromo";
 import StudyNotesPromo from "@/components/StudyNotesPromo";
 import Navigation from "@/components/Navigation";
-import DailyVerseCard from "@/components/DailyVerseCard";
 import FeaturedSermons from "@/components/FeaturedSermons";
 import EngagementPrompt from "@/components/engagement/EngagementPrompt";
 import EngagementSummary from "@/components/engagement/EngagementSummary";
@@ -108,14 +107,6 @@ const Index = () => {
             >
               <ReadingPlanWidget />
             </SectionErrorBoundary>
-            {/* Daily Verse and Sermon Quote - Requires database */}
-            <SectionErrorBoundary
-              section="Daily verse"
-              description="Unable to load the daily scripture reading."
-            >
-              <DailyVerseCard />
-            </SectionErrorBoundary>
-
             <SectionErrorBoundary
               section="Engagement prompt"
               description="We couldn't load today's engagement questions."

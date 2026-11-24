@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
-import { format, startOfDay } from "date-fns";
+import { useEffect, useState } from "react";
+import { format, isToday, startOfDay } from "date-fns";
 import { CalendarDays, Quote, Share2, Copy, Check, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { appendShareAttribution, getBrandUrl } from "@/lib/share";
+import { useEngagement } from "@/contexts/EngagementContext";
 
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -43,12 +45,22 @@ export default function DailyQuote() {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { recordActivity } = useEngagement();
 
-  const reading = useMemo(() => getReadingForDate(selectedDate), [selectedDate]);
+  const reading = getReadingForDate(selectedDate);
+  const { message, verse } = reading;
+  const transcriptPath = `/messages?message=${message.code}&paragraph=${message.paragraph}`;
+  const citation = `${message.title} (${message.code}, ¶ ${message.number})`;
+
+  useEffect(() => {
+    if (isToday(selectedDate)) {
+      recordActivity("daily-devotional", { description: verse.reference });
+    }
+  }, [recordActivity, selectedDate, verse.reference]);
 
   const buildShareText = () => {
     return appendShareAttribution(
-      `Daily Quote – ${format(selectedDate, "MMMM d, yyyy")}\n\n📖 Scripture Reading\n"${reading.verse.text}"\n— ${reading.verse.reference}\n\n💬 Message Insight\n"${reading.message.text}"\n— ${reading.message.reference}`
+      `Daily Quote – ${format(selectedDate, "MMMM d, yyyy")}\n\n${message.text}\n— William Branham, ${citation}\n${getBrandUrl()}${transcriptPath}\n\n${verse.text}\n— ${verse.reference} (KJV)`
     );
   };
 
@@ -138,7 +150,7 @@ export default function DailyQuote() {
                   {format(selectedDate, "MMMM d, yyyy")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Explore today&apos;s scripture reading alongside a message quote from William Branham. Use the calendar to revisit previous days.
+                  A quote from Brother Branham paired with a Bible passage. Use the calendar to revisit previous days.
                 </p>
               </div>
             </div>
@@ -221,22 +233,25 @@ export default function DailyQuote() {
 
         <div className="space-y-4">
           <div className="space-y-2 p-4 glass-subtle rounded-glass border border-secondary/10">
-            <h4 className="text-lg font-semibold text-gradient-blue-purple">Message Insight</h4>
+            <h4 className="text-lg font-semibold text-gradient-blue-purple">Brother Branham Quote</h4>
             <blockquote className="text-base md:text-lg leading-relaxed text-foreground/90 italic">
-              “{reading.message.text}”
+              {message.text}
             </blockquote>
             <p className="text-sm text-muted-foreground font-medium">
-              — {reading.message.reference}
+              <span>William Branham · </span>
+              <Link to={transcriptPath} className="text-primary underline underline-offset-4">
+                {citation}
+              </Link>
             </p>
           </div>
 
           <div className="space-y-2 p-4 glass-subtle rounded-glass border border-primary/10">
             <h4 className="text-lg font-semibold text-gradient-blue-purple">Scripture Reading</h4>
             <blockquote className="reader-typography text-base md:text-lg leading-relaxed text-foreground/90">
-              “{reading.verse.text}”
+              “{verse.text}”
             </blockquote>
             <p className="text-sm font-semibold text-primary">
-              — {reading.verse.reference}
+              — {verse.reference} (KJV)
             </p>
           </div>
         </div>
