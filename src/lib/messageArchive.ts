@@ -13,6 +13,7 @@ export interface MessageMatch {
   paragraph: number;
   number: string;
   excerpt: string;
+  rank: number;
 }
 
 export const archivePath = "/data/message-archive/";
@@ -21,7 +22,6 @@ export function messageArchiveLink(query = "") {
   const trimmed = query.trim();
   if (!trimmed) return "/messages";
   const params = new URLSearchParams({ q: trimmed });
-  if (!/^\d{2}-?\d{4}[a-z]?$/i.test(trimmed)) params.set("scope", "text");
   return `/messages?${params}`;
 }
 
@@ -39,36 +39,128 @@ export async function loadMessageBatch(file: string, signal?: AbortSignal) {
 }
 
 const words = (text: string) => text.toLowerCase().replace(/[‘’']/g, "").match(/[\p{L}\p{N}]+/gu) ?? [];
+const wordBoundaryBefore = "(?<![\\p{L}\\p{N}])";
+const wordBoundaryAfter = "(?![\\p{L}\\p{N}])";
+const wordSeparator = "[^\\p{L}\\p{N}]+";
+const patternForWord = (word: string) => Array.from(word).join("[‘’']?");
+const patternForPhrase = (terms: string[]) =>
+  wordBoundaryBefore + terms.map(patternForWord).join(wordSeparator) + wordBoundaryAfter;
+
+const commonWords = new Set([
+  "a", "an", "and", "are", "about", "at", "be", "by", "did", "do", "does",
+  "for", "from", "how", "in", "is", "of", "on", "or", "that", "the", "to",
+  "was", "were", "what", "when", "where", "which", "with",
+]);
+
+const months = "january february march april may june july august september october november december".split(" ");
+
+export function messageDateCode(query: string) {
+  const input = query.trim().toLowerCase();
+  const short = /^(\d{2})[-–— ]?(\d{4})([a-z]{0,2})$/.exec(input);
+  if (short) return short.slice(1).join("");
+
+  const iso = /^(19\d{2})-(\d{1,2})-(\d{1,2})$/.exec(input);
+  if (iso) return iso[1].slice(-2) + iso[2].padStart(2, "0") + iso[3].padStart(2, "0");
+
+  const monthFirst = /^([a-z]+) (\d{1,2})(?:st|nd|rd|th)?[,]? (19\d{2})$/.exec(input);
+  const dayFirst = /^(\d{1,2})(?:st|nd|rd|th)? ([a-z]+)[,]? (19\d{2})$/.exec(input);
+  const date = monthFirst ?? (dayFirst && [input, dayFirst[2], dayFirst[1], dayFirst[3]]);
+  if (!date) return undefined;
+  const month = months.findIndex((name) => name === date[1] || name.slice(0, 3) === date[1]) + 1;
+  if (!month || Number(date[2]) < 1 || Number(date[2]) > 31) return undefined;
+  return date[3].slice(-2) + String(month).padStart(2, "0") + date[2].padStart(2, "0");
+}
 
 export function filterMessageCatalog(catalog: MessageEntry[], query: string) {
-  const trimmed = query.trim();
-  const terms = words(trimmed);
-  if (!terms.length) return catalog;
-  const code = terms.join("");
-  return catalog.filter((entry) =>
-    entry.code.replace("-", "").toLowerCase().includes(code) ||
-    terms.every((term) => words(entry.title).join(" ").includes(term)),
-  );
+  const terms = words(query);
+  if (!terms.length) return query.trim() ? [] : catalog;
+  const code = messageDateCode(query);
+  const phrase = terms.join(" ");
+  const quoted = /"[^"]+"|“[^”]+”/.test(query) ? compileQuery(query) : undefined;
+  return catalog.flatMap((entry) => {
+    const entryCode = entry.code.replace("-", "").toLowerCase();
+    if (code) return entryCode.startsWith(code) ? [{ entry, rank: entryCode === code ? 0 : 1 }] : [];
+    const title = words(entry.title);
+    const titlePhrase = title.join(" ");
+    if (titlePhrase === phrase) return [{ entry, rank: 0 }];
+    if (` ${titlePhrase} `.includes(` ${phrase} `)) return [{ entry, rank: 1 }];
+    if (quoted) return quoted.required.every((pattern) => pattern.test(entry.title)) ? [{ entry, rank: 2 }] : [];
+    return terms.every((term) => title.some((word) => word.startsWith(term))) ? [{ entry, rank: 2 }] : [];
+  }).sort((a, b) => a.rank - b.rank).map(({ entry }) => entry);
+}
+
+function compileQuery(query: string) {
+  const terms = words(query);
+  if (!terms.length) return undefined;
+  const quoted = Array.from(query.matchAll(/"([^"]+)"|“([^”]+)”/g), (match) =>
+    words(match[1] ?? match[2])).filter((phrase) => phrase.length > 0);
+  const unquoted = words(query.replace(/"[^"]+"|“[^”]+”/g, " "));
+  const meaningful = unquoted.filter((term) => !commonWords.has(term));
+  const keywords = [...new Set(meaningful.length || quoted.length ? meaningful : unquoted)];
+  return {
+    phrase: new RegExp(patternForPhrase(terms), "iu"),
+    required: [
+      ...quoted.map((phrase) => new RegExp(patternForPhrase(phrase), "iu")),
+      ...keywords.map((word) => new RegExp(patternForPhrase([word]), "iu")),
+    ],
+  };
+}
+
+export function highlightMessageText(text: string, query: string) {
+  const terms = [...new Set(words(query))];
+  const keywords = terms.filter((term) => !commonWords.has(term));
+  if (!terms.length) return [{ text, match: false }];
+  const alternatives = (keywords.length ? keywords : terms).map(patternForWord).join("|");
+  const pattern = new RegExp(`${wordBoundaryBefore}(?:${alternatives})${wordBoundaryAfter}`, "giu");
+  const fragments = [];
+  let end = 0;
+  for (const match of text.matchAll(pattern)) {
+    fragments.push({ text: text.slice(end, match.index), match: false });
+    fragments.push({ text: match[0], match: true });
+    end = match.index + match[0].length;
+  }
+  fragments.push({ text: text.slice(end), match: false });
+  return fragments;
 }
 
 export function findMessageMatches(messages: ArchivedMessage[], query: string): MessageMatch[] {
-  const terms = words(query);
-  if (!terms.length) return [];
-  const termPattern = terms.map((term) => Array.from(term).join("[‘’']?")).join("[^\\p{L}\\p{N}]+");
-  const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${termPattern}(?![\\p{L}\\p{N}])`, "iu");
+  const compiled = compileQuery(query);
+  if (!compiled) return [];
   const results: MessageMatch[] = [];
   for (const [code, title, paragraphs] of messages) {
     for (const [paragraph, [number, text]] of paragraphs.entries()) {
-      const match = pattern.exec(text);
-      if (!match) continue;
-      const start = Math.max(0, match.index - 72);
-      const end = Math.min(text.length, match.index + match[0].length + 100);
+      if (!text) continue;
+      const exact = compiled.phrase.exec(text);
+      let first = 0;
+      let last = 0;
+      let rank = 0;
+      if (exact) {
+        first = exact.index;
+        last = first + exact[0].length;
+      } else {
+        const found: RegExpExecArray[] = [];
+        for (const pattern of compiled.required) {
+          const match = pattern.exec(text);
+          if (!match) break;
+          found.push(match);
+        }
+        if (found.length !== compiled.required.length || found.length === 0) continue;
+        first = Math.min(...found.map((match) => match.index));
+        last = Math.max(...found.map((match) => match.index + match[0].length));
+        rank = 1 + last - first;
+      }
+
+      const start = Math.max(0, first - 55);
+      const end = Math.min(text.length, Math.max(first + 125, Math.min(last + 45, first + 195)));
       results.push({
-        code, title, paragraph, number,
+        code, title, paragraph, number, rank,
         excerpt: (start ? "…" : "") + text.slice(start, end).trim() + (end < text.length ? "…" : ""),
       });
-      break;
     }
   }
-  return results;
+  return results.sort(compareMessageMatches);
+}
+
+export function compareMessageMatches(a: MessageMatch, b: MessageMatch) {
+  return a.rank - b.rank || a.code.localeCompare(b.code) || a.paragraph - b.paragraph;
 }
