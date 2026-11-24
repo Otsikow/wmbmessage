@@ -367,17 +367,17 @@ export default function Songs() {
     setSelectedId(song.id);
     setSearchParams(songQuery(song), { replace: true });
     setMobileView("reader");
-    // Bring the reader content into view on mobile.
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const handleBackToList = () => {
     setMobileView("list");
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("song");
+      return next;
+    }, { replace: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const showListOnMobile = mobileView === "list";

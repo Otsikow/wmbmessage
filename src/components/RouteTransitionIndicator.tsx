@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { matchPath, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -18,10 +18,21 @@ export function RouteTransitionIndicator({
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const firstLoadRef = useRef(true);
+  const previousPathname = useRef(location.pathname);
 
   useEffect(() => {
+    // Opening a song or changing an arrangement updates the URL within the current page.
+    const changingSong =
+      previousPathname.current === location.pathname && matchPath("/songs", location.pathname);
+    previousPathname.current = location.pathname;
+
     if (firstLoadRef.current) {
       firstLoadRef.current = false;
+      return;
+    }
+
+    if (changingSong) {
+      setIsTransitioning(false);
       return;
     }
 
