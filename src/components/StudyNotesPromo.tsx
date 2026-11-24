@@ -50,7 +50,7 @@ export default function StudyNotesPromo() {
   }, []);
 
   return (
-    <section className="container mx-auto max-w-5xl px-4 sm:px-6 py-4 sm:py-6">
+    <section className="home-content">
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-amber-50/60 via-background to-orange-50/40 dark:from-amber-950/20 dark:via-background dark:to-orange-950/20 p-4 sm:p-6 lg:p-8 shadow-elegant">
         {/* Decorative glow */}
         <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-amber-400/20 blur-3xl" />

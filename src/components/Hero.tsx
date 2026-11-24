@@ -42,7 +42,7 @@ export default function Hero() {
           parallaxIntensity={0.3}
         />
 
-        <div className="container responsive-section relative z-10 py-16 sm:py-24 lg:py-32">
+        <div className="home-content relative z-10 py-16 sm:py-24 lg:py-32">
           <div className="flex flex-col items-center text-center space-y-8 animate-fade-in-up px-2 sm:px-0">
             {/* Logo with floating animation */}
             <div className="mb-4 float">
@@ -116,17 +116,9 @@ export default function Hero() {
         {/* Subtle mesh gradient overlay */}
         <div className="absolute inset-0 mesh-gradient opacity-50 pointer-events-none" />
         
-        <div className="container responsive-section relative z-10 py-12 space-y-12">
-          {/* Daily Quote */}
-          <div className="w-full max-w-5xl mx-auto px-2 sm:px-0">
-            <DailyQuote />
-          </div>
-
-          {/* Recent Verses */}
-          <div className="w-full max-w-6xl mx-auto px-2 sm:px-0">
-            <RecentBibleVerses />
-          </div>
-
+        <div className="home-content relative z-10 space-y-8 py-8 sm:space-y-10 sm:py-12">
+          <DailyQuote />
+          <RecentBibleVerses />
         </div>
       </div>
     </section>

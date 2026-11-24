@@ -36,7 +36,7 @@ const communityFeatures = [
 
 export default function CommunityPromo() {
   return (
-    <section className="relative py-10 px-4">
+    <section className="home-content py-8 sm:py-10">
       {/* Section Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3">
@@ -52,7 +52,7 @@ export default function CommunityPromo() {
       </div>
 
       {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         {communityFeatures.map((feature) => {
           const Icon = feature.icon;
           return (

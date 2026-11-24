@@ -133,7 +133,7 @@ const HomeStats = () => {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none" />
-      <div className="container mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <div className="home-content relative py-10 sm:py-14">
         <div className="flex flex-col gap-3 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-primary/70">Community impact</p>
           <h2 className="text-2xl sm:text-3xl font-semibold text-gradient-blue-purple">

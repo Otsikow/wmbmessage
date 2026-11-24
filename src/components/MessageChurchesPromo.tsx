@@ -5,7 +5,7 @@ import { MapPin, Users, ShieldCheck, ArrowRight } from "lucide-react";
 
 export default function MessageChurchesPromo() {
   return (
-    <section className="container mx-auto max-w-6xl px-3 py-8 sm:px-4">
+    <section className="home-content">
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />

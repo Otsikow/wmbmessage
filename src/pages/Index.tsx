@@ -52,7 +52,7 @@ const Index = () => {
           <Header />
         </SectionErrorBoundary>
 
-        <main className="space-y-6">
+        <main className="space-y-4 sm:space-y-6">
           <SectionErrorBoundary section="Hero" description="The hero content is temporarily unavailable.">
             <Hero />
           </SectionErrorBoundary>
@@ -99,7 +99,7 @@ const Index = () => {
           </SectionErrorBoundary>
 
           {/* Daily Messages Section - Positioned after Hero */}
-          <section className="relative container mx-auto max-w-4xl space-y-6 px-4 py-8">
+          <section className="home-content relative space-y-6 py-8">
             {/* Subtle mesh gradient for this section */}
             <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none -z-10" />
             <SectionErrorBoundary

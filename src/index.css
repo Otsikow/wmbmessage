@@ -446,6 +446,13 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  .home-content {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+  }
+
   .responsive-section {
     padding-inline: clamp(1rem, 4vw, 2.5rem);
   }
