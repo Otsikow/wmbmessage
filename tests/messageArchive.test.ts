@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { gunzipSync } from "node:zlib";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { filterMessageCatalog, findMessageMatches, highlightMessageText, messageArchiveLink, type ArchivedMessage, type MessageEntry } from "@/lib/messageArchive";
+import { filterMessageCatalog, findMessageMatches, findTranscriptParagraphs, highlightMessageText, messageArchiveLink, type ArchivedMessage, type MessageEntry } from "@/lib/messageArchive";
 
 const archive = new URL("../public/data/message-archive/", import.meta.url);
 const catalog = JSON.parse(await readFile(new URL("catalog.json", archive), "utf8")) as MessageEntry[];
@@ -67,4 +67,21 @@ test("ranks an exact phrase ahead of reordered words and returns multiple paragr
   assert.deepEqual(findMessageMatches(messages, '"faith and hope" grow'), []);
   assert.deepEqual(highlightMessageText("Hope grows through faith.", "faith and hope")
     .filter(({ match }) => match).map(({ text }) => text), ["Hope", "faith"]);
+});
+
+test("transcript search jumps by printed number and searches words or exact quotes in the selected message", () => {
+  const message: ArchivedMessage = ["47-0412", "Example", [
+    ["4", "We’re getting some new gadgets."],
+    ["8", "Some new equipment is coming."],
+    ["20", "The 8 gadgets are new."],
+  ]];
+
+  for (const input of ["8", "¶ 8", "Paragraph 8", "para. 08"]) {
+    assert.deepEqual(findTranscriptParagraphs(message, input), { query: "", paragraphs: [1] });
+  }
+  assert.deepEqual(findTranscriptParagraphs(message, "2").paragraphs, []);
+  assert.deepEqual(findTranscriptParagraphs(message, "new gadgets").paragraphs, [0, 2]);
+  assert.deepEqual(findTranscriptParagraphs(message, '“we\'re getting some”').paragraphs, [0]);
+  assert.deepEqual(findTranscriptParagraphs(message, '"8"').paragraphs, [2]);
+  assert.deepEqual(findTranscriptParagraphs(message, '"new gadgets are"').paragraphs, []);
 });
