@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Church, HandHeart, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BookOpen, CalendarCheck, Church, HandHeart, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
@@ -11,8 +12,24 @@ const formatCount = (value: number | null) => {
 };
 
 const refreshIntervalMs = 60000;
+const studyNotesRefreshIntervalMs = 15000;
+
+async function fetchPublishedStudyNoteCount() {
+  const { count, error } = await supabase
+    .from("message_study_notes")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "published");
+  if (error) throw error;
+  return count ?? 0;
+}
 
 const HomeStats = () => {
+  const { data: studyNotesCount = null } = useQuery({
+    queryKey: ["published-study-notes-count"],
+    queryFn: fetchPublishedStudyNoteCount,
+    refetchInterval: studyNotesRefreshIntervalMs,
+    refetchOnWindowFocus: "always",
+  });
   const [counts, setCounts] = useState({
     events: null as number | null,
     prayerRequests: null as number | null,
@@ -126,8 +143,16 @@ const HomeStats = () => {
         accent: "text-sky-300",
         href: "/message-churches",
       },
+      {
+        label: "Message Study Notes",
+        value: formatCount(studyNotesCount),
+        description: "Published notes in the study library.",
+        icon: BookOpen,
+        accent: "text-primary",
+        href: "/study-notes",
+      },
     ],
-    [counts],
+    [counts, studyNotesCount],
   );
 
   return (
@@ -145,12 +170,12 @@ const HomeStats = () => {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {stats.map(({ label, value, description, icon: Icon, accent, href }) => (
             <Link
               key={label}
               to={href}
-              aria-label={`View ${label.toLowerCase()}`}
+              aria-label={`View ${label.toLowerCase()}, ${value === "—" ? "count unavailable" : value}`}
               className="group block rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <Card
