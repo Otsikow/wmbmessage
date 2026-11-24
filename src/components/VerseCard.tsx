@@ -122,7 +122,7 @@ export default function VerseCard({
     }
   };
   return <div className={cn(
-    "group relative overflow-hidden rounded-[20px] p-4 sm:p-5 cursor-pointer",
+    "group relative overflow-hidden rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4 cursor-pointer",
     // Glass styling
     "bg-white/70 dark:bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
     "border border-border/60 dark:border-white/[0.08]",
@@ -153,10 +153,10 @@ export default function VerseCard({
         className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px] bg-gradient-to-r from-transparent via-white/20 to-transparent" 
         aria-hidden="true"
       />
-      <div className="grid grid-cols-[auto,1fr] gap-3 sm:gap-4">
+      <div className="grid grid-cols-[1.75rem,1fr] items-start gap-3 sm:grid-cols-[2rem,1fr] sm:gap-4">
         {/* Verse Number */}
         <span className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide transition-colors",
+          "mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 sm:mt-0 items-center justify-center rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors",
           "border border-border/60 dark:border-white/20 bg-white/70 dark:bg-white/[0.08] backdrop-blur-sm",
           "text-foreground/70 dark:text-white/70",
           isFocused && "border-primary/60 text-primary bg-primary/10",
@@ -166,8 +166,8 @@ export default function VerseCard({
         </span>
 
         {/* Verse Content */}
-        <div className="flex flex-col gap-3">
-          <p className={cn("text-sm sm:text-base leading-relaxed glass-heading", verse.isJesusWords && "text-jesus-words font-medium", fontClass)}>
+        <div className="flex min-w-0 flex-col gap-2">
+          <p className={cn("text-[15px] sm:text-base !leading-[1.7] text-pretty glass-heading", verse.isJesusWords && "text-jesus-words font-medium", fontClass)}>
             {verse.text}
           </p>
 

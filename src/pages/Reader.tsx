@@ -867,7 +867,7 @@ export default function Reader() {
               <div className="space-y-5 sm:space-y-6">
                 <div
                   ref={versesContainerRef}
-                  className={cn("space-y-4 sm:space-y-5 max-w-4xl mx-auto", readerFontClass)}
+                  className={cn("space-y-2.5 sm:space-y-3 max-w-4xl mx-auto", readerFontClass)}
                 >
                   {verses.map((verse) => (
                     <div
