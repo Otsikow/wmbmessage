@@ -32,13 +32,14 @@ export function parseVerseReference(reference: string): ParsedReference | null {
   const bookName = match[1].trim();
   let chapter = parseInt(match[2]);
   let startVerse = match[3] ? parseInt(match[3]) : undefined;
-  let endVerse = match[4] ? parseInt(match[4]) : undefined;
+  const endVerse = match[4] ? parseInt(match[4]) : undefined;
   
-  // Find the book (case-insensitive, partial match)
-  const book = BIBLE_BOOKS.find(b => 
-    b.name.toLowerCase().includes(bookName.toLowerCase()) ||
-    bookName.toLowerCase().includes(b.name.toLowerCase())
-  );
+  const normalizedBook = bookName.toLowerCase();
+  const book = BIBLE_BOOKS.find((b) => b.name.toLowerCase() === normalizedBook) ??
+    BIBLE_BOOKS.find((b) =>
+      b.name.toLowerCase().includes(normalizedBook) ||
+      normalizedBook.includes(b.name.toLowerCase())
+    );
   
   if (!book) return null;
 

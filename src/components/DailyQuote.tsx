@@ -4,6 +4,7 @@ import { CalendarDays, Quote, Share2, Copy, Check, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { appendShareAttribution, getBrandUrl } from "@/lib/share";
+import { buildBibleHref } from "@/lib/linkifyScripture";
 import { useEngagement } from "@/contexts/EngagementContext";
 
 import { Card } from "@/components/ui/card";
@@ -49,6 +50,7 @@ export default function DailyQuote() {
 
   const reading = getReadingForDate(selectedDate);
   const { message, verse } = reading;
+  const scripturePath = buildBibleHref(verse.reference);
   const transcriptPath = `/messages?message=${message.code}&paragraph=${message.paragraph}`;
   const citation = `${message.title} (${message.code}, ¶ ${message.number})`;
 
@@ -251,7 +253,11 @@ export default function DailyQuote() {
               “{verse.text}”
             </blockquote>
             <p className="text-sm font-semibold text-primary">
-              — {verse.reference} (KJV)
+              — {scripturePath ? (
+                <Link to={scripturePath} className="underline underline-offset-4">
+                  {verse.reference}
+                </Link>
+              ) : verse.reference} (KJV)
             </p>
           </div>
         </div>
