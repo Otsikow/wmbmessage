@@ -3,7 +3,30 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { gunzipSync } from "node:zlib";
 import { getReadingForDate } from "@/data/dailyReadings";
+import { buildBibleHref } from "@/lib/linkifyScripture";
 import type { ArchivedMessage, MessageEntry } from "@/lib/messageArchive";
+import type { BibleVerseRecord } from "@/utils/bibleData";
+
+test("each daily Scripture reference links to its first verse in the Bible reader", async () => {
+  const kjv = new URL("../public/data/kjv-bible.json", import.meta.url);
+  const verses = JSON.parse(await readFile(kjv, "utf8")) as BibleVerseRecord[];
+  const verseKeys = new Set(verses.map(({ book, chapter, verse }) => `${book} ${chapter}:${verse}`));
+  const references = new Set(Array.from({ length: 366 }, (_, day) =>
+    getReadingForDate(new Date(2024, 0, day + 1)).verse.reference));
+
+  for (const reference of references) {
+    const href = buildBibleHref(reference);
+    assert.ok(href, reference);
+    const { pathname, searchParams } = new URL(href, "https://messageguide.org");
+    assert.equal(pathname, "/bible");
+    const book = searchParams.get("book");
+    const chapter = searchParams.get("chapter");
+    const verse = searchParams.get("verse");
+    const destination = `${book} ${chapter}:${verse}`;
+    assert.equal(destination, reference.replace(/^Psalm /, "Psalms ").replace(/-\d+$/, ""));
+    assert.ok(verseKeys.has(destination), destination);
+  }
+});
 
 test("each calendar reading has Scripture and an exact, attributable transcript excerpt", async () => {
   const archive = new URL("../public/data/message-archive/", import.meta.url);
