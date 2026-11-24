@@ -485,10 +485,6 @@ export default function Reader() {
   );
   const controlButtonClass =
     "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-  const controlButtonWideClass = cn(
-    controlButtonClass,
-    "w-auto px-4 gap-2 min-w-[120px] justify-center"
-  );
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -544,20 +540,15 @@ export default function Reader() {
                     Navigate scripture, notes, and sermon references
                   </span>
                 </div>
-                <div className="flex flex-col min-w-0 sm:hidden">
-                  <span className="text-sm font-medium text-foreground">
-                    {currentBook} {currentChapter}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Tap to change book or chapter
-                  </span>
-                </div>
+                <span className="min-w-0 truncate text-base font-semibold text-foreground sm:hidden">
+                  {currentBook} {currentChapter}
+                </span>
               </div>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <Button asChild variant="outline" className={controlButtonWideClass}>
+              <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+                <Button asChild variant="outline" className={cn(controlButtonClass, "sm:w-auto sm:min-w-[120px] sm:gap-2 sm:px-4")}>
                   <Link to="/search" aria-label="Search the Bible" className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
-                    <span className="text-sm font-medium">Search</span>
+                    <span className="hidden text-sm font-medium sm:inline">Search</span>
                   </Link>
                 </Button>
                 <DropdownMenu>
@@ -779,8 +770,8 @@ export default function Reader() {
             </Dialog>
 
             <div className="rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm sm:p-4">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                <div className="flex min-w-0 flex-col gap-1">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
                     Book
                   </span>
@@ -828,7 +819,7 @@ export default function Reader() {
                       setFocusedVerse(undefined);
                     }}
                   >
-                    <SelectTrigger className="h-11 w-full min-w-[140px] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
+                    <SelectTrigger className="h-11 w-full min-w-[7.5rem] rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition focus:ring-2 focus:ring-primary/30 sm:h-12 sm:w-[140px] sm:text-base md:w-[160px]">
                       <SelectValue placeholder="Chapter" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[400px]">
