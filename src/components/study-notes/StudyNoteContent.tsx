@@ -135,10 +135,12 @@ function renderBlock(block: StudyBlock, idx: number, query?: string) {
       return (
         <div
           key={idx}
-          className="my-3 inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground"
+          className="my-3 flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-[15px] leading-relaxed text-card-foreground shadow-sm"
         >
-          <BookMarked className="h-4 w-4" />
-          <Rich text={block.text} query={query} />
+          <BookMarked className="mt-1 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          <span className="min-w-0 break-words">
+            <Rich text={block.text} query={query} />
+          </span>
         </div>
       );
     case "key-point":
