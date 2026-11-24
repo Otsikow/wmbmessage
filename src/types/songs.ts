@@ -9,7 +9,8 @@ export interface SongSection {
 
 export interface Song {
   id: string;
-  number: number;
+  number: number | null;
+  collection?: "presenter";
   title: string;
   sections: SongSection[];
   /** Convenience: first chorus joined by newlines, if present */

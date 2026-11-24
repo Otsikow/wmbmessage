@@ -39,6 +39,7 @@ import {
 } from "@/lib/themeSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { buildExcerpt } from "@/lib/studyNoteFormatter";
+import { messageArchiveLink } from "@/lib/messageArchive";
 import type { StudyNote } from "@/types/studyNotes";
 import { FileText, Tag } from "lucide-react";
 
@@ -583,6 +584,9 @@ const SearchPage = () => {
               </TabsContent>
 
               <TabsContent value="sermons" className="space-y-4">
+                <Button asChild variant="outline">
+                  <Link to={messageArchiveLink(searchQuery)}>Search the full message archive</Link>
+                </Button>
                 <div className="flex flex-col gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Filter className="h-4 w-4" />

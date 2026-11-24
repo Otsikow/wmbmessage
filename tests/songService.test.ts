@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { loadSongs, searchSongs } from "@/services/songService";
+import { loadSongs, searchSongs, songPath } from "@/services/songService";
 
 describe("songService", () => {
   test("loads full songs dataset", async () => {
@@ -12,6 +12,17 @@ describe("songService", () => {
       assert.ok(s.sections.length > 0, `song ${s.number} has no sections`);
       assert.ok(s.title.length > 0, `song ${s.number} has empty title`);
     }
+  });
+
+  test("includes every Presenter arrangement and preserves Fellowship song links", async () => {
+    const songs = await loadSongs();
+    const presenter = songs.filter((song) => song.collection === "presenter");
+    assert.equal(presenter.length, 1163);
+    assert.equal(new Set(presenter.map((song) => song.id)).size, presenter.length);
+    const unnumbered = presenter.find((song) => song.number === null)!;
+    assert.match(songPath(unnumbered), /^\/songs\?song=presenter-/);
+    assert.equal(songPath(songs[0]), "/songs?song=1");
+    assert.ok(presenter.some((song) => song.sections.some((section) => section.type === "chorus")));
   });
 
   test("parses choruses distinctly from verses", async () => {

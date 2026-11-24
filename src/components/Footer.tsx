@@ -73,7 +73,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link 
-                  to="/wmb-sermons" 
+                  to="/messages"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                 >
                   <Mic className="h-3.5 w-3.5" />
