@@ -1,3 +1,4 @@
+import { songPath, songReference, songSectionLabel } from "@/services/songService";
 import jsPDF from "jspdf";
 import type { Song } from "@/types/songs";
 import { buildShareUrl, BRAND_NAME } from "@/lib/share";
@@ -5,22 +6,18 @@ import { buildShareUrl, BRAND_NAME } from "@/lib/share";
 /** Build a clean plain-text version of a song for sharing / clipboard / .txt download. */
 export function songToPlainText(song: Song): string {
   const lines: string[] = [];
-  lines.push(`Song ${song.number} — ${song.title}`);
+  lines.push(`${songReference(song)} — ${song.title}`);
   lines.push("");
 
   let verseCount = 0;
   for (const section of song.sections) {
-    if (section.type === "chorus") {
-      lines.push(section.label ?? "CHORUS");
-    } else {
-      verseCount += 1;
-      lines.push(section.label ?? `VERSE ${verseCount}`);
-    }
+    if (section.type === "verse") verseCount += 1;
+    lines.push(songSectionLabel(section, verseCount).toUpperCase());
     for (const ln of section.lines) lines.push(ln);
     lines.push("");
   }
 
-  lines.push(`Shared via ${BRAND_NAME} – ${buildShareUrl(`/songs?song=${song.number}`)}`);
+  lines.push(`Shared via ${BRAND_NAME} – ${buildShareUrl(songPath(song))}`);
   return lines.join("\n").trim() + "\n";
 }
 
@@ -47,7 +44,7 @@ export function downloadSongPdf(song: Song): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(90, 110, 200);
-  doc.text(`SONG ${song.number}`, marginX, y);
+  doc.text(songReference(song).toUpperCase(), marginX, y);
   y += 16;
 
   // Title
@@ -69,14 +66,9 @@ export function downloadSongPdf(song: Song): void {
 
   let verseCount = 0;
   for (const section of song.sections) {
-    const isChorus = section.type === "chorus";
-    let label: string;
-    if (isChorus) {
-      label = section.label ?? "CHORUS";
-    } else {
-      verseCount += 1;
-      label = section.label ?? `VERSE ${verseCount}`;
-    }
+    const isChorus = section.type === "chorus" || section.type === "refrain";
+    if (section.type === "verse") verseCount += 1;
+    const label = songSectionLabel(section, verseCount);
 
     ensureSpace(32);
 
@@ -121,10 +113,10 @@ export function downloadSongPdf(song: Song): void {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(140);
-    const footer = `${BRAND_NAME} • ${buildShareUrl(`/songs?song=${song.number}`)} • Page ${i} of ${pageCount}`;
+    const footer = `${BRAND_NAME} • ${buildShareUrl(songPath(song))} • Page ${i} of ${pageCount}`;
     doc.text(footer, pageWidth / 2, pageHeight - 24, { align: "center" });
   }
 
-  const fileName = `Song-${song.number}-${song.title.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pdf`;
+  const fileName = `${song.number === null ? "Song" : `Song-${song.number}`}-${song.title.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pdf`;
   doc.save(fileName);
 }

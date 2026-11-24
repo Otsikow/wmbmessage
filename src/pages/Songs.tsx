@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { loadSongs, searchSongs } from "@/services/songService";
+import { loadSongs, searchSongs, songPath, songQuery, songReference, songSectionLabel } from "@/services/songService";
 import type { Song, SongSection } from "@/types/songs";
 import { downloadSongPdf, songToPlainText } from "@/lib/songExport";
 import { buildShareUrl, BRAND_NAME } from "@/lib/share";
@@ -56,7 +56,7 @@ function splitIntoStanzas(lines: string[]): string[] {
   return stanzas;
 }
 function SectionBlock({ section, index }: { section: SongSection; index: number }) {
-  const isChorus = section.type === "chorus";
+  const isChorus = section.type === "chorus" || section.type === "refrain";
   return (
     <div
       className={cn(
@@ -73,7 +73,7 @@ function SectionBlock({ section, index }: { section: SongSection; index: number 
             isChorus ? "text-primary" : "text-muted-foreground",
           )}
         >
-          {section.label ?? (isChorus ? "Chorus" : `Verse ${index}`)}
+          {songSectionLabel(section, index)}
         </span>
       </div>
       <div
@@ -99,10 +99,10 @@ function SongReader({ song }: { song: Song }) {
   let verseCount = 0;
 
   const handleShare = async () => {
-    const url = buildShareUrl(`/songs?song=${song.number}`);
+    const url = buildShareUrl(songPath(song));
     const text = songToPlainText(song);
     const shareData = {
-      title: `Song ${song.number} — ${song.title}`,
+      title: song.title,
       text,
       url,
     };
@@ -146,7 +146,7 @@ function SongReader({ song }: { song: Song }) {
   const handleDownloadPdf = () => {
     try {
       downloadSongPdf(song);
-      toast({ title: "PDF ready", description: `Song ${song.number} downloaded.` });
+      toast({ title: "PDF ready", description: `${song.title} downloaded.` });
     } catch (err) {
       console.error("PDF export failed", err);
       toast({
@@ -163,7 +163,7 @@ function SongReader({ song }: { song: Song }) {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <Hash className="h-3 w-3" />
-            Song {song.number}
+            {songReference(song)}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -172,7 +172,7 @@ function SongReader({ song }: { song: Song }) {
               size="sm"
               onClick={handleDownloadPdf}
               className="gap-1.5"
-              aria-label={`Download song ${song.number} as PDF`}
+              aria-label={`Download ${song.title} as PDF`}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">PDF</span>
@@ -184,7 +184,7 @@ function SongReader({ song }: { song: Song }) {
                   variant="outline"
                   size="sm"
                   className="gap-1.5"
-                  aria-label={`Share song ${song.number}`}
+                  aria-label={`Share ${song.title}`}
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                   <span className="hidden sm:inline">Share</span>
@@ -215,12 +215,12 @@ function SongReader({ song }: { song: Song }) {
 
       <div className="space-y-4">
         {song.sections.map((section, idx) => {
-          if (section.type !== "chorus") verseCount += 1;
+          if (section.type === "verse") verseCount += 1;
           return (
             <SectionBlock
               key={idx}
               section={section}
-              index={section.type === "chorus" ? idx : verseCount}
+              index={verseCount}
             />
           );
         })}
@@ -254,6 +254,7 @@ function SongIndex({
             <button
               type="button"
               onClick={() => onSelect(song)}
+              aria-current={isActive ? "true" : undefined}
               className={cn(
                 "group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-all min-h-[44px]",
                 isActive
@@ -269,10 +270,13 @@ function SongIndex({
                     : "bg-muted text-muted-foreground group-hover:bg-background",
                 )}
               >
-                {song.number}
+                {song.number ?? <Music className="h-3.5 w-3.5" aria-hidden="true" />}
               </span>
               <span className="flex-1 text-sm font-medium leading-tight">
                 {song.title}
+                <span className={cn("mt-1 block text-xs", isActive ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                  {song.collection === "presenter" ? "Church Presenter" : "Fellowship Song Book"}
+                </span>
               </span>
             </button>
           </li>
@@ -286,6 +290,9 @@ export default function Songs() {
   const [songs, setSongs] = useState<Song[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [collection, setCollection] = useState("all");
+  const [order, setOrder] = useState("title");
+  const [listLimit, setListLimit] = useState(80);
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // On mobile, toggle between the list and the reader so the song
@@ -300,7 +307,7 @@ export default function Songs() {
         setSongs(data);
         const requested = searchParams.get("song");
         const initial =
-          (requested && data.find((s) => s.id === requested || String(s.number) === requested)) ||
+          (requested && data.find((s) => s.id === requested || (s.collection !== "presenter" && String(s.number) === requested))) ||
           data[0];
         if (initial) {
           setSelectedId(initial.id);
@@ -321,8 +328,13 @@ export default function Songs() {
 
   const filtered = useMemo(() => {
     if (!songs) return [];
-    return searchSongs(songs, query);
-  }, [songs, query]);
+    const available = songs.filter((song) => collection === "all" || (song.collection ?? "fellowship") === collection);
+    const sorted = available.sort((a, b) =>
+      (order === "number" ? (a.number ?? Infinity) - (b.number ?? Infinity) : 0) ||
+      a.title.localeCompare(b.title),
+    );
+    return searchSongs(sorted, query);
+  }, [songs, query, collection, order]);
 
   const selected = useMemo(
     () => songs?.find((s) => s.id === selectedId) ?? null,
@@ -331,7 +343,7 @@ export default function Songs() {
 
   const handleSelect = (song: Song) => {
     setSelectedId(song.id);
-    setSearchParams({ song: String(song.number) }, { replace: true });
+    setSearchParams(songQuery(song), { replace: true });
     setMobileView("reader");
     // Bring the reader content into view on mobile.
     if (typeof window !== "undefined") {
@@ -364,7 +376,7 @@ export default function Songs() {
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
             <div className="mb-3 flex items-center gap-2">
               <Music className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Song Book</h2>
+              <h1 className="text-lg font-semibold">Song Book</h1>
               <span className="text-xs text-muted-foreground">
                 {songs ? `${songs.length} songs` : ""}
               </span>
@@ -373,13 +385,44 @@ export default function Songs() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => { setQuery(e.target.value); setListLimit(80); }}
                 placeholder="Search by number, title, or a line of lyrics…"
                 className="h-11 pl-9 text-base"
                 inputMode="search"
                 aria-label="Search songs"
               />
             </div>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <label className="grid gap-1 text-sm">
+                Collection
+                <select
+                  value={collection}
+                  onChange={(event) => { setCollection(event.target.value); setListLimit(80); }}
+                  className="h-10 rounded-md border bg-background px-2"
+                >
+                  <option value="all">All songs</option>
+                  <option value="presenter">Church Presenter</option>
+                  <option value="fellowship">Fellowship Song Book</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm">
+                Sort by
+                <select
+                  value={order}
+                  onChange={(event) => { setOrder(event.target.value); setListLimit(80); }}
+                  className="h-10 rounded-md border bg-background px-2"
+                >
+                  <option value="title">Title A–Z</option>
+                  <option value="number">Hymn number</option>
+                </select>
+              </label>
+              {songs && <p role="status" className="pb-2 text-sm text-muted-foreground">{filtered.length.toLocaleString()} shown in results</p>}
+            </div>
+            {songs && !songs.some((song) => song.collection === "presenter") && (
+              <p role="status" className="mt-3 text-sm text-muted-foreground">
+                Church Presenter songs are temporarily unavailable.
+              </p>
+            )}
           </div>
         </div>
 
@@ -398,7 +441,7 @@ export default function Songs() {
               All songs
             </Button>
             <span className="ml-auto truncate text-xs font-medium text-muted-foreground">
-              #{selected.number}
+              {songReference(selected)}
             </span>
           </div>
         )}
@@ -437,10 +480,15 @@ export default function Songs() {
               >
                 <ScrollArea className="md:h-full">
                   <SongIndex
-                    songs={filtered}
+                    songs={filtered.slice(0, listLimit)}
                     selectedId={selectedId}
                     onSelect={handleSelect}
                   />
+                  {filtered.length > listLimit && (
+                    <Button variant="outline" className="m-2" onClick={() => setListLimit((value) => value + 80)}>
+                      Show more songs
+                    </Button>
+                  )}
                 </ScrollArea>
               </aside>
 

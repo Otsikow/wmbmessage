@@ -31,6 +31,7 @@ import Library from "./pages/Library";
 import Notes from "./pages/Notes";
 import More from "./pages/More";
 import WMBSermons from "./pages/WMBSermons";
+import MessageArchive from "./pages/MessageArchive";
 import MessageReader from "./pages/MessageReader";
 import Calendar from "./pages/Calendar";
 import Events from "./pages/Events";
@@ -165,7 +166,7 @@ function App() {
                                   /> {/* Legacy route */}
                                   <Route
                                     path="/messages"
-                                    element={withSectionBoundary("Sermons", <WMBSermons />)}
+                                    element={withSectionBoundary("Messages", <MessageArchive />)}
                                   />
                                   <Route
                                     path="/wmb-sermons"

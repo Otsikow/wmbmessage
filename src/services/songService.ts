@@ -13,13 +13,14 @@ import { toTitleCase } from "@/lib/titleCase";
  */
 
 const REMOTE_SONGS_URL = "/data/songs.json";
+const PRESENTER_SONGS_URL = "/data/presenter-songs.json";
 const SECTION_MARKER_REGEX = /^(chorus|refrain|bridge|verse)(?:\s+\d+)?$/i;
 
 let cache: Song[] | null = null;
 let inflight: Promise<Song[]> | null = null;
 
 function sortByNumber(songs: Song[]): Song[] {
-  return songs.slice().sort((a, b) => a.number - b.number);
+  return songs.slice().sort((a, b) => (a.number ?? Infinity) - (b.number ?? Infinity));
 }
 
 function normalizeLines(text: string): string[] {
@@ -201,7 +202,8 @@ async function fetchRemoteSongs(): Promise<Song[]> {
 }
 
 async function loadNodeSongs(): Promise<Song[]> {
-  const mod = await import("../../public/data/songs.json");
+  const localPath = "../../public/data/songs.json";
+  const mod = await import(/* @vite-ignore */ localPath, { with: { type: "json" } });
   const data = (mod.default ?? mod) as Song[];
   if (!Array.isArray(data) || data.length === 0) {
     throw new Error("Node songs payload is empty");
@@ -209,42 +211,77 @@ async function loadNodeSongs(): Promise<Song[]> {
   return sortByNumber(normalizeSongCollection(data));
 }
 
+async function loadFellowshipSongs(): Promise<Song[]> {
+  try {
+    return typeof window === "undefined" ? await loadNodeSongs() : await fetchRemoteSongs();
+  } catch (error) {
+    console.warn("[songService] Falling back to the bundled Song Book:", error);
+    return sortByNumber(normalizeSongCollection(BUNDLED_SONGS));
+  }
+}
+
+type PresenterSong = Pick<Song, "id" | "number" | "title" | "sections">;
+
+async function loadPresenterSongs(): Promise<Song[]> {
+  let songs: PresenterSong[];
+  if (typeof window === "undefined") {
+    const localPath = "../../public/data/presenter-songs.json";
+    songs = (await import(/* @vite-ignore */ localPath, { with: { type: "json" } })).default as PresenterSong[];
+  } else {
+    const response = await fetch(PRESENTER_SONGS_URL);
+    if (!response.ok) throw new Error(`Could not load Church Presenter songs (${response.status})`);
+    songs = await response.json();
+  }
+
+  return songs.map((song) => {
+    const lyrics = song.sections.map((section) => section.lines.join("\n")).join("\n\n");
+    return {
+      ...song,
+      collection: "presenter",
+      chorus: song.sections.find((section) => section.type === "chorus")?.lines.join("\n") ?? null,
+      lyrics,
+      rawText: lyrics,
+      searchText: lyrics.toLowerCase(),
+    };
+  });
+}
+
 export async function loadSongs(): Promise<Song[]> {
   if (cache) return cache;
   if (inflight) return inflight;
 
-  inflight = (async () => {
-    try {
-      const remote = await fetchRemoteSongs();
-      cache = remote;
-      return remote;
-    } catch (err) {
-      console.warn("[songService] Falling back from remote songs dataset:", err);
-
-      // In Node (tests / tools), there is no browser fetch for /public assets.
-      // Load the same canonical songs dataset directly from disk.
-      if (typeof window === "undefined") {
-        try {
-          const nodeSongs = await loadNodeSongs();
-          cache = nodeSongs;
-          return nodeSongs;
-        } catch (nodeErr) {
-          console.warn(
-            "[songService] Node songs fallback failed, using bundled dataset:",
-            nodeErr,
-          );
-        }
+  inflight = Promise.allSettled([loadFellowshipSongs(), loadPresenterSongs()])
+    .then(([fellowship, presenter]) => {
+      if (fellowship.status === "rejected") throw fellowship.reason;
+      if (presenter.status === "rejected") {
+        console.warn("[songService] Could not load the Church Presenter collection:", presenter.reason);
+        return fellowship.value;
       }
-
-      const bundledFallback = sortByNumber(normalizeSongCollection(BUNDLED_SONGS));
-      cache = bundledFallback;
-      return bundledFallback;
-    } finally {
-      inflight = null;
-    }
-  })();
+      cache = [...fellowship.value, ...presenter.value];
+      return cache;
+    })
+    .finally(() => { inflight = null; });
 
   return inflight;
+}
+
+export function songQuery(song: Song) {
+  return { song: song.collection === "presenter" ? song.id : String(song.number) };
+}
+
+export function songPath(song: Song) {
+  return `/songs?${new URLSearchParams(songQuery(song))}`;
+}
+
+export function songReference(song: Song) {
+  return song.number === null ? "Church Presenter" : `Song ${song.number}`;
+}
+
+export function songSectionLabel(section: SongSection, verseNumber: number) {
+  if (section.label) return section.label;
+  if (section.type === "verse") return `Verse ${verseNumber}`;
+  if (section.type === "other") return "Section";
+  return section.type[0].toUpperCase() + section.type.slice(1);
 }
 
 export interface SongSearchOptions {
@@ -266,6 +303,8 @@ function normalizeForSearch(text: string): string {
  * Search songs by number, title, or lyrics.
  * Returns songs ranked: number-match → title-match → lyrics-match.
  */
+const searchIndex = new WeakMap<Song, { title: string; lyrics: string }>();
+
 export function searchSongs(
   songs: Song[],
   query: string,
@@ -283,19 +322,22 @@ export function searchSongs(
   const isNumberQuery = !Number.isNaN(asNumber) && /^\d+$/.test(q);
 
   for (const song of songs) {
-    if (isNumberQuery && song.number === asNumber) {
-      numberMatch.push(song);
+    if (isNumberQuery) {
+      if (song.number === asNumber) numberMatch.push(song);
       continue;
     }
 
-    const normalizedTitle = normalizeForSearch(song.title);
-    if (normalizedTitle.includes(q)) {
+    let index = searchIndex.get(song);
+    if (!index) {
+      index = { title: normalizeForSearch(song.title), lyrics: normalizeForSearch(song.searchText) };
+      searchIndex.set(song, index);
+    }
+    if (index.title.includes(q)) {
       titleMatch.push(song);
       continue;
     }
 
-    const normalizedLyrics = normalizeForSearch(song.searchText);
-    if (normalizedLyrics.includes(q)) {
+    if (index.lyrics.includes(q)) {
       lyricsMatch.push(song);
     }
   }

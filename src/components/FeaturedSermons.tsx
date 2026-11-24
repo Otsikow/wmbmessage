@@ -151,7 +151,7 @@ const FeaturedSermons = () => {
               variant="secondary"
               className="bg-primary text-primary-foreground hover:bg-primary-hover hover:scale-105 transition-transform duration-300 font-medium shadow-md"
             >
-              <Link to="/wmb-sermons">Browse All Sermons</Link>
+              <Link to="/messages">Browse all messages</Link>
             </Button>
           </div>
         </div>

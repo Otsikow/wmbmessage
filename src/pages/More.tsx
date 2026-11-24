@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   HelpCircle,
+  Presentation,
   Info,
   Download,
   Share2,
@@ -17,6 +18,7 @@ import {
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import { CHURCH_PRESENTER, CHURCH_PRESENTER_PATH } from "@/lib/churchPresenter";
 
 export default function More() {
   const sections = [
@@ -27,7 +29,8 @@ export default function More() {
         { icon: Target, label: "Reading Plans", path: "/plans" },
         { icon: FileText, label: "My Notes", path: "/notes" },
         { icon: FileText, label: "Message Study Notes", path: "/study-notes" },
-        { icon: MessageSquare, label: "WMB Sermons", path: "/wmb-sermons" },
+        { icon: MessageSquare, label: "William Branham Messages", path: "/messages" },
+        { icon: MessageSquare, label: "Sermon Study Tools", path: "/wmb-sermons" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
       ],
     },
@@ -35,6 +38,11 @@ export default function More() {
       title: "Content",
       items: [
         { icon: Download, label: "Downloads", path: "/downloads" },
+        {
+          icon: Presentation,
+          label: CHURCH_PRESENTER.title,
+          path: CHURCH_PRESENTER_PATH,
+        },
         { icon: Share2, label: "Share", path: "/share" },
       ],
     },
