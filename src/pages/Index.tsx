@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SongsPromo from "@/components/SongsPromo";
+import ChurchPresenterPromo from "@/components/ChurchPresenterPromo";
 import StudyNotesPromo from "@/components/StudyNotesPromo";
 import Navigation from "@/components/Navigation";
 import DailyVerseCard from "@/components/DailyVerseCard";
@@ -71,6 +72,8 @@ const Index = () => {
           >
             <SongsPromo />
           </SectionErrorBoundary>
+
+          <ChurchPresenterPromo />
 
           {/* Message Churches Directory - Prominent CTA */}
           <SectionErrorBoundary

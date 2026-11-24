@@ -1,25 +1,23 @@
-/**
- * Offline Church Presenter download package.
- *
- * Single source of truth for the card shown on the public /downloads page and
- * for the unobtrusive link from the home-page Song Book area.
- */
+const browsers = "Chrome, Edge or Brave";
+
 export const CHURCH_PRESENTER = {
   cardId: "church-presenter",
   title: "Church Presenter",
   type: "ZIP",
   description:
-    "The full offline presentation package: songs, the KJV Bible and William Branham messages, ready to run without an internet connection.",
+    "Put lyrics, Scripture and message excerpts on screen during church services. After downloading, you can use the presenter offline.",
   size: "About 35 MB",
   format: "ZIP archive",
   contents: "Songs, KJV Bible, William Branham messages",
-  browsers: "Chrome, Edge or Brave",
+  browsers,
   driveUrl:
     "https://drive.google.com/file/d/12NsItXmQksfVy_NRZjRRsPcvkD7gCVIx/view",
   requiresSignIn: false,
   steps: [
-    "Download the ZIP file, then unzip it to a folder on your computer.",
-    "Open Church Presenter.html in Chrome, Edge or Brave.",
-    "Consult Start Here.txt for projector setup.",
+    "Download the ZIP file from Google Drive and unzip it on your computer.",
+    `Open Church Presenter.html from the extracted folder in ${browsers}.`,
+    "Connect your projector or second screen, set it to extend your desktop, then choose Show on audience screen in the presenter. See Start Here.txt for the full setup.",
   ],
 } as const;
+
+export const CHURCH_PRESENTER_PATH = `/downloads#${CHURCH_PRESENTER.cardId}`;

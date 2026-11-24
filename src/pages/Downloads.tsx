@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,18 +49,17 @@ const downloads: DownloadItem[] = [
 ];
 
 export default function Downloads() {
-  const location = useLocation();
+  const { hash, key } = useLocation();
+  const presenterHeading = useRef<HTMLHeadingElement>(null);
 
-  // Land on the Church Presenter card when arriving from the home-page link.
   useEffect(() => {
-    if (location.hash !== `#${CHURCH_PRESENTER.cardId}`) return;
+    if (hash !== `#${CHURCH_PRESENTER.cardId}`) return;
     const frame = requestAnimationFrame(() => {
-      document
-        .getElementById(CHURCH_PRESENTER.cardId)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      presenterHeading.current?.focus({ preventScroll: true });
+      presenterHeading.current?.scrollIntoView({ block: "start" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [location.hash]);
+  }, [hash, key]);
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -71,91 +70,66 @@ export default function Downloads() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Downloads</h1>
           </div>
 
-          <p className="text-sm sm:text-base text-muted-foreground mb-6">
-            Printable resources you can take offline. Download the latest copy or preview in a new
-            tab before printing.
-          </p>
-
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="space-y-4">
-              <Card
-                variant="glass"
-                hoverable
-                id={CHURCH_PRESENTER.cardId}
-                className="scroll-mt-32"
-              >
-                <CardHeader className="flex flex-row items-start gap-4 pb-4">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Presentation className="h-6 w-6" aria-hidden />
-                  </span>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold">
-                        {CHURCH_PRESENTER.title}
-                      </h3>
-                      <Badge variant="secondary">{CHURCH_PRESENTER.type}</Badge>
-                      <Badge variant="secondary">Offline</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {CHURCH_PRESENTER.description}
-                    </p>
+          <section aria-labelledby={CHURCH_PRESENTER.cardId} className="mb-8">
+            <Card className="border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card">
+              <CardContent className="grid gap-6 p-5 sm:p-7 md:grid-cols-2 md:gap-8">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Presentation className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <h2
+                      id={CHURCH_PRESENTER.cardId}
+                      ref={presenterHeading}
+                      tabIndex={-1}
+                      className="scroll-mt-6 text-xl font-bold sm:text-2xl"
+                    >
+                      {CHURCH_PRESENTER.title}
+                    </h2>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid gap-3 sm:grid-cols-2 text-xs sm:text-sm text-muted-foreground">
-                    <div>
-                      <p className="font-medium text-foreground">File size</p>
-                      <p>{CHURCH_PRESENTER.size}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Format</p>
-                      <p>{CHURCH_PRESENTER.format}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Includes</p>
-                      <p>{CHURCH_PRESENTER.contents}</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Runs in</p>
-                      <p>{CHURCH_PRESENTER.browsers}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      How to use it
-                    </p>
-                    <ol className="grid gap-2 text-sm text-muted-foreground">
-                      {CHURCH_PRESENTER.steps.map((step, index) => (
-                        <li key={step} className="flex items-start gap-2">
-                          <span
-                            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary"
-                            aria-hidden
-                          >
-                            {index + 1}
-                          </span>
-                          <span>{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex flex-wrap items-center gap-3">
-                  <Button asChild>
+                  <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+                    {CHURCH_PRESENTER.description}
+                  </p>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Includes {CHURCH_PRESENTER.contents}.
+                  </p>
+                  <Button asChild className="mt-5 min-h-[44px] w-full sm:w-auto">
                     <a
                       href={CHURCH_PRESENTER.driveUrl}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="Download Church Presenter (ZIP)"
+                      aria-describedby="church-presenter-download-details"
                     >
-                      <FileDown className="mr-2 h-4 w-4" />
-                      Download Church Presenter (ZIP)
+                      <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Download Church Presenter
                     </a>
                   </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Opens Google Drive in a new tab
-                  </span>
-                </CardFooter>
-              </Card>
+                  <p id="church-presenter-download-details" className="mt-2 text-xs text-muted-foreground">
+                    {CHURCH_PRESENTER.format} · {CHURCH_PRESENTER.size} · Opens Google Drive in a new tab
+                  </p>
+                </div>
+
+                <div className="border-t border-border pt-5 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                  <h3 className="font-semibold">Set up for a service</h3>
+                  <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground marker:font-semibold marker:text-primary">
+                    {CHURCH_PRESENTER.steps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Before the service, test a song and a Bible passage on the audience screen.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          <h2 className="mb-2 text-xl font-semibold">Printable resources</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Download a PDF or preview it in a new tab before printing.
+          </p>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="space-y-4">
               {downloads.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -235,7 +209,7 @@ export default function Downloads() {
                     <Download className="h-5 w-5" aria-hidden />
                   </span>
                   <div>
-                    <h2 className="text-lg font-semibold">Make the most of your downloads</h2>
+                    <h3 className="text-lg font-semibold">Make the most of your PDFs</h3>
                     <p className="text-sm text-muted-foreground">
                       Everything is ready for printing or sharing.
                     </p>
