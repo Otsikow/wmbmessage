@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { gunzipSync } from "node:zlib";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { filterMessageCatalog, findMessageMatches, messageArchiveLink, type ArchivedMessage, type MessageEntry } from "@/lib/messageArchive";
+import { filterMessageCatalog, findMessageMatches, highlightMessageText, messageArchiveLink, type ArchivedMessage, type MessageEntry } from "@/lib/messageArchive";
 
 const archive = new URL("../public/data/message-archive/", import.meta.url);
 const catalog = JSON.parse(await readFile(new URL("catalog.json", archive), "utf8")) as MessageEntry[];
@@ -30,9 +30,12 @@ test("every catalogue entry resolves to a complete transcript", async () => {
 
 test("finds titles and date codes with or without hyphens", () => {
   assert.equal(filterMessageCatalog(catalog, "470412")[0].title, "Faith Is the Substance");
+  assert.equal(filterMessageCatalog(catalog, "12 April 1947")[0].code, "47-0412");
+  assert.equal(filterMessageCatalog(catalog, "1947-04-12")[0].code, "47-0412");
   assert.equal(filterMessageCatalog(catalog, "faith is the substance")[0].code, "47-0412");
+  assert.deepEqual(filterMessageCatalog([{ code: "47-0412", title: "Unfaith is not faith", file: "example" }], '"faith is"'), []);
   assert.equal(messageArchiveLink("47-0412"), "/messages?q=47-0412");
-  assert.equal(messageArchiveLink("some phrase"), "/messages?q=some+phrase&scope=text");
+  assert.equal(messageArchiveLink("some phrase"), "/messages?q=some+phrase");
 });
 
 test("phrase searches return the matching paragraph and tolerate apostrophe styles and line breaks", () => {
@@ -49,4 +52,19 @@ test("phrase searches return the matching paragraph and tolerate apostrophe styl
   assert.equal(match.number, "2");
   assert.match(match.excerpt, /gadgets for recording/);
   assert.deepEqual(findMessageMatches(messages, "cord"), []);
+});
+
+
+test("ranks an exact phrase ahead of reordered words and returns multiple paragraphs", () => {
+  const messages: ArchivedMessage[] = [["47-0412", "Example", [
+    ["1", "Hope grows when we hold to our faith."],
+    ["2", "We learn about faith and hope."],
+    ["3", "We only mention hope here."],
+    ["4", "Faith and hope remain."],
+  ]]];
+  assert.deepEqual(findMessageMatches(messages, "faith and hope").map(({ number }) => number), ["2", "4", "1"]);
+  assert.deepEqual(findMessageMatches(messages, '"faith and hope"').map(({ number }) => number), ["2", "4"]);
+  assert.deepEqual(findMessageMatches(messages, '"faith and hope" grow'), []);
+  assert.deepEqual(highlightMessageText("Hope grows through faith.", "faith and hope")
+    .filter(({ match }) => match).map(({ text }) => text), ["Hope", "faith"]);
 });

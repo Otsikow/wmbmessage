@@ -9,15 +9,29 @@ import { Input } from "@/components/ui/input";
 import {
   archivePath,
   filterMessageCatalog,
+  highlightMessageText,
   loadMessageBatch,
+  messageDateCode,
   type ArchivedMessage,
   type MessageEntry,
   type MessageMatch,
 } from "@/lib/messageArchive";
 
 const PAGE_SIZE = 40;
+type SearchScope = "all" | "catalog" | "text";
+const SEARCH_SCOPES: { value: SearchScope; label: string }[] = [
+  { value: "all", label: "Everything" },
+  { value: "catalog", label: "Titles and dates" },
+  { value: "text", label: "Transcript text" },
+];
 
-function Transcript({ entry, paragraph }: { entry: MessageEntry; paragraph: string | null }) {
+function Highlight({ text, query }: { text: string; query: string }) {
+  return highlightMessageText(text, query).map(({ text: part, match }, index) => match
+    ? <mark key={index} className="rounded-sm bg-primary/20 text-foreground">{part}</mark>
+    : part);
+}
+
+function Transcript({ entry, paragraph, query }: { entry: MessageEntry; paragraph: string | null; query: string }) {
   const [message, setMessage] = useState<ArchivedMessage>();
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -69,7 +83,7 @@ function Transcript({ entry, paragraph }: { entry: MessageEntry; paragraph: stri
                 className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 rounded-lg p-2 leading-relaxed ${current ? "bg-primary/10" : ""}`}
               >
                 <span className="select-none text-sm tabular-nums text-muted-foreground">¶ {number || index + 1}</span>
-                <p className="whitespace-pre-line">{text}</p>
+                <p className="whitespace-pre-line">{current ? <Highlight text={text} query={query} /> : text}</p>
               </li>
             );
           })}
@@ -81,8 +95,9 @@ function Transcript({ entry, paragraph }: { entry: MessageEntry; paragraph: stri
 
 export default function MessageArchive() {
   const [params, setParams] = useSearchParams();
-  const query = params.get("q") ?? "";
-  const scope = params.get("scope") === "text" ? "text" : "catalog";
+  const query = (params.get("q") ?? "").slice(0, 160);
+  const requestedScope = params.get("scope");
+  const scope: SearchScope = requestedScope === "text" || requestedScope === "catalog" ? requestedScope : "all";
   const code = params.get("message");
   const paragraph = params.get("paragraph");
   const [catalog, setCatalog] = useState<MessageEntry[]>();
@@ -91,14 +106,19 @@ export default function MessageArchive() {
   const [input, setInput] = useState(query);
   const [mode, setMode] = useState(scope);
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const [searchResult, setSearchResult] = useState<{ query: string; matches: MessageMatch[] }>();
+  const [searchResult, setSearchResult] = useState<{ query: string; matches: MessageMatch[]; total: number }>();
   const [progress, setProgress] = useState(0);
   const [searchError, setSearchError] = useState(false);
   const [searchRetry, setSearchRetry] = useState(0);
   const files = useMemo(() => [...new Set(catalog?.map((entry) => entry.file))], [catalog]);
-  const fullText = scope === "text" && Boolean(query.trim());
-  const matches = searchResult?.query === query ? searchResult.matches : undefined;
-  const shouldSearch = fullText && !code && files.length > 0 && !matches;
+  const titles = useMemo(() => filterMessageCatalog(catalog ?? [], query), [catalog, query]);
+  const searchTranscripts = Boolean(query.trim()) && (
+    scope === "text" || (scope === "all" && !(messageDateCode(query) && titles.length))
+  );
+  const transcriptResults = searchTranscripts && searchResult?.query === query ? searchResult : undefined;
+  const shouldSearch = searchTranscripts && !code && files.length > 0 && !transcriptResults;
+  const searching = searchTranscripts && !transcriptResults && !searchError;
+  const results = [...(scope === "text" && query.trim() ? [] : titles), ...(transcriptResults?.matches ?? [])];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -130,7 +150,7 @@ export default function MessageArchive() {
       worker.onerror = () => setSearchError(true);
       worker.onmessage = ({ data }) => {
         if (data.type === "progress") setProgress(data.completed);
-        if (data.type === "results") setSearchResult({ query, matches: data.results });
+        if (data.type === "results") setSearchResult({ query, matches: data.results, total: data.total });
         if (data.type === "error") setSearchError(true);
       };
       worker.postMessage({ files, query });
@@ -141,8 +161,6 @@ export default function MessageArchive() {
   }, [files, query, searchRetry, shouldSearch]);
 
   const entry = catalog?.find((item) => item.code === code);
-  const titles = useMemo(() => filterMessageCatalog(catalog ?? [], query), [catalog, query]);
-  const results = fullText ? matches : titles;
   const backParams = new URLSearchParams(params);
   backParams.delete("message");
   backParams.delete("paragraph");
@@ -170,7 +188,7 @@ export default function MessageArchive() {
             <Button asChild variant="outline">
               <Link to={`?${backParams}`}>Back to messages</Link>
             </Button>
-            {entry ? <Transcript key={entry.code} entry={entry} paragraph={paragraph} />
+            {entry ? <Transcript key={entry.code} entry={entry} paragraph={paragraph} query={query} />
               : <p role="status">{catalog ? "This message isn’t in the archive." : "Loading message…"}</p>}
           </>
         ) : (
@@ -189,26 +207,25 @@ export default function MessageArchive() {
               event.preventDefault();
               const next = new URLSearchParams();
               if (input.trim()) next.set("q", input.trim());
-              if (mode === "text") next.set("scope", "text");
+              if (mode !== "all") next.set("scope", mode);
               setParams(next);
             }}>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-                <label className="inline-flex items-center gap-2">
-                  <input type="radio" name="message-scope" checked={mode === "catalog"} onChange={() => setMode("catalog")} />
-                  Title or date code
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="radio" name="message-scope" checked={mode === "text"} onChange={() => setMode("text")} />
-                  Words in a transcript
-                </label>
-              </div>
+              <fieldset className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                <legend className="sr-only">Search scope</legend>
+                {SEARCH_SCOPES.map(({ value, label }) => (
+                  <label key={value} className="inline-flex items-center gap-2">
+                    <input type="radio" name="message-scope" checked={mode === value} onChange={() => setMode(value)} />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
               <div className="flex gap-2">
                 <Input
                   type="search"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   aria-label="Search William Branham messages"
-                  placeholder={mode === "text" ? "Enter a phrase" : "Enter a title or date code"}
+                  placeholder={mode === "catalog" ? "Enter a title or date code" : "Enter a title, date, or words from a message"}
                   maxLength={160}
                 />
                 <Button type="submit">
@@ -216,44 +233,61 @@ export default function MessageArchive() {
                   Search
                 </Button>
               </div>
+              {mode !== "catalog" && (
+                <p className="text-sm text-muted-foreground">Use quotation marks to search for an exact phrase.</p>
+              )}
             </form>
 
-            {searchError ? (
+            {searchTranscripts && searchError && (
               <div role="alert" className="space-y-3">
                 <p>Couldn’t finish searching the transcripts.</p>
                 <Button variant="outline" onClick={() => setSearchRetry((value) => value + 1)}>Try again</Button>
               </div>
-            ) : !catalog ? <p role="status">Loading messages…</p>
-              : !results ? (
-                <div role="status" className="space-y-2">
-                  <p>Searching transcripts…</p>
-                  <progress aria-label="Transcript search progress" max={files.length} value={progress} className="w-full" />
-                </div>
-              ) : (
-                <>
-                  <p role="status" className="text-sm text-muted-foreground">
-                    {results.length ? `${results.length.toLocaleString()} messages` : "No matching messages"}
-                  </p>
-                  {results.length > 0 && <ul className="divide-y overflow-hidden rounded-xl border bg-card">
-                    {results.slice(0, limit).map((result) => (
-                      <li key={result.code}>
-                        <Link to={messageLink(result)} className="block p-4 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none">
-                          <p className="text-xs font-semibold text-primary">
-                            {result.code}{"number" in result && result.number ? ` · ¶ ${result.number}` : ""}
-                          </p>
-                          <p className="mt-1 font-semibold">{result.title}</p>
-                          {"excerpt" in result && <p className="mt-1 text-sm text-muted-foreground">{result.excerpt}</p>}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>}
-                  {results.length > limit && (
-                    <Button variant="outline" onClick={() => setLimit((value) => value + PAGE_SIZE)}>
-                      Show more messages
-                    </Button>
-                  )}
-                </>
-              )}
+            )}
+            {!catalog ? <p role="status">Loading messages…</p> : searching ? (
+              <div role="status" className="space-y-2 text-sm text-muted-foreground">
+                <p>Searching transcripts…</p>
+                <progress aria-label="Transcript search progress" max={files.length} value={progress} className="w-full" />
+              </div>
+            ) : !(searchTranscripts && searchError && !results.length) && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {results.length ? [
+                  (scope !== "text" || !query.trim()) && titles.length
+                    ? `${titles.length.toLocaleString()} ${titles.length === 1 ? "message" : "messages"}`
+                    : null,
+                  transcriptResults?.total
+                    ? `${transcriptResults.total.toLocaleString()} matching ${transcriptResults.total === 1 ? "paragraph" : "paragraphs"}`
+                    : null,
+                ].filter(Boolean).join(" · ") : "No matching messages or paragraphs"}
+              </p>
+            )}
+            {results.length > 0 && (
+              <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+                {results.slice(0, limit).map((result) => (
+                  <li key={`${result.code}:${"paragraph" in result ? result.paragraph : "title"}`}>
+                    <Link to={messageLink(result)} className="block p-4 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none">
+                      <p className="text-xs font-semibold text-primary">
+                        {result.code}{"paragraph" in result ? ` · ¶ ${result.number || result.paragraph + 1}` : ""}
+                      </p>
+                      <p className="mt-1 font-semibold">{result.title}</p>
+                      {"excerpt" in result && (
+                        <p className="mt-1 text-sm text-muted-foreground"><Highlight text={result.excerpt} query={query} /></p>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {results.length > limit && (
+              <Button variant="outline" onClick={() => setLimit((value) => value + PAGE_SIZE)}>
+                Show more results
+              </Button>
+            )}
+            {transcriptResults && transcriptResults.total > transcriptResults.matches.length && (
+              <p className="text-sm text-muted-foreground">
+                The best {transcriptResults.matches.length.toLocaleString()} paragraph matches are available. Add more words to narrow your search.
+              </p>
+            )}
           </>
         )}
       </main>

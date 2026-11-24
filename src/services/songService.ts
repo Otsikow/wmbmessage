@@ -287,6 +287,7 @@ export function songSectionLabel(section: SongSection, verseNumber: number) {
 export interface SongSearchOptions {
   /** Max results to return; default is unbounded */
   limit?: number;
+  displayTitle?: (song: Song) => string | undefined;
 }
 
 function normalizeForSearch(text: string): string {
@@ -310,7 +311,7 @@ export function searchSongs(
   query: string,
   options: SongSearchOptions = {},
 ): Song[] {
-  const { limit = Number.POSITIVE_INFINITY } = options;
+  const { limit = Number.POSITIVE_INFINITY, displayTitle } = options;
   const q = normalizeForSearch(query);
   if (!q) return songs.slice(0, limit);
 
@@ -332,7 +333,8 @@ export function searchSongs(
       index = { title: normalizeForSearch(song.title), lyrics: normalizeForSearch(song.searchText) };
       searchIndex.set(song, index);
     }
-    if (index.title.includes(q)) {
+    const alternateTitle = displayTitle?.(song);
+    if (index.title.includes(q) || (alternateTitle && normalizeForSearch(alternateTitle).includes(q))) {
       titleMatch.push(song);
       continue;
     }
