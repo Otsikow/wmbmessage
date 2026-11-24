@@ -170,12 +170,17 @@ export function findTranscriptParagraphs(message: ArchivedMessage, query: string
   if (!number) {
     return {
       query,
-      paragraphs: findMessageMatches([message], query).map((match) => match.paragraph),
+      matches: findMessageMatches([message], query),
     };
   }
 
   // The printed paragraph number can differ from its offset in the transcript.
-  const paragraphs = message[2].flatMap(([label], index) =>
-    Number(label || index + 1) === Number(number[1]) ? [index] : []);
-  return { query: "", paragraphs };
+  const [code, title, paragraphs] = message;
+  const matches = paragraphs.flatMap(([label, text], paragraph): MessageMatch[] => {
+    const printedNumber = label || String(paragraph + 1);
+    if (Number(printedNumber) !== Number(number[1])) return [];
+    const excerpt = text.length > 150 ? `${text.slice(0, 150).trimEnd()}…` : text;
+    return [{ code, title, paragraph, number: printedNumber, excerpt, rank: 0 }];
+  });
+  return { query: "", matches };
 }

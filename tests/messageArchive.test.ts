@@ -77,11 +77,16 @@ test("transcript search jumps by printed number and searches words or exact quot
   ]];
 
   for (const input of ["8", "¶ 8", "Paragraph 8", "para. 08"]) {
-    assert.deepEqual(findTranscriptParagraphs(message, input), { query: "", paragraphs: [1] });
+    const { query, matches } = findTranscriptParagraphs(message, input);
+    assert.equal(query, "");
+    assert.deepEqual(matches.map(({ paragraph, number, excerpt }) => ({ paragraph, number, excerpt })), [
+      { paragraph: 1, number: "8", excerpt: "Some new equipment is coming." },
+    ]);
   }
-  assert.deepEqual(findTranscriptParagraphs(message, "2").paragraphs, []);
-  assert.deepEqual(findTranscriptParagraphs(message, "new gadgets").paragraphs, [0, 2]);
-  assert.deepEqual(findTranscriptParagraphs(message, '“we\'re getting some”').paragraphs, [0]);
-  assert.deepEqual(findTranscriptParagraphs(message, '"8"').paragraphs, [2]);
-  assert.deepEqual(findTranscriptParagraphs(message, '"new gadgets are"').paragraphs, []);
+  const paragraphs = (query: string) => findTranscriptParagraphs(message, query).matches.map((match) => match.paragraph);
+  assert.deepEqual(paragraphs("2"), []);
+  assert.deepEqual(paragraphs("new gadgets"), [0, 2]);
+  assert.deepEqual(paragraphs('“we\'re getting some”'), [0]);
+  assert.deepEqual(paragraphs('"8"'), [2]);
+  assert.deepEqual(paragraphs('"new gadgets are"'), []);
 });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, List, Search } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -19,6 +19,7 @@ import {
 } from "@/lib/messageArchive";
 
 const PAGE_SIZE = 40;
+const MATCH_PAGE_SIZE = 6;
 type SearchScope = "all" | "catalog" | "text";
 const SEARCH_SCOPES: { value: SearchScope; label: string }[] = [
   { value: "all", label: "Everything" },
@@ -28,18 +29,20 @@ const SEARCH_SCOPES: { value: SearchScope; label: string }[] = [
 
 function Highlight({ text, query }: { text: string; query: string }) {
   return highlightMessageText(text, query).map(({ text: part, match }, index) => match
-    ? <mark key={index} className="rounded-sm bg-primary/20 text-foreground">{part}</mark>
+    ? <mark key={index} className="rounded-sm bg-amber-200 text-amber-950 dark:bg-amber-300">{part}</mark>
     : part);
 }
 
 function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessage; paragraph: string | null; query: string }) {
   const [input, setInput] = useState("");
   const [search, setSearch] = useState<(ReturnType<typeof findTranscriptParagraphs> & { index: number })>();
+  const [matchLimit, setMatchLimit] = useState(MATCH_PAGE_SIZE);
   const inputRef = useRef<HTMLInputElement>(null);
-  const activeMatch = search?.paragraphs[search.index];
-  const matchCount = search?.paragraphs.length ?? 0;
+  const resultsRef = useRef<HTMLHeadingElement>(null);
+  const activeMatch = search?.matches[search.index]?.paragraph;
+  const matchCount = search?.matches.length ?? 0;
   const status = search && (matchCount
-    ? `Match ${search.index + 1} of ${matchCount}`
+    ? `${matchCount} matching paragraph${matchCount === 1 ? "" : "s"}`
     : "No matching paragraphs in this message.");
 
   const focusSearch = () => {
@@ -66,6 +69,7 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
       <form className="space-y-2 rounded-xl border bg-background/60 p-3 sm:p-4" onSubmit={(event) => {
         event.preventDefault();
         const value = input.trim();
+        setMatchLimit(MATCH_PAGE_SIZE);
         setSearch(value ? { ...findTranscriptParagraphs(message, value), index: 0 } : undefined);
       }}>
         <label htmlFor="transcript-search" className="text-sm font-semibold">Find in this message</label>
@@ -92,8 +96,50 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
         <p id="transcript-search-hint" className="text-xs text-muted-foreground">
           Enter a number to jump to a paragraph. Use quotation marks for an exact phrase.
         </p>
-        <p role="status" className={status ? "text-sm text-muted-foreground" : "sr-only"}>{status}</p>
+        <p role="status" className={search && !matchCount ? "text-sm text-muted-foreground" : "sr-only"}>
+          {status}
+        </p>
       </form>
+      {search && matchCount > 0 && (
+        <section aria-labelledby="transcript-results" className="space-y-3 rounded-xl border bg-background/60 p-3 sm:p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h2 id="transcript-results" ref={resultsRef} tabIndex={-1} className="scroll-mt-28 text-sm font-semibold">
+              Search results
+            </h2>
+            <span className="text-xs text-muted-foreground">{status}</span>
+          </div>
+          <ul className="divide-y overflow-hidden rounded-lg border bg-card">
+            {search.matches.slice(0, matchLimit).map((match, index) => (
+              <li key={match.paragraph}>
+                <button
+                  type="button"
+                  aria-current={index === search.index ? "true" : undefined}
+                  onClick={() => setSearch({ ...search, index })}
+                  className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring aria-[current=true]:bg-primary/10"
+                >
+                  <span className="min-w-0 flex-1 space-y-1">
+                    <span className="block text-xs font-semibold text-primary">Paragraph {match.number || match.paragraph + 1}</span>
+                    <span className="line-clamp-2 break-words text-sm leading-relaxed text-foreground/85">
+                      <Highlight text={match.excerpt} query={search.query} />
+                    </span>
+                  </span>
+                  <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          {matchLimit < matchCount && (
+            <Button type="button" variant="outline" size="sm" onClick={() => {
+              setMatchLimit(matchLimit + MATCH_PAGE_SIZE);
+              requestAnimationFrame(() => {
+                resultsRef.current?.closest("section")?.querySelectorAll<HTMLButtonElement>("li button")[matchLimit]?.focus();
+              });
+            }}>
+              Show more matches ({matchCount - matchLimit})
+            </Button>
+          )}
+        </section>
+      )}
       <ol className="space-y-4">
         {message[2].map(([number, text], index) => {
           const localMatch = index === activeMatch;
@@ -103,19 +149,34 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
               key={index}
               id={`message-paragraph-${index}`}
               tabIndex={current ? -1 : undefined}
-              className={`grid scroll-mt-28 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-2 rounded-lg p-2 leading-relaxed ${current ? "bg-primary/10" : ""}`}
+              className={`grid scroll-mt-28 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-2 rounded-lg leading-relaxed ${localMatch ? "border border-primary/30 bg-primary/5 p-3 shadow-sm sm:p-4" : current ? "bg-primary/10 p-2" : "p-2"}`}
             >
               {localMatch && search && (
-                <div className="col-span-2 flex flex-wrap items-center gap-1 border-b border-primary/20 pb-2">
-                  <Button type="button" variant="ghost" size="sm" onClick={focusSearch}>
-                    <Search className="h-4 w-4" aria-hidden="true" />
-                    Back to search
+                <div className="col-span-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-primary/20 pb-2">
+                  <div className="mr-auto">
+                    <p className="text-sm font-semibold text-primary">Paragraph {number || index + 1}</p>
+                    <p className="text-xs tabular-nums text-muted-foreground">
+                      Match {search.index + 1} of {matchCount}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={matchCount === 1 ? focusSearch : () => {
+                      setMatchLimit((limit) => Math.max(limit, search.index + 1));
+                      resultsRef.current?.focus({ preventScroll: true });
+                      resultsRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+                    }}
+                  >
+                    {matchCount === 1 ? <Search aria-hidden="true" /> : <List aria-hidden="true" />}
+                    {matchCount === 1 ? "Back to search" : "All matches"}
                   </Button>
                   {matchCount > 1 && (
-                    <div className="ml-auto flex items-center gap-1">
+                    <div role="group" aria-label="Match navigation" className="flex items-center gap-1">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         aria-label="Previous match"
                         disabled={search.index === 0}
@@ -123,10 +184,9 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
                       >
                         <ChevronLeft aria-hidden="true" />
                       </Button>
-                      <span className="text-xs tabular-nums text-muted-foreground">{search.index + 1} / {matchCount}</span>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         aria-label="Next match"
                         disabled={search.index + 1 === matchCount}
@@ -138,8 +198,8 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
                   )}
                 </div>
               )}
-              <span className="select-none text-sm tabular-nums text-muted-foreground">¶ {number || index + 1}</span>
-              <p className="whitespace-pre-line break-words">
+              {!localMatch && <span className="select-none text-sm tabular-nums text-muted-foreground">¶ {number || index + 1}</span>}
+              <p className={`whitespace-pre-line break-words ${localMatch ? "col-span-2 pt-1" : ""}`}>
                 {current ? <Highlight text={text} query={localMatch ? search.query : query} /> : text}
               </p>
             </li>
