@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function SongsPromo() {
   return (
-    <section className="container mx-auto max-w-5xl px-4 py-6">
+    <section className="home-content">
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-accent/10 p-6 sm:p-8 shadow-elegant">
         {/* Decorative glow */}
         <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />

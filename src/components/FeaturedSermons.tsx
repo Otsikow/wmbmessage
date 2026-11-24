@@ -127,7 +127,7 @@ const FeaturedSermons = () => {
       <div className="absolute inset-0 mesh-gradient opacity-40" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-muted/30" />
 
-      <div className="container relative z-10 space-y-10">
+      <div className="home-content relative z-10 space-y-10">
         {/* Header Section */}
         <div className="flex flex-col gap-6 text-center md:text-left md:flex-row md:items-end md:justify-between">
           <div className="space-y-4">

@@ -7,7 +7,7 @@ export default function ChurchPresenterPromo() {
   return (
     <section
       aria-labelledby="church-presenter-promo-title"
-      className="container mx-auto max-w-5xl px-4"
+      className="home-content"
     >
       <div className="flex flex-col gap-5 rounded-2xl border border-primary/20 bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex items-start gap-4">
