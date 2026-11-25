@@ -113,16 +113,16 @@ export function PageBreadcrumbs({
 
   return (
     <Breadcrumb className={cn("text-xs sm:text-sm", className)}>
-      <BreadcrumbList>
+      <BreadcrumbList className="flex-nowrap overflow-hidden">
         {breadcrumbs.map((crumb, index) => (
           <Fragment key={`${crumb.label}-${crumb.href ?? index}`}>
-            <BreadcrumbItem>
+            <BreadcrumbItem className={index === breadcrumbs.length - 1 ? "min-w-0" : "shrink-0"}>
               {crumb.href ? (
-                <BreadcrumbLink asChild>
+                <BreadcrumbLink asChild className="whitespace-nowrap">
                   <Link to={crumb.href}>{crumb.label}</Link>
                 </BreadcrumbLink>
               ) : (
-                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
               )}
             </BreadcrumbItem>
             {index < breadcrumbs.length - 1 ? <BreadcrumbSeparator /> : null}

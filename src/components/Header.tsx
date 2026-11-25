@@ -36,19 +36,19 @@ export default function Header({
     navigate('/');
   };
   return <header className={cn("sticky top-0 z-30 w-full border-b border-border bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:glass md:shadow-glass", className)}>
-      <div className="container flex flex-col gap-1 px-4 py-1 md:gap-2 md:py-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5 md:gap-3">
-            {showBackButton ? <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" /> : null}
-            <Link to="/" aria-label="Go to homepage" className="flex min-w-0 items-center space-x-1.5 md:space-x-3 group">
-              <img src={logoImage} alt="" className="h-7 sm:h-8 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" />
-              <span className="truncate text-[17px] font-semibold tracking-tight text-foreground md:text-xl md:font-bold md:text-gradient-blue-purple">
-                MessageGuide
-              </span>
-            </Link>
-          </div>
+      <div className="container flex h-14 items-center justify-between gap-2 px-4 md:h-16">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 md:gap-3">
+          {showBackButton ? <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" /> : null}
+          <Link to="/" aria-label="Go to homepage" className="flex shrink-0 items-center space-x-1.5 md:space-x-3 group">
+            <img src={logoImage} alt="" className="h-7 sm:h-8 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" />
+            <span className="text-[17px] font-semibold tracking-tight text-foreground md:text-lg md:font-bold md:text-gradient-blue-purple">
+              MessageGuide
+            </span>
+          </Link>
+          <PageBreadcrumbs title={pageTitle} className="hidden md:flex min-w-0 flex-1 border-l border-border pl-3 md:pl-4" />
+        </div>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <ThemeToggle />
 
             <nav className="hidden lg:flex items-center space-x-1">
@@ -151,11 +151,6 @@ export default function Header({
                 <Link to="/auth/sign-in">Sign In</Link>
               </Button>}
           </div>
-        </div>
-
-        
-
-        <PageBreadcrumbs title={pageTitle} className="hidden sm:block" />
       </div>
     </header>;
 }
