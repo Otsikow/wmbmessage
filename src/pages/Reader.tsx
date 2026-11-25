@@ -63,6 +63,7 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { useUserNotes } from "@/hooks/useNotes";
 import { useAuth } from "@/contexts/AuthContext";
 import BackButton from "@/components/BackButton";
+import Navigation from "@/components/Navigation";
 import { useEngagement } from "@/contexts/EngagementContext";
 import HighlightMenu from "@/components/HighlightMenu";
 import { useSwipe } from "@/hooks/useSwipe";
@@ -484,7 +485,7 @@ export default function Reader() {
     (option) => option.id === settings.readerFontFamily
   );
   const controlButtonClass =
-    "h-10 w-10 sm:h-11 sm:w-11 rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+    "h-11 w-11 rounded-xl border-transparent bg-muted text-foreground transition-colors hover:bg-accent md:border-border/60 md:bg-background/90 md:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -524,9 +525,9 @@ export default function Reader() {
       : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24 md:pb-12">
+    <div className="min-h-screen bg-background md:bg-gradient-to-b md:from-background md:via-background md:to-muted/30 md:pb-12">
       {/* Top Navigation */}
-      <div className="border-b border-border/70 bg-card/95 shadow-sm">
+      <div className="border-b border-border bg-background pt-[env(safe-area-inset-top)] md:bg-card/95 md:shadow-sm">
         <div className="container mx-auto max-w-5xl px-3 py-3 sm:px-4 sm:py-4">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex items-center justify-between gap-2">
@@ -838,11 +839,11 @@ export default function Reader() {
       </div>
 
       {/* Bible Content */}
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-        <Card ref={swipeRef} className="border border-border/60 bg-card/95 shadow-xl">
-          <div className="px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-10 space-y-8">
-            <div className="space-y-2 text-center">
-              <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground/70">Holy Bible • King James Version</p>
+      <div className={cn("container mx-auto max-w-5xl px-4 py-5 sm:px-6 md:py-10", hasSelection && "max-md:pb-24")}>
+        <Card ref={swipeRef} className="border-0 bg-transparent shadow-none md:border md:border-border/60 md:bg-card/95 md:shadow-xl">
+          <div className="space-y-5 md:space-y-8 md:px-8 md:py-10 lg:px-12">
+            <div className="space-y-1 md:space-y-2 md:text-center">
+              <p className="text-sm text-muted-foreground md:text-xs md:uppercase md:tracking-[0.25em]">Holy Bible • King James Version</p>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
                 {currentBook} {currentChapter}
               </h1>
@@ -927,15 +928,11 @@ export default function Reader() {
       </div>
 
       {/* Selection Actions */}
-      <div
-        className={cn(
-          "fixed inset-x-0 bottom-4 z-30 transition-all duration-200", 
-          hasSelection ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
-        )}
-        aria-hidden={!hasSelection}
+      {hasSelection && <div
+        className="fixed inset-x-0 bottom-[calc(var(--mobile-tab-height)+env(safe-area-inset-bottom,0px)+0.5rem)] z-30 md:bottom-4"
       >
         <div className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 shadow-lg backdrop-blur-xl sm:gap-3 sm:justify-between sm:p-3">
+          <div className="flex flex-row items-center justify-center gap-2 rounded-2xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-xl sm:gap-3 sm:justify-between sm:p-3">
             <div className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Highlighter className="h-4 w-4" />
@@ -955,7 +952,8 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-border bg-muted/60 hover:bg-accent"
+                aria-label="Add note"
                 onClick={handleBulkNote}
                 disabled={!selectedVerses.length}
               >
@@ -965,7 +963,8 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-border bg-muted/60 hover:bg-accent"
+                aria-label="Bookmark"
                 onClick={handleBulkBookmark}
                 disabled={!selectedVerses.length}
               >
@@ -975,7 +974,8 @@ export default function Reader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-white/10 bg-white/5 hover:bg-white/10"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 border-border bg-muted/60 hover:bg-accent"
+                aria-label="Copy"
                 onClick={handleCopySelection}
                 disabled={!hasSelection}
               >
@@ -985,7 +985,8 @@ export default function Reader() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 hover:bg-white/10"
+                className="gap-2 h-9 w-9 p-0 sm:w-auto sm:px-3 hover:bg-muted"
+                aria-label="Clear selection"
                 onClick={handleClearSelection}
                 disabled={!hasSelection}
               >
@@ -995,7 +996,9 @@ export default function Reader() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
+
+      <Navigation />
 
       {/* Sermon Cross References Modal */}
       <SermonCrossReferenceModal

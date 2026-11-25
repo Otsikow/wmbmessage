@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import {
+  ChevronRight,
+  Church,
   HelpCircle,
   Presentation,
   Info,
@@ -17,7 +19,7 @@ import {
 
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import BackButton from "@/components/BackButton";
+import Header from "@/components/Header";
 import { CHURCH_PRESENTER, CHURCH_PRESENTER_PATH } from "@/lib/churchPresenter";
 
 export default function More() {
@@ -51,8 +53,8 @@ export default function More() {
       items: [
         { icon: CalendarDays, label: "Events", path: "/events" },
         {
-          icon: MessageSquare,
-          label: "Message Churches Directory",
+          icon: Church,
+          label: "Find a Church",
           path: "/message-churches",
         },
         {
@@ -78,50 +80,43 @@ export default function More() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 w-full py-6 sm:py-8 pb-24 md:pb-8">
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <Header />
+      <main className="w-full flex-1 py-6 sm:py-8">
         <div className="px-4 sm:px-6 md:px-8 lg:px-12 max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <BackButton fallbackPath="/" useHistory={false} />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-              More
-            </h1>
-          </div>
+          <h1 className="mb-6 text-[2rem] font-bold leading-tight tracking-tight sm:mb-8 sm:text-4xl">More</h1>
 
           <div className="space-y-6 sm:space-y-8">
             {sections.map((section) => (
-              <div key={section.title} className="space-y-3">
-                <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              <section key={section.title} className="space-y-2">
+                <h2 className="px-2 text-sm font-semibold text-muted-foreground">
                   {section.title}
                 </h2>
 
-                <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border/70 bg-card">
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-muted/50 transition-colors"
-                      >
-                        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                        <span className="flex-1 font-medium text-sm sm:text-base">
-                          {item.label}
-                        </span>
-                      </Link>
+                      <li key={item.path}>
+                        <Link to={item.path} className="flex min-h-[3.25rem] items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted focus-visible:outline-none active:bg-muted">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                            <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0 flex-1 text-base font-medium">{item.label}</span>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        </Link>
+                      </li>
                     );
                   })}
-                </div>
-              </div>
+                </ul>
+              </section>
             ))}
           </div>
         </div>
-      </div>
+      </main>
 
       <Footer />
-      <div className="md:hidden">
-        <Navigation />
-      </div>
+      <Navigation />
     </div>
   );
 }

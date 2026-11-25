@@ -1,60 +1,42 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Music, Church, MoreHorizontal } from "lucide-react";
+import { BookOpen, Ellipsis, House, Music, TextSearch } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/bible", icon: Book, label: "Bible" },
-  { path: "/songs", icon: Music, label: "Songs" },
-  { path: "/message-churches", icon: Church, label: "Churches" },
-  { path: "/more", icon: MoreHorizontal, label: "More" },
+const tabs = [
+  { path: "/", icon: House, label: "Home", routes: ["/"] },
+  { path: "/bible", icon: BookOpen, label: "Bible", routes: ["/bible", "/reader", "/search"] },
+  { path: "/messages", icon: TextSearch, label: "Messages", routes: ["/messages", "/wmb-sermons", "/message-reader", "/study-notes"] },
+  { path: "/songs", icon: Music, label: "Songs", routes: ["/songs"] },
+  { path: "/more", icon: Ellipsis, label: "More", routes: ["/more", "/message-churches", "/events", "/prayer-board", "/testimonies", "/downloads", "/share", "/calendar", "/plans", "/library", "/notes", "/profile", "/help", "/about"] },
 ];
 
 export default function Navigation() {
-  const location = useLocation();
+  const { pathname } = useLocation();
 
-  // Hide navigation on auth pages
-  const hideNav = location.pathname.startsWith('/auth');
-
-  if (hideNav) return null;
+  if (pathname.startsWith("/auth")) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
-      {/* Glass navigation bar with premium styling */}
-      <div className="glass glass-elevated border-t border-white/10 dark:border-white/5">
-        <div className="flex items-center justify-around h-14 px-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-label={item.label}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex flex-col items-center justify-center flex-1 h-12 transition-all duration-300 ease-out rounded-xl mx-0.5",
-                  isActive
-                    ? "text-primary bg-primary/15 dark:bg-primary/20 shadow-inner"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
-                )}
-              >
-                <Icon 
-                  className={cn(
-                    "h-5 w-5 mb-0.5 transition-all duration-300", 
-                    isActive && "scale-110 icon-neon"
-                  )} 
-                />
-                <span className={cn(
-                  "text-[10px] font-medium transition-all duration-300",
-                  isActive && "font-semibold"
-                )}>
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+    <nav aria-label="Main tabs" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid h-[var(--mobile-tab-height)] max-w-md grid-cols-5 px-1">
+        {tabs.map(({ path, icon: Icon, label, routes }) => {
+          const active = routes.some((route) => pathname === route || (route !== "/" && pathname.startsWith(route + "/")));
+          return (
+            <Link
+              key={path}
+              to={path}
+              aria-current={active ? (pathname === path ? "page" : "location") : undefined}
+              className={cn(
+                "flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                active ? "text-primary" : "text-muted-foreground active:bg-muted",
+              )}
+            >
+              <span className={cn("grid h-7 w-12 place-items-center rounded-full", active && "bg-primary/10")}>
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
+              </span>
+              <span className={cn("text-[11px] leading-none", active ? "font-semibold" : "font-medium")}>{label}</span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

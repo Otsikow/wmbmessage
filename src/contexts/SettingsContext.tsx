@@ -27,7 +27,7 @@ const defaultSettings: AppSettings = {
 };
 
 const FONT_STACKS: Record<AppSettings["fontFamily"], string> = {
-  "sans-serif": "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  "sans-serif": "var(--app-sans-font)",
   serif: "'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, serif",
   monospace: "'JetBrains Mono', 'Fira Code', 'Fira Mono', 'Courier New', monospace",
 };
