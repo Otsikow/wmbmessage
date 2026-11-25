@@ -24,7 +24,9 @@
 @layer base {
   :root {
     --base-font-size: 16px;
-    --app-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --app-sans-font: "Inter", system-ui, sans-serif;
+    --app-font-family: var(--app-sans-font);
+    --mobile-tab-height: 3.5rem;
     --reader-font-family: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
     --scripture-font-family: "Gentium Book Plus", "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, serif;
 
@@ -400,9 +402,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  @media (max-width: 768px) {
+  @media (width < 768px) {
+    :root {
+      --app-sans-font: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
     body {
-      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(var(--mobile-tab-height) + env(safe-area-inset-bottom, 0px));
     }
   }
 

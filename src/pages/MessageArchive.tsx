@@ -66,7 +66,7 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
 
   return (
     <>
-      <form className="space-y-2 rounded-xl border bg-background/60 p-3 sm:p-4" onSubmit={(event) => {
+      <form className="space-y-2 rounded-2xl border border-border/70 bg-background p-3 sm:p-4" onSubmit={(event) => {
         event.preventDefault();
         const value = input.trim();
         setMatchLimit(MATCH_PAGE_SIZE);
@@ -86,9 +86,9 @@ function TranscriptBody({ message, paragraph, query }: { message: ArchivedMessag
             maxLength={1000}
             placeholder="Paragraph number, words, or a quote"
             aria-describedby="transcript-search-hint"
-            className="min-w-0 flex-1 text-base"
+            className="h-11 min-w-0 flex-1 rounded-xl border-transparent bg-muted text-base"
           />
-          <Button type="submit">
+          <Button type="submit" className="h-11 rounded-xl">
             <Search className="h-4 w-4" aria-hidden="true" />
             Find
           </Button>
@@ -231,7 +231,7 @@ function Transcript({ entry, paragraph, query }: { entry: MessageEntry; paragrap
   }, [entry, retry]);
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6 rounded-2xl border bg-card p-5 sm:p-8">
+    <article className="mx-auto max-w-3xl space-y-5 rounded-2xl border border-border/70 bg-card p-4 sm:space-y-6 sm:p-8">
       <header>
         <p className="text-sm font-semibold text-primary">{entry.code}</p>
         <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{entry.title}</h1>
@@ -329,7 +329,7 @@ export default function MessageArchive() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-muted/30 md:bg-background">
       <Header />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6 sm:px-6 sm:py-10">
         {catalogError ? (
@@ -350,8 +350,8 @@ export default function MessageArchive() {
         ) : (
           <>
             <div className="space-y-2">
-              <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-                <BookOpen className="text-primary" aria-hidden="true" />
+              <h1 className="flex items-center gap-3 text-[2rem] font-bold leading-tight tracking-tight">
+                <BookOpen className="hidden shrink-0 text-primary md:block" aria-hidden="true" />
                 William Branham Messages
               </h1>
               <p className="text-muted-foreground">
@@ -359,19 +359,21 @@ export default function MessageArchive() {
               </p>
             </div>
 
-            <form className="space-y-3 rounded-xl border bg-card p-4" onSubmit={(event) => {
+            <form className="space-y-3 rounded-2xl border border-border/70 bg-card p-3 sm:p-4" onSubmit={(event) => {
               event.preventDefault();
               const next = new URLSearchParams();
               if (input.trim()) next.set("q", input.trim());
               if (mode !== "all") next.set("scope", mode);
               setParams(next);
             }}>
-              <fieldset className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <fieldset className="grid min-w-0 grid-cols-3 gap-1 rounded-xl bg-muted p-1 text-sm">
                 <legend className="sr-only">Search scope</legend>
                 {SEARCH_SCOPES.map(({ value, label }) => (
-                  <label key={value} className="inline-flex items-center gap-2">
-                    <input type="radio" name="message-scope" checked={mode === value} onChange={() => setMode(value)} />
-                    {label}
+                  <label key={value} className="relative min-w-0 cursor-pointer">
+                    <input type="radio" name="message-scope" checked={mode === value} onChange={() => setMode(value)} className="peer sr-only" />
+                    <span className="flex h-full min-h-11 items-center justify-center rounded-lg px-1 py-1 text-center text-xs font-medium leading-tight text-muted-foreground peer-checked:bg-card peer-checked:text-foreground peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-ring sm:text-sm">
+                      {label}
+                    </span>
                   </label>
                 ))}
               </fieldset>
@@ -381,11 +383,12 @@ export default function MessageArchive() {
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   aria-label="Search William Branham messages"
-                  placeholder={mode === "catalog" ? "Enter a title or date code" : "Enter a title, date, or words from a message"}
+                  placeholder={mode === "catalog" ? "Title or date code" : "Search messages"}
+                  className="h-11 min-w-0 rounded-xl border-transparent bg-muted"
                   maxLength={160}
                 />
-                <Button type="submit">
-                  <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                <Button type="submit" className="h-11 rounded-xl">
+                  <Search className="h-4 w-4 max-[360px]:hidden" aria-hidden="true" />
                   Search
                 </Button>
               </div>
@@ -418,7 +421,7 @@ export default function MessageArchive() {
               </p>
             )}
             {results.length > 0 && (
-              <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+              <ul className="divide-y overflow-hidden rounded-2xl border border-border/70 bg-card">
                 {results.slice(0, limit).map((result) => (
                   <li key={`${result.code}:${"paragraph" in result ? result.paragraph : "title"}`}>
                     <Link to={messageLink(result)} className="block p-4 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none">

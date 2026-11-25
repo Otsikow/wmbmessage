@@ -11,15 +11,18 @@ import { useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo-final.png";
 import BackButton from "@/components/BackButton";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import { cn } from "@/lib/utils";
 interface HeaderProps {
   showBackButton?: boolean;
   backButtonFallbackPath?: string;
   pageTitle?: string;
+  className?: string;
 }
 export default function Header({
   showBackButton = false,
   backButtonFallbackPath = "/",
   pageTitle,
+  className,
 }: HeaderProps) {
   const {
     user
@@ -28,31 +31,18 @@ export default function Header({
     isAdmin
   } = useUserRole();
   const navigate = useNavigate();
-  const mobileNavLinks = [{
-    label: "Bible",
-    path: "/bible"
-  }, {
-    label: "Churches",
-    path: "/message-churches"
-  }, {
-    label: "Events",
-    path: "/events"
-  }, {
-    label: "Prayer",
-    path: "/prayer-board"
-  }];
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
-  return <header className="sticky top-0 z-40 w-full glass border-b border-white/10 dark:border-white/5 shadow-glass animate-nav-slide-up">
-      <div className="container flex flex-col gap-1 px-3 py-2 md:gap-2 md:px-4 md:py-3">
+  return <header className={cn("sticky top-0 z-30 w-full border-b border-border bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:glass md:shadow-glass", className)}>
+      <div className="container flex flex-col gap-1 px-4 py-1 md:gap-2 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5 md:gap-3">
             {showBackButton ? <BackButton fallbackPath={backButtonFallbackPath} className="shrink-0" /> : null}
             <Link to="/" aria-label="Go to homepage" className="flex min-w-0 items-center space-x-1.5 md:space-x-3 group">
-              <img src={logoImage} alt="MessageGuide Logo" className="h-7 sm:h-8 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" />
-              <span className="truncate text-[15px] sm:text-base md:text-xl font-bold text-gradient-blue-purple">
+              <img src={logoImage} alt="" className="h-7 sm:h-8 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" />
+              <span className="truncate text-[17px] font-semibold tracking-tight text-foreground md:text-xl md:font-bold md:text-gradient-blue-purple">
                 MessageGuide
               </span>
             </Link>
@@ -123,7 +113,7 @@ export default function Header({
 
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild className="lg:hidden">
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="" alt="User" />
                       <AvatarFallback>
@@ -157,11 +147,9 @@ export default function Header({
                     <span>Sign out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu> : <Link to="/auth/sign-in" className="lg:hidden">
-                <Button variant="ghost" size="sm" className="px-2 sm:px-3">
-                  Sign In
-                </Button>
-              </Link>}
+              </DropdownMenu> : <Button asChild variant="ghost" size="sm" className="px-2 font-semibold text-primary lg:hidden sm:px-3">
+                <Link to="/auth/sign-in">Sign In</Link>
+              </Button>}
           </div>
         </div>
 

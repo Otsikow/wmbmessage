@@ -10,7 +10,7 @@ export default function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" })}
-      className="h-9 w-9"
+      className="h-9 w-9 rounded-xl hover:bg-muted hover:text-foreground"
     >
       {settings.theme === "dark" ? (
         <Sun className="h-5 w-5" />

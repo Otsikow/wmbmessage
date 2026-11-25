@@ -124,23 +124,23 @@ export default function VerseCard({
   return <div className={cn(
     "group relative overflow-hidden rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4 cursor-pointer",
     // Glass styling
-    "bg-white/70 dark:bg-white/[0.06] backdrop-blur-[16px] saturate-[180%]",
+    "bg-white/70 dark:bg-white/[0.06] md:backdrop-blur-[16px] md:saturate-[180%]",
     "border border-border/60 dark:border-white/[0.08]",
-    "shadow-[0_8px_24px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
-    "dark:drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
+    "md:shadow-[0_8px_24px_rgba(15,23,42,0.12)] md:dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
+    "md:dark:drop-shadow-[0_8px_25px_rgba(0,0,0,0.4)]",
     // Transitions
-    "transition-all duration-[350ms] ease-out",
+    "transition-colors md:transition-all md:duration-300",
     // Highlight colors override glass when present
     highlight ? getHighlightColorClass(highlight.color) : [
-      "hover:-translate-y-1 hover:scale-[1.01]",
+      "md:hover:-translate-y-1 md:hover:scale-[1.01]",
       "hover:border-border/80 dark:hover:border-white/25",
-      "hover:shadow-[0_12px_30px_rgba(15,23,42,0.18)]",
-      "dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
+      "md:hover:shadow-[0_12px_30px_rgba(15,23,42,0.18)]",
+      "md:dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.5)]"
     ],
     // Focused state
-    isFocused && "bg-primary/[0.06] dark:bg-primary/[0.12] border-primary/50 shadow-[0_12px_30px_rgba(59,130,246,0.2)]",
+    isFocused && "bg-primary/[0.06] dark:bg-primary/[0.12] border-primary/50 md:shadow-[0_12px_30px_rgba(59,130,246,0.2)]",
     // Selected state
-    isSelected && "ring-2 ring-primary border-primary shadow-lg -translate-y-1 scale-[1.01]"
+    isSelected && "ring-2 ring-primary border-primary md:shadow-lg md:-translate-y-1 md:scale-[1.01]"
   )} role="button" aria-pressed={isSelected} aria-label={`${book} ${chapter}:${verse.number} verse card`} tabIndex={0} onClick={handleSelectVerse} onKeyDown={handleKeyDown}>
       {isFocused && (
         <div
